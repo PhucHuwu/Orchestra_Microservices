@@ -13,7 +13,7 @@ import { useSessionStore } from "@/stores/session-store";
 import { useToastStore } from "@/stores/toast-store";
 
 export default function TempoPage() {
-  const { sessionId, status, currentBpm, tempoUpdatedAt, setTempo } = useSessionStore();
+  const { sessionId, status, currentBpm, tempoUpdatedAt, setTempo, bumpAudioToken } = useSessionStore();
   const pushToast = useToastStore((state) => state.push);
   const [value, setValue] = useState<number>(currentBpm ?? 120);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
@@ -24,6 +24,7 @@ export default function TempoPage() {
     mutationFn: applyTempo,
     onSuccess: () => {
       setTempo({ bpm: value, updatedAt: new Date().toISOString() });
+      bumpAudioToken();
       pushToast({
         type: "success",
         title: "Đã cập nhật tempo",

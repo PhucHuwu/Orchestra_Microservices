@@ -121,7 +121,7 @@ class DashboardService:
         db.commit()
 
         try:
-            self._audio_renderer.render_midi_file(str(score_file_path))
+            self._audio_renderer.render_midi_file(str(score_file_path), bpm=initial_bpm)
 
             for instrument in ("violin", "piano", "drums", "cello"):
                 self._audio_renderer.set_instrument_enabled(instrument, True)
@@ -215,6 +215,7 @@ class DashboardService:
         )
 
         self._call_conductor_tempo(session.id, new_bpm, issued_by)
+        self._audio_renderer.set_tempo(new_bpm)
 
         return {"status": "accepted"}
 

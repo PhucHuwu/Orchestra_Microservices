@@ -5,7 +5,7 @@ import os
 import subprocess
 from pathlib import Path
 
-from mido import MetaMessage, MidiFile, MidiTrack
+from mido import MetaMessage, MidiFile, MidiTrack, bpm2tempo
 
 LOGGER = logging.getLogger(__name__)
 TRACK_INSTRUMENTS = ("violin", "piano", "drums", "cello")
@@ -35,6 +35,7 @@ class PlaybackAudioRenderer:
             "cello": True,
         }
         self._source_midi: Path | None = None
+        self._current_bpm = 120
 
         _ = rabbitmq_url
         _ = exchange_name
@@ -60,8 +61,10 @@ class PlaybackAudioRenderer:
             self._enabled[key] = enabled
             self.rerender_current()
 
-    def render_midi_file(self, midi_path: str) -> Path:
+    def render_midi_file(self, midi_path: str, bpm: int | None = None) -> Path:
         self._source_midi = Path(midi_path).resolve()
+        if bpm is not None:
+            self._current_bpm = bpm
         if not self._source_midi.exists():
             raise FileNotFoundError(f"MIDI file not found: {self._source_midi}")
         if not self._soundfont_path.exists():
@@ -75,6 +78,10 @@ class PlaybackAudioRenderer:
             return None
         self._render_current_state()
         return self._latest_file
+
+    def set_tempo(self, bpm: int) -> None:
+        self._current_bpm = max(20, min(300, int(bpm)))
+        self.rerender_current()
 
     def _render_current_state(self) -> None:
         assert self._source_midi is not None
@@ -136,7 +143,32 @@ class PlaybackAudioRenderer:
                 out_track.append(MetaMessage("end_of_track", time=0))
             output.tracks.append(out_track)
 
+        self._apply_tempo_override(output)
+
         return output
+
+    def _apply_tempo_override(self, midi: MidiFile) -> None:
+        if len(midi.tracks) == 0:
+            first = MidiTrack()
+            first.append(MetaMessage("set_tempo", tempo=bpm2tempo(self._current_bpm), time=0))
+            first.append(MetaMessage("end_of_track", time=0))
+            midi.tracks.append(first)
+            return
+
+        for index, track in enumerate(midi.tracks):
+            rebuilt = MidiTrack()
+            carry_ticks = 0
+            for msg in track:
+                if msg.type == "set_tempo":
+                    carry_ticks += int(msg.time)
+                    continue
+                rebuilt.append(msg.copy(time=int(msg.time) + carry_ticks))
+                carry_ticks = 0
+            if len(rebuilt) == 0:
+                rebuilt.append(MetaMessage("end_of_track", time=0))
+            midi.tracks[index] = rebuilt
+
+        midi.tracks[0].insert(0, MetaMessage("set_tempo", tempo=bpm2tempo(self._current_bpm), time=0))
 
     def _infer_track_instrument(self, track: MidiTrack) -> str | None:
         track_name = ""
