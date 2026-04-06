@@ -38,6 +38,7 @@ export function MicroserviceProofBoard({
   const topologyEdges = dedupeTopologyEdges(interactions);
 
   const queueInsights: QueueInsight[] = Object.keys(queueDepth)
+    .filter((queue) => !queue.endsWith(".dlq"))
     .map((queue) => ({
       queue,
       depth: queueDepth[queue] ?? 0,
@@ -109,7 +110,9 @@ export function MicroserviceProofBoard({
                   ? "border-[var(--danger)] bg-[var(--danger-soft)]"
                   : state === "busy"
                     ? "border-[var(--warning)] bg-[var(--warning-soft)]"
-                    : "border-[var(--border)] bg-[var(--card-muted)]";
+                    : state === "idle"
+                      ? "border-[var(--border)] bg-[var(--card)]"
+                      : "border-[var(--border)] bg-[var(--card-muted)]";
               return (
                 <div key={item.queue} className={`rounded-lg border px-3 py-2 ${tone}`}>
                   <p className="font-medium text-[var(--text-strong)]">{item.queue}</p>
