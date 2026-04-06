@@ -44,6 +44,10 @@ class InteractionEdge(BaseModel):
     message_rate: float
 
 
+class FaultScenarioRequest(BaseModel):
+    scenario: str = Field(min_length=1, max_length=80)
+
+
 class MetricsOverview(BaseModel):
     model_config = ConfigDict(extra="ignore")
 

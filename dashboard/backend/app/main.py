@@ -1,4 +1,5 @@
 import asyncio
+from uuid import uuid4
 from datetime import UTC, datetime
 
 from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect
@@ -7,16 +8,19 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api import ApiError, api_error_handler, success_response, validation_error_handler
 from app.audio_renderer import PlaybackAudioRenderer
 from app.config import settings
+from app.db.models import PlaybackSession
 from app.db.session import get_db_session
 from app.logging_config import configure_logging
 from app.metrics import RabbitMQManagementClient
 from app.rabbitmq_client import RabbitMQPublisher, RabbitMQPublisherProvider
 from app.schemas import (
+    FaultScenarioRequest,
     PlaybackStartRequest,
     PlaybackStopRequest,
     ServiceToggleRequest,
@@ -205,6 +209,20 @@ async def set_service_control(request: ServiceToggleRequest, db: Session = Depen
     return success_response(item.model_dump(mode="json"))
 
 
+@app.post("/api/v1/fault/run")
+async def run_fault(request: FaultScenarioRequest, db: Session = Depends(get_db_session)) -> dict:
+    _track("/api/v1/fault/run", "POST")
+    await _run_fault_scenario(action="run", scenario=request.scenario, db=db)
+    return success_response({"status": "accepted", "action": "run", "scenario": request.scenario})
+
+
+@app.post("/api/v1/fault/cleanup")
+async def cleanup_fault(request: FaultScenarioRequest, db: Session = Depends(get_db_session)) -> dict:
+    _track("/api/v1/fault/cleanup", "POST")
+    await _run_fault_scenario(action="cleanup", scenario=request.scenario, db=db)
+    return success_response({"status": "accepted", "action": "cleanup", "scenario": request.scenario})
+
+
 @app.websocket("/ws/metrics")
 async def metrics_ws(websocket: WebSocket) -> None:
     await websocket.accept()
@@ -237,3 +255,82 @@ async def metrics_ws(websocket: WebSocket) -> None:
             await websocket.close()
         except Exception:
             pass
+
+
+async def _run_fault_scenario(action: str, scenario: str, db: Session) -> None:
+    scenario_key = scenario.strip().lower()
+
+    if scenario_key == "service-crash-recovery":
+        await dashboard_service.set_service_enabled(
+            db=db,
+            service_name="drums-service",
+            enabled=(action == "cleanup"),
+        )
+        return
+
+    if scenario_key == "consumer-lag":
+        if action == "run":
+            await dashboard_service.set_service_enabled(
+                db=db,
+                service_name="violin-service",
+                enabled=False,
+            )
+            publisher = publisher_provider.get()
+            now = datetime.now(UTC).isoformat()
+            for idx in range(120):
+                publisher.publish_json(
+                    routing_key="instrument.violin.note",
+                    payload={
+                        "note_id": str(uuid4()),
+                        "session_id": settings.fault_toolkit_session_id,
+                        "instrument": "violin",
+                        "pitch": 60 + (idx % 12),
+                        "duration": 0.2,
+                        "volume": 90,
+                        "beat_time": idx * 0.25,
+                        "timestamp": now,
+                    },
+                )
+        else:
+            await dashboard_service.set_service_enabled(
+                db=db,
+                service_name="violin-service",
+                enabled=True,
+            )
+        return
+
+    if scenario_key == "bpm-runtime":
+        stmt = (
+            select(PlaybackSession)
+            .where(PlaybackSession.status == "running")
+            .order_by(PlaybackSession.started_at.desc())
+        )
+        active = db.execute(stmt).scalars().first()
+        if active is None:
+            raise ApiError(
+                error_code="FAULT_SESSION_NOT_FOUND",
+                message="No running session for bpm-runtime scenario",
+                status_code=400,
+            )
+
+        target = 140 if action == "run" else 120
+        dashboard_service.update_tempo(
+            db=db,
+            session_id=active.id,
+            new_bpm=target,
+            issued_by="fault-demo",
+        )
+        return
+
+    if scenario_key in {"competing-consumers", "iot-reconnect"}:
+        raise ApiError(
+            error_code="FAULT_SCENARIO_UNAVAILABLE",
+            message=f"Scenario {scenario_key} is unavailable in this local runtime",
+            status_code=501,
+        )
+
+    raise ApiError(
+        error_code="FAULT_SCENARIO_INVALID",
+        message=f"Unknown scenario: {scenario_key}",
+        status_code=400,
+    )

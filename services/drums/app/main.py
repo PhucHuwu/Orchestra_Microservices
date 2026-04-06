@@ -44,6 +44,9 @@ def _start_worker_unlocked() -> None:
     global worker_thread
     if _worker_running():
         return
+    if not worker_enabled:
+        return
+    worker._running = True
     worker_thread = Thread(target=worker.start, daemon=True)
     worker_thread.start()
 

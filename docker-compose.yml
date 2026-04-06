@@ -146,6 +146,11 @@ services:
       CONDUCTOR_BASE_URL: ${CONDUCTOR_BASE_URL:-http://conductor:8000}
       SCORE_STORAGE_DIR: ${SCORE_STORAGE_DIR:-/shared-scores}
       AUDIO_OUTPUT_DIR: ${AUDIO_OUTPUT_DIR:-/shared-audio}
+      FAULT_TOOLKIT_COMPOSE_CMD: ${FAULT_TOOLKIT_COMPOSE_CMD:-docker compose}
+      FAULT_TOOLKIT_RABBITMQ_URL: ${FAULT_TOOLKIT_RABBITMQ_URL:-amqp://orchestra:orchestra@rabbitmq:5672/%2F}
+      FAULT_TOOLKIT_EXCHANGE: ${FAULT_TOOLKIT_EXCHANGE:-orchestra.events}
+      FAULT_TOOLKIT_NETWORK: ${FAULT_TOOLKIT_NETWORK:-orchestra_net}
+      FAULT_TOOLKIT_SESSION_ID: ${FAULT_TOOLKIT_SESSION_ID:-fault-demo-session}
     depends_on:
       - rabbitmq
       - postgres
