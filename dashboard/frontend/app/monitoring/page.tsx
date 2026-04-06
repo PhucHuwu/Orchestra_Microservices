@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { InteractionFlowTable } from "@/components/monitoring/interaction-flow-table";
 import { MetricLineChart } from "@/components/monitoring/metric-line-chart";
+import { MicroserviceProofBoard } from "@/components/monitoring/microservice-proof-board";
 import { ServiceToggleGrid } from "@/components/monitoring/service-toggle-grid";
 import { StatePanel } from "@/components/shared/state-panel";
 import {
@@ -32,6 +33,7 @@ export default function MonitoringPage() {
   const [queueSeries, setQueueSeries] = useState<Point[]>([]);
   const [rateSeries, setRateSeries] = useState<Point[]>([]);
   const [pendingService, setPendingService] = useState<string | null>(null);
+  const [controlOverrides, setControlOverrides] = useState<Record<string, boolean>>({});
   const pushToast = useToastStore((state) => state.push);
   const bumpAudioToken = useSessionStore((state) => state.bumpAudioToken);
 
@@ -57,6 +59,7 @@ export default function MonitoringPage() {
     mutationFn: setServiceControl,
     onSuccess: (item) => {
       controlQuery.refetch();
+      setControlOverrides((prev) => ({ ...prev, [item.service_name]: item.enabled }));
       bumpAudioToken();
       pushToast({
         type: "success",
@@ -98,7 +101,19 @@ export default function MonitoringPage() {
 
   const healthRows = healthQuery.data ?? latest?.metrics.services ?? [];
   const interactions = latest?.metrics.interactions ?? [];
-  const serviceControls = controlQuery.data ?? latest?.metrics.toggles ?? [];
+  const serviceControlsBase = controlQuery.data ?? latest?.metrics.toggles ?? [];
+  const serviceControls = serviceControlsBase.map((item) => {
+    const override = controlOverrides[item.service_name];
+    if (override === undefined) {
+      return item;
+    }
+    return {
+      ...item,
+      enabled: override,
+      status: override ? "enabled" : "disabled",
+      worker_enabled: override
+    };
+  });
 
   const onToggleService = (serviceName: string, enabled: boolean) => {
     setPendingService(serviceName);
@@ -162,6 +177,32 @@ export default function MonitoringPage() {
                 <MetricLineChart data={rateSeries} color="#b45309" />
               </div>
             )}
+          </StatePanel>
+
+          <StatePanel
+            title="Microservices Proof"
+            description="Live evidence that this system is microservices + event-driven + queue-based synchronization."
+          >
+            <MicroserviceProofBoard
+              socketStatus={socketStatus}
+              serviceControls={serviceControls}
+              pendingService={pendingService}
+              interactions={
+                interactions.length > 0
+                  ? interactions
+                  : Object.entries(overview?.queue_depth ?? {}).map(([queue]) => ({
+                      from_service: "unknown",
+                      to_service: "unknown",
+                      queue,
+                      depth: overview?.queue_depth[queue] ?? 0,
+                      consumers: overview?.consumer_count[queue] ?? 0,
+                      message_rate: overview?.message_rate[queue] ?? 0
+                    }))
+              }
+              queueDepth={overview?.queue_depth ?? {}}
+              messageRate={overview?.message_rate ?? {}}
+              consumerCount={overview?.consumer_count ?? {}}
+            />
           </StatePanel>
 
           <StatePanel
