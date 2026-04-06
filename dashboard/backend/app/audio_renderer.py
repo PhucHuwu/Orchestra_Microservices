@@ -103,10 +103,17 @@ class PlaybackAudioRenderer:
         source_midi = MidiFile(str(source))
         output = MidiFile(ticks_per_beat=source_midi.ticks_per_beat)
 
-        for track_index, track in enumerate(source_midi.tracks):
+        if not any(self._enabled.values()):
+            return MidiFile(ticks_per_beat=source_midi.ticks_per_beat)
+
+        instrument_track_index = 0
+        for track in source_midi.tracks:
             out_track = MidiTrack()
             muted_accumulated_ticks = 0
-            track_instrument = self._infer_track_instrument(track_index, track)
+            track_instrument = self._infer_track_instrument(track)
+            if track_instrument is None and any(msg.type in {"note_on", "note_off"} for msg in track):
+                track_instrument = TRACK_INSTRUMENTS[instrument_track_index % len(TRACK_INSTRUMENTS)]
+                instrument_track_index += 1
 
             preserve_all = track_instrument is None
             for msg in track:
@@ -131,11 +138,36 @@ class PlaybackAudioRenderer:
 
         return output
 
-    def _infer_track_instrument(self, track_index: int, track: MidiTrack) -> str | None:
-        has_notes = any(msg.type in {"note_on", "note_off"} for msg in track)
-        if not has_notes:
-            return None
-        return TRACK_INSTRUMENTS[track_index % len(TRACK_INSTRUMENTS)]
+    def _infer_track_instrument(self, track: MidiTrack) -> str | None:
+        track_name = ""
+        for event in track:
+            if event.type == "track_name":
+                track_name = (event.name or "").lower()
+                break
+
+        if "violin" in track_name:
+            return "violin"
+        if "piano" in track_name or "keys" in track_name or "right hand" in track_name or "left hand" in track_name:
+            return "piano"
+        if "cello" in track_name or "bass" in track_name:
+            return "cello"
+        if "drum" in track_name or "perc" in track_name:
+            return "drums"
+
+        for event in track:
+            if event.type == "program_change":
+                program = int(event.program)
+                if 0 <= program <= 7:
+                    return "piano"
+                if 40 <= program <= 41:
+                    return "violin"
+                if 42 <= program <= 43:
+                    return "cello"
+
+        for event in track:
+            if hasattr(event, "channel") and event.channel == 9:
+                return "drums"
+        return None
 
     def _infer_message_instrument(self, msg, track_instrument: str | None) -> str | None:
         if hasattr(msg, "channel") and msg.channel == 9:

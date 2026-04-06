@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { StatePanel } from "@/components/shared/state-panel";
+import { useSessionStore } from "@/stores/session-store";
 import { useToastStore } from "@/stores/toast-store";
 
 type Scenario = {
@@ -66,6 +67,7 @@ export default function FaultDemoPage() {
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const pushToast = useToastStore((state) => state.push);
+  const bumpAudioToken = useSessionStore((state) => state.bumpAudioToken);
 
   const trigger = async (scenario: Scenario, action: "run" | "cleanup") => {
     const key = `${action}-${scenario.id}`;
@@ -79,6 +81,7 @@ export default function FaultDemoPage() {
         action
       };
       setTimeline((prev) => [item, ...prev]);
+      bumpAudioToken();
       pushToast({
         type: "success",
         title: `${action === "run" ? "Đã kích hoạt" : "Đã cleanup"} ${scenario.label}`
