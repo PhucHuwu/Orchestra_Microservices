@@ -63,11 +63,11 @@ export default function MonitoringPage() {
       bumpAudioToken();
       pushToast({
         type: "success",
-        title: `${item.service_name} ${item.enabled ? "started" : "stopped"}`
+        title: `${item.service_name} ${item.enabled ? "đã bật" : "đã tắt"}`
       });
     },
     onError: (error: Error) => {
-      pushToast({ type: "error", title: "Toggle failed", description: error.message });
+      pushToast({ type: "error", title: "Toggle thất bại", description: error.message });
     },
     onSettled: () => {
       setPendingService(null);
@@ -126,19 +126,19 @@ export default function MonitoringPage() {
         <div className="space-y-5">
           <StatePanel
             title="System Metrics"
-            description="Queue depth, consumer count, and message rate updated every 1s via WebSocket."
+            description="Queue depth, consumer count và message rate được cập nhật mỗi 1s qua WebSocket."
           >
             {overviewQuery.isLoading && !overview ? (
-              <p className="text-sm text-[var(--text-muted)]">Loading metrics...</p>
+              <p className="text-sm text-[var(--text-muted)]">Đang tải metrics...</p>
             ) : null}
 
             {!overviewQuery.isLoading && queueRows.length === 0 ? (
-              <p className="text-sm text-[var(--text-muted)]">Empty metrics data.</p>
+              <p className="text-sm text-[var(--text-muted)]">Không có dữ liệu metrics.</p>
             ) : null}
 
             {overviewQuery.isError ? (
               <p className="rounded-xl border border-[var(--danger)] bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--danger)]">
-                Error loading metrics overview.
+                Lỗi khi tải metrics overview.
               </p>
             ) : null}
 
@@ -168,9 +168,9 @@ export default function MonitoringPage() {
             ) : null}
           </StatePanel>
 
-          <StatePanel title="Realtime Charts" description="Trend charts for total queue depth and message rate.">
+          <StatePanel title="Realtime Charts" description="Biểu đồ xu hướng cho tổng queue depth và message rate.">
             {socketStatus !== "connected" && queueSeries.length === 0 ? (
-              <p className="text-sm text-[var(--text-muted)]">Waiting realtime stream...</p>
+              <p className="text-sm text-[var(--text-muted)]">Đang chờ realtime stream...</p>
             ) : (
               <div className="grid gap-4 lg:grid-cols-2">
                 <MetricLineChart data={queueSeries} color="#0f766e" />
@@ -181,7 +181,7 @@ export default function MonitoringPage() {
 
           <StatePanel
             title="Microservices Proof"
-            description="Live evidence that this system is microservices + event-driven + queue-based synchronization."
+            description="Bằng chứng realtime cho thấy hệ thống này là microservices + event-driven + đồng bộ bằng queue."
           >
             <MicroserviceProofBoard
               socketStatus={socketStatus}
@@ -207,7 +207,7 @@ export default function MonitoringPage() {
 
           <StatePanel
             title="Interaction Flow"
-            description="Realtime queue interaction between services (producer -> consumer)."
+            description="Tương tác queue realtime giữa các service (producer -> consumer)."
           >
             <InteractionFlowTable
               edges={
@@ -227,23 +227,23 @@ export default function MonitoringPage() {
         </div>
 
         <div className="space-y-5">
-          <StatePanel title="Socket State" description="Current WS /ws/metrics connection state.">
+          <StatePanel title="Trạng thái Socket" description="Trạng thái kết nối hiện tại của WS /ws/metrics.">
             <p className="text-sm">
               <span className="pill border-[var(--border)] bg-[var(--card)]">{socketStatus}</span>
             </p>
           </StatePanel>
 
-          <StatePanel title="Service Health" description="Service status overview from /api/v1/services/health.">
+          <StatePanel title="Service Health" description="Tổng quan trạng thái service từ /api/v1/services/health.">
             {healthQuery.isLoading && healthRows.length === 0 ? (
-              <p className="text-sm text-[var(--text-muted)]">Loading service health...</p>
+              <p className="text-sm text-[var(--text-muted)]">Đang tải service health...</p>
             ) : null}
             {healthQuery.isError ? (
               <p className="rounded-xl border border-[var(--danger)] bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--danger)]">
-                Error loading service health.
+                Lỗi khi tải service health.
               </p>
             ) : null}
             {healthRows.length === 0 && !healthQuery.isLoading ? (
-              <p className="text-sm text-[var(--text-muted)]">Empty service health snapshot.</p>
+              <p className="text-sm text-[var(--text-muted)]">Không có snapshot service health.</p>
             ) : null}
             <div className="space-y-2">
               {healthRows.map((item) => (
@@ -258,8 +258,8 @@ export default function MonitoringPage() {
           </StatePanel>
 
           <StatePanel
-            title="Service Controls"
-            description="Start/stop each worker service and observe queue interaction impact in realtime."
+            title="Điều khiển Service"
+            description="Bật/tắt từng worker service và quan sát tác động lên queue interaction theo realtime."
           >
             <ServiceToggleGrid
               items={serviceControls}

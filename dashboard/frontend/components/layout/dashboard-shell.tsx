@@ -8,9 +8,9 @@ import { SessionBanner } from "@/components/shared/session-banner";
 import { ToastViewport } from "@/components/shared/toast-viewport";
 
 const navItems = [
-  { href: "/playback", label: "Playback" },
+  { href: "/playback", label: "Phát nhạc" },
   { href: "/tempo", label: "Tempo" },
-  { href: "/monitoring", label: "Monitoring" },
+  { href: "/monitoring", label: "Giám sát" },
   { href: "/fault-demo", label: "Fault Demo" }
 ];
 
@@ -25,9 +25,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <Link href="/" className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
               Orchestra Microservices
             </Link>
-            <h1 className="mt-1 font-heading text-4xl text-[var(--text-strong)]">Dashboard Frontend</h1>
+            <h1 className="mt-1 font-heading text-4xl text-[var(--text-strong)]">Bảng điều khiển Frontend</h1>
             <p className="mt-2 text-sm text-[var(--text-base)]">
-              Playback control, realtime tempo, monitoring, and fault demo aligned with BA handover baseline.
+              Điều khiển playback, chỉnh tempo realtime, giám sát hệ thống và chạy Fault Demo theo BA handover baseline.
             </p>
           </div>
           <SessionBanner />

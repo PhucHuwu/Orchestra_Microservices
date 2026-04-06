@@ -48,11 +48,11 @@ export default function PlaybackPage() {
     mutationFn: startPlayback,
     onSuccess: (data) => {
       setRunning({ sessionId: data.session_id, bpm: form.initial_bpm });
-      pushToast({ type: "success", title: "Playback started", description: `Session ${data.session_id}` });
+      pushToast({ type: "success", title: "Playback đã bắt đầu", description: `Session ${data.session_id}` });
     },
     onError: (error: Error) => {
       setFailed();
-      pushToast({ type: "error", title: "Start playback failed", description: error.message });
+      pushToast({ type: "error", title: "Bắt đầu playback thất bại", description: error.message });
     }
   });
 
@@ -60,30 +60,30 @@ export default function PlaybackPage() {
     mutationFn: stopPlayback,
     onSuccess: () => {
       setStopped();
-      pushToast({ type: "success", title: "Playback stopped" });
+      pushToast({ type: "success", title: "Playback đã dừng" });
     },
     onError: (error: Error) => {
-      pushToast({ type: "error", title: "Stop playback failed", description: error.message });
+      pushToast({ type: "error", title: "Dừng playback thất bại", description: error.message });
     }
   });
 
   const uploadMutation = useMutation({
     mutationFn: uploadScore,
     onSuccess: (created) => {
-      pushToast({ type: "success", title: "Score uploaded", description: created.name });
+      pushToast({ type: "success", title: "Tải file score thành công", description: created.name });
       setSelectedFile(null);
       setForm((prev) => ({ ...prev, score_id: created.id }));
       scoresQuery.refetch();
     },
     onError: (error: Error) => {
-      pushToast({ type: "error", title: "Upload failed", description: error.message });
+      pushToast({ type: "error", title: "Tải file thất bại", description: error.message });
     }
   });
 
   const onStart = () => {
     const parsed = playbackFormSchema.safeParse(form);
     if (!parsed.success) {
-      const message = parsed.error.issues[0]?.message ?? "Invalid input";
+      const message = parsed.error.issues[0]?.message ?? "Dữ liệu đầu vào không hợp lệ";
       setValidationMessage(message);
       return;
     }
@@ -93,7 +93,7 @@ export default function PlaybackPage() {
 
   const onUpload = () => {
     if (!selectedFile) {
-      pushToast({ type: "info", title: "Select a MIDI file first" });
+      pushToast({ type: "info", title: "Hãy chọn file MIDI trước" });
       return;
     }
     uploadMutation.mutate(selectedFile);
@@ -101,7 +101,7 @@ export default function PlaybackPage() {
 
   const onStop = () => {
     if (!sessionId) {
-      pushToast({ type: "info", title: "No running session", description: "No session to stop." });
+      pushToast({ type: "info", title: "Không có session đang chạy", description: "Không có session để dừng." });
       return;
     }
     stopMutation.mutate({ session_id: sessionId });
@@ -110,7 +110,7 @@ export default function PlaybackPage() {
   return (
     <DashboardShell>
       <div className="grid gap-5 lg:grid-cols-[1.1fr,0.9fr]">
-        <StatePanel title="Playback Control" description="Start/Stop session theo contract /api/v1/playback/*.">
+        <StatePanel title="Điều khiển Playback" description="Bật/Tắt session theo contract /api/v1/playback/*.">
           <PlaybackControlForm
             scoreId={form.score_id}
             bpm={form.initial_bpm}
@@ -130,24 +130,24 @@ export default function PlaybackPage() {
           />
         </StatePanel>
 
-        <StatePanel title="Session Status" description="Current runtime status for the demo and audio output.">
+        <StatePanel title="Trạng thái Session" description="Trạng thái runtime hiện tại cho demo và audio output.">
           <div className="space-y-2 text-sm">
             <p>
-              <span className="text-[var(--text-muted)]">Status:</span> <strong>{status}</strong>
+              <span className="text-[var(--text-muted)]">Trạng thái:</span> <strong>{status}</strong>
             </p>
             <p>
               <span className="text-[var(--text-muted)]">Session ID:</span> {sessionId ?? "-"}
             </p>
             <p>
-              <span className="text-[var(--text-muted)]">Start action:</span>{" "}
+              <span className="text-[var(--text-muted)]">Hành động bắt đầu:</span>{" "}
               {startMutation.isSuccess ? "success" : startMutation.isError ? "error" : "idle"}
             </p>
             <p>
-              <span className="text-[var(--text-muted)]">Stop action:</span>{" "}
+              <span className="text-[var(--text-muted)]">Hành động dừng:</span>{" "}
               {stopMutation.isSuccess ? "success" : stopMutation.isError ? "error" : "idle"}
             </p>
             <p className="pt-2 text-[var(--text-muted)]">
-              Audio player is pinned at the bottom and keeps playing across page navigation.
+              Audio player được ghim ở cuối màn hình và tiếp tục phát khi chuyển trang.
             </p>
           </div>
         </StatePanel>

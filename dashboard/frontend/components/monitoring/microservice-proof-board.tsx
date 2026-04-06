@@ -51,22 +51,22 @@ export function MicroserviceProofBoard({
   return (
     <div className="space-y-4">
       <div className="grid gap-3 md:grid-cols-5">
-        <EvidenceCard label="Reachable Services" value={`${reachableServices}/${totalServices}`} hint="Service runtimes online" />
-        <EvidenceCard label="Enabled Services" value={`${enabledServices}/${totalServices}`} hint="Actively processing events" />
-        <EvidenceCard label="Independent Control" value={String(independentlyControlled)} hint="Can start/stop each service" />
-        <EvidenceCard label="Event Edges" value={String(activeEdges)} hint="Producer -> consumer queue links" />
-        <EvidenceCard label="Sync Stream" value={socketStatus} hint="Realtime WebSocket updates" />
+        <EvidenceCard label="Reachable Services" value={`${reachableServices}/${totalServices}`} hint="Service runtime đang online" />
+        <EvidenceCard label="Enabled Services" value={`${enabledServices}/${totalServices}`} hint="Đang xử lý event" />
+        <EvidenceCard label="Independent Control" value={String(independentlyControlled)} hint="Có thể bật/tắt từng service" />
+        <EvidenceCard label="Event Edges" value={String(activeEdges)} hint="Luồng producer -> consumer qua queue" />
+        <EvidenceCard label="Sync Stream" value={socketStatus} hint="Cập nhật realtime qua WebSocket" />
       </div>
 
       <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 text-sm">
         <p className="font-semibold text-[var(--text-strong)]">Live Control Mirror</p>
         <p className="mt-1 text-xs text-[var(--text-muted)]">
-          Disabled services: {disabledServices.length > 0 ? disabledServices.join(", ") : "none"}
+          Service đang tắt: {disabledServices.length > 0 ? disabledServices.join(", ") : "không có"}
         </p>
         {pendingService ? (
-          <p className="mt-1 text-xs text-[var(--warning)]">Applying change: {pendingService}</p>
+          <p className="mt-1 text-xs text-[var(--warning)]">Đang áp dụng thay đổi: {pendingService}</p>
         ) : (
-          <p className="mt-1 text-xs text-[var(--text-muted)]">No pending control change.</p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">Không có thay đổi đang chờ.</p>
         )}
       </div>
 
@@ -74,7 +74,7 @@ export function MicroserviceProofBoard({
         <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
           <h3 className="text-sm font-semibold text-[var(--text-strong)]">Service Topology (Live)</h3>
           <p className="mt-1 text-xs text-[var(--text-muted)]">
-            This proves microservices: each node is a separate deployable runtime connected by queues.
+            Bằng chứng microservices: mỗi node là runtime deploy độc lập, liên kết qua queue.
           </p>
           <div className="mt-3 space-y-2 text-sm">
             {topologyEdges.slice(0, 8).map((edge) => (
@@ -93,7 +93,7 @@ export function MicroserviceProofBoard({
         <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
           <h3 className="text-sm font-semibold text-[var(--text-strong)]">Event-Driven Queue Watch</h3>
           <p className="mt-1 text-xs text-[var(--text-muted)]">
-            Higher rate means more events flowing; higher depth means backlog waiting for consumers.
+            Rate cao nghĩa là event đang chạy mạnh; depth cao nghĩa là queue đang bị tồn backlog.
           </p>
           <div className="mt-3 space-y-2 text-sm">
             {queueInsights.map((item) => {
@@ -117,7 +117,7 @@ export function MicroserviceProofBoard({
                 <div key={item.queue} className={`rounded-lg border px-3 py-2 ${tone}`}>
                   <p className="font-medium text-[var(--text-strong)]">{item.queue}</p>
                   <p className="text-xs text-[var(--text-muted)]">
-                    rate={item.rate.toFixed(2)} msg/s depth={item.depth} consumers={item.consumers} state={state}
+                    rate={item.rate.toFixed(2)} msg/s depth={item.depth} consumers={item.consumers} trạng thái={state}
                   </p>
                 </div>
               );

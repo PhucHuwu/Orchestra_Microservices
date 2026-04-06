@@ -23,22 +23,22 @@ const scenarios: Scenario[] = [
   {
     id: "consumer-lag",
     label: "Consumer lag",
-    description: "Simulate queue accumulation caused by slow consumers."
+    description: "Giả lập queue bị dồn do consumer xử lý chậm."
   },
   {
     id: "service-crash-recovery",
     label: "Crash & recovery",
-    description: "Simulate service crash and recovery."
+    description: "Giả lập service bị crash và khôi phục lại."
   },
   {
     id: "competing-consumers",
     label: "Scale consumer",
-    description: "Simulate competing consumers on the same queue."
+    description: "Giả lập competing consumers trên cùng một queue."
   },
   {
     id: "iot-reconnect",
     label: "IoT reconnect",
-    description: "Simulate IoT disconnect and reconnect."
+    description: "Giả lập IoT disconnect và reconnect."
   }
 ];
 
@@ -81,10 +81,10 @@ export default function FaultDemoPage() {
       setTimeline((prev) => [item, ...prev]);
       pushToast({
         type: "success",
-        title: `${action === "run" ? "Triggered" : "Cleanup"} ${scenario.label}`
+        title: `${action === "run" ? "Đã kích hoạt" : "Đã cleanup"} ${scenario.label}`
       });
     } catch (error) {
-      pushToast({ type: "error", title: "Fault scenario failed", description: (error as Error).message });
+      pushToast({ type: "error", title: "Fault scenario thất bại", description: (error as Error).message });
     } finally {
       setPendingKey(null);
     }
@@ -94,8 +94,8 @@ export default function FaultDemoPage() {
     <DashboardShell>
       <div className="grid gap-5 lg:grid-cols-[1.1fr,0.9fr]">
         <StatePanel
-          title="Fault Scenarios"
-          description="Runbook presets: consumer lag, crash/recovery, scale consumer, IoT reconnect."
+          title="Các Fault Scenario"
+          description="Preset theo runbook: consumer lag, crash/recovery, scale consumer, IoT reconnect."
         >
           <div className="space-y-3">
             {scenarios.map((scenario) => (
@@ -109,7 +109,7 @@ export default function FaultDemoPage() {
                     disabled={pendingKey !== null}
                     className="rounded-xl bg-[var(--accent-strong)] px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
                   >
-                    {pendingKey === `run-${scenario.id}` ? "Running..." : "Run"}
+                    {pendingKey === `run-${scenario.id}` ? "Đang chạy..." : "Run"}
                   </button>
                   <button
                     type="button"
@@ -117,7 +117,7 @@ export default function FaultDemoPage() {
                     disabled={pendingKey !== null}
                     className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-xs font-semibold text-[var(--text-base)] disabled:opacity-60"
                   >
-                    {pendingKey === `cleanup-${scenario.id}` ? "Cleaning..." : "Cleanup"}
+                    {pendingKey === `cleanup-${scenario.id}` ? "Đang cleanup..." : "Cleanup"}
                   </button>
                 </div>
               </div>
@@ -125,9 +125,9 @@ export default function FaultDemoPage() {
           </div>
         </StatePanel>
 
-        <StatePanel title="Event Timeline" description="Fault trigger events ordered from newest to oldest.">
+        <StatePanel title="Event Timeline" description="Các sự kiện Fault trigger sắp xếp từ mới nhất đến cũ nhất.">
           {timeline.length === 0 ? (
-            <p className="text-sm text-[var(--text-muted)]">No events yet.</p>
+            <p className="text-sm text-[var(--text-muted)]">Chưa có sự kiện nào.</p>
           ) : (
             <ol className="space-y-2">
               {timeline.map((item) => (

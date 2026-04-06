@@ -10,7 +10,7 @@ type Props = {
 
 export function ServiceToggleGrid({ items, pendingService, onToggle }: Props) {
   if (items.length === 0) {
-    return <p className="text-sm text-[var(--text-muted)]">No controllable services found.</p>;
+    return <p className="text-sm text-[var(--text-muted)]">Không tìm thấy service nào có thể điều khiển.</p>;
   }
 
   return (
@@ -33,7 +33,7 @@ export function ServiceToggleGrid({ items, pendingService, onToggle }: Props) {
                 disabled={pending}
                 className="rounded-lg bg-[var(--accent-strong)] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
               >
-                {pending && !item.enabled ? "Starting..." : "Start"}
+                {pending && !item.enabled ? "Đang bắt đầu..." : "Start"}
               </button>
               <button
                 type="button"
@@ -41,7 +41,7 @@ export function ServiceToggleGrid({ items, pendingService, onToggle }: Props) {
                 disabled={pending}
                 className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-xs font-semibold disabled:opacity-60"
               >
-                {pending && item.enabled ? "Stopping..." : "Stop"}
+                {pending && item.enabled ? "Đang dừng..." : "Stop"}
               </button>
             </div>
           </div>

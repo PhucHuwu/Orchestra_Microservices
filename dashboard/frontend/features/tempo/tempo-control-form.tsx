@@ -13,7 +13,7 @@ export function TempoControlForm(props: TempoControlFormProps) {
   return (
     <div className="space-y-4">
       <label className="block text-sm font-medium text-[var(--text-base)]">
-        BPM Slider
+        Thanh trượt BPM
         <input
           type="range"
           min={20}
@@ -25,7 +25,7 @@ export function TempoControlForm(props: TempoControlFormProps) {
       </label>
 
       <label className="block text-sm font-medium text-[var(--text-base)]">
-        BPM Value
+        Giá trị BPM
         <input
           type="number"
           min={20}
@@ -48,7 +48,7 @@ export function TempoControlForm(props: TempoControlFormProps) {
         disabled={props.disabled || props.pending}
         className="rounded-xl bg-[var(--accent-strong)] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {props.pending ? "Applying..." : "Apply BPM"}
+          {props.pending ? "Đang áp dụng..." : "Apply BPM"}
       </button>
     </div>
   );

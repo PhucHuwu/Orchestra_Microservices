@@ -27,7 +27,7 @@ export function PlaybackControlForm(props: PlaybackControlFormProps) {
   return (
     <div className="space-y-4">
       <label className="block text-sm font-medium text-[var(--text-base)]">
-        Score
+        Bản nhạc (Score)
         <select
           value={props.scoreId}
           onChange={(event) => props.onScoreChange(event.target.value)}
@@ -43,7 +43,7 @@ export function PlaybackControlForm(props: PlaybackControlFormProps) {
 
       <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3">
         <label className="block text-sm font-medium text-[var(--text-base)]">
-          Upload MIDI (.mid)
+          Tải file MIDI (.mid)
           <input
             type="file"
             accept=".mid,audio/midi,audio/x-midi"
@@ -52,20 +52,20 @@ export function PlaybackControlForm(props: PlaybackControlFormProps) {
           />
         </label>
         <div className="mt-2 flex items-center justify-between gap-3 text-sm">
-          <span className="truncate text-[var(--text-muted)]">{props.selectedFileName ?? "No file selected"}</span>
+          <span className="truncate text-[var(--text-muted)]">{props.selectedFileName ?? "Chưa chọn file"}</span>
           <button
             type="button"
             onClick={props.onUpload}
             disabled={!props.selectedFileName || props.uploadPending}
             className="rounded-xl border border-[var(--border)] bg-[var(--card-muted)] px-3 py-2 font-semibold disabled:opacity-60"
           >
-            {props.uploadPending ? "Uploading..." : "Upload"}
+            {props.uploadPending ? "Đang tải..." : "Upload"}
           </button>
         </div>
       </div>
 
       <label className="block text-sm font-medium text-[var(--text-base)]">
-        Initial BPM
+        BPM ban đầu
         <input
           type="number"
           min={20}
@@ -89,7 +89,7 @@ export function PlaybackControlForm(props: PlaybackControlFormProps) {
           disabled={props.startPending}
           className="rounded-xl bg-[var(--accent-strong)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {props.startPending ? "Starting..." : "Start"}
+          {props.startPending ? "Đang bắt đầu..." : "Start"}
         </button>
         <button
           type="button"
@@ -97,7 +97,7 @@ export function PlaybackControlForm(props: PlaybackControlFormProps) {
           disabled={props.stopPending || !props.canStop}
           className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-2 text-sm font-semibold text-[var(--text-base)] disabled:opacity-60"
         >
-          {props.stopPending ? "Stopping..." : "Stop"}
+          {props.stopPending ? "Đang dừng..." : "Stop"}
         </button>
       </div>
     </div>

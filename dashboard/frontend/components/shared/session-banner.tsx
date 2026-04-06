@@ -21,10 +21,10 @@ export function SessionBanner() {
     <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-sm">
       <div className="flex items-center gap-2">
         <span className={`pill ${statusTone(status)}`}>Session {status}</span>
-        <span className="text-xs text-[var(--text-muted)]">{sessionId ?? "No active session"}</span>
+        <span className="text-xs text-[var(--text-muted)]">{sessionId ?? "Chưa có session đang chạy"}</span>
       </div>
       <p className="mt-2 text-xs text-[var(--text-muted)]">
-        BPM: {currentBpm ?? "-"} | Last tempo update: {tempoUpdatedAt ? new Date(tempoUpdatedAt).toLocaleTimeString() : "-"}
+        BPM: {currentBpm ?? "-"} | Lần cập nhật tempo gần nhất: {tempoUpdatedAt ? new Date(tempoUpdatedAt).toLocaleTimeString() : "-"}
       </p>
     </div>
   );

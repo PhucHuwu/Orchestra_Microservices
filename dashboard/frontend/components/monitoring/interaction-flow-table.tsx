@@ -8,7 +8,7 @@ type Props = {
 
 export function InteractionFlowTable({ edges }: Props) {
   if (edges.length === 0) {
-    return <p className="text-sm text-[var(--text-muted)]">No interaction edges yet.</p>;
+    return <p className="text-sm text-[var(--text-muted)]">Chưa có interaction edge nào.</p>;
   }
 
   return (
@@ -16,8 +16,8 @@ export function InteractionFlowTable({ edges }: Props) {
       <table className="min-w-full text-sm">
         <thead>
           <tr className="text-left text-[var(--text-muted)]">
-            <th className="py-2">From</th>
-            <th className="py-2">To</th>
+            <th className="py-2">Từ service</th>
+            <th className="py-2">Đến service</th>
             <th className="py-2">Queue</th>
             <th className="py-2">Depth</th>
             <th className="py-2">Consumers</th>

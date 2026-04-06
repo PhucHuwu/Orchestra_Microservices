@@ -84,7 +84,7 @@ export function PersistentPlaybackAudio() {
   return (
     <div className="fixed bottom-3 left-1/2 z-50 w-[min(760px,92vw)] -translate-x-1/2 rounded-2xl border border-[var(--border)] bg-[color:var(--card)]/95 p-3 shadow-lg backdrop-blur">
       <p className="mb-2 text-xs text-[var(--text-muted)]">
-        Persistent audio player ({status}) - continues across page navigation
+        Audio player cố định ({status}) - tiếp tục phát khi chuyển trang
       </p>
       <audio ref={audioRef} controls className="w-full">
         <source src={src} type="audio/wav" />
