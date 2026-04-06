@@ -58,10 +58,13 @@ export async function apiGet<T extends z.ZodTypeAny>(path: string, schema: T): P
 export async function apiPost<T extends z.ZodTypeAny>(
   path: string,
   body: unknown,
-  schema: T
+  schema: T,
+  options?: { timeoutMs?: number }
 ): Promise<z.infer<T>> {
   try {
-    const response = await http.post(path, body);
+    const response = await http.post(path, body, {
+      timeout: options?.timeoutMs ?? http.defaults.timeout
+    });
     const parsed = successEnvelopeSchema(schema).safeParse(response.data);
     if (!parsed.success) {
       throw new ApiClientError("Invalid response envelope", "CLIENT_SCHEMA", response.status);

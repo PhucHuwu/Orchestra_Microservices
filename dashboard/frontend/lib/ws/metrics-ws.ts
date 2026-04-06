@@ -1,6 +1,15 @@
 import { metricsWsSchema, type MetricsWsPayload } from "@/lib/api/contracts";
 
-const DEFAULT_WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000/ws/metrics";
+function resolveWsUrl(): string {
+  if (process.env.NEXT_PUBLIC_WS_URL) {
+    return process.env.NEXT_PUBLIC_WS_URL;
+  }
+  if (typeof window !== "undefined") {
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    return `${protocol}//${window.location.host}/ws/metrics`;
+  }
+  return "ws://localhost:8000/ws/metrics";
+}
 
 type Listener = (payload: MetricsWsPayload) => void;
 type Status = "connected" | "disconnected" | "reconnecting";
@@ -23,7 +32,7 @@ export class MetricsWsClient {
       return;
     }
 
-    this.ws = new WebSocket(DEFAULT_WS_URL);
+    this.ws = new WebSocket(resolveWsUrl());
     this.onStatus("reconnecting");
 
     this.ws.onopen = () => {

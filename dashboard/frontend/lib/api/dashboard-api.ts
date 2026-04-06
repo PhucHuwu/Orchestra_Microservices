@@ -25,7 +25,7 @@ export type TempoBody = {
 };
 
 export async function startPlayback(body: StartPlaybackBody) {
-  return apiPost("/api/v1/playback/start", body, playbackStartResponseSchema);
+  return apiPost("/api/v1/playback/start", body, playbackStartResponseSchema, { timeoutMs: 60000 });
 }
 
 export async function stopPlayback(body: StopPlaybackBody) {
