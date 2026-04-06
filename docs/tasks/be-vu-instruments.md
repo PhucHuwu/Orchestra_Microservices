@@ -70,3 +70,18 @@ Xây dựng cụm `Instrument Services` (violin, piano, drums, cello) theo một
 - Output event đúng schema gửi về Mixer.
 - Có idempotency, retry/DLQ, reconnect, health endpoint.
 - Test cơ bản pass và có tài liệu vận hành.
+
+## 5) Trạng thái cập nhật
+
+- [x] Task 1 - Tạo framework dùng chung cho 4 instrument.
+- [x] Task 2 - Triển khai 4 worker độc lập (violin/piano/drums/cello) + health endpoint.
+- [x] Task 3 - Xử lý `NoteEvent` và idempotency theo `note_id`.
+- [x] Task 4 - Phát `InstrumentOutputEvent` đúng schema và routing key output.
+- [x] Task 5 - Retry, DLQ, reconnect theo policy (max retry 3, backoff 1/2/5/10).
+- [x] Task 6 - Structured logging, counter nội bộ, bổ sung unit test parser/validator/idempotency và flow xử lý.
+- [x] Task 7 - Hoàn thiện tài liệu triển khai tại `services/README.md`.
+
+### Ghi chú xác minh
+
+- Đã hoàn tất implementation theo tài liệu.
+- Chưa xác minh pass test ngay trên môi trường hiện tại do thiếu `pytest`/`ruff` trong runtime local.

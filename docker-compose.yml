@@ -41,9 +41,16 @@ services:
 
   violin-service:
     build:
-      context: ./services/violin
+      context: .
+      dockerfile: ./services/violin/Dockerfile
     env_file:
       - .env
+    environment:
+      SERVICE_NAME: violin-service
+      INSTRUMENT_NAME: violin
+      INPUT_QUEUE: instrument.violin.note
+      OUTPUT_ROUTING_KEY: instrument.violin.output
+      INSTRUMENT_WORKER_ENABLED: "true"
     depends_on:
       - rabbitmq
     ports:
@@ -51,9 +58,16 @@ services:
 
   piano-service:
     build:
-      context: ./services/piano
+      context: .
+      dockerfile: ./services/piano/Dockerfile
     env_file:
       - .env
+    environment:
+      SERVICE_NAME: piano-service
+      INSTRUMENT_NAME: piano
+      INPUT_QUEUE: instrument.piano.note
+      OUTPUT_ROUTING_KEY: instrument.piano.output
+      INSTRUMENT_WORKER_ENABLED: "true"
     depends_on:
       - rabbitmq
     ports:
@@ -61,9 +75,16 @@ services:
 
   drums-service:
     build:
-      context: ./services/drums
+      context: .
+      dockerfile: ./services/drums/Dockerfile
     env_file:
       - .env
+    environment:
+      SERVICE_NAME: drums-service
+      INSTRUMENT_NAME: drums
+      INPUT_QUEUE: instrument.drums.beat
+      OUTPUT_ROUTING_KEY: instrument.drums.output
+      INSTRUMENT_WORKER_ENABLED: "true"
     depends_on:
       - rabbitmq
     ports:
@@ -71,9 +92,16 @@ services:
 
   cello-service:
     build:
-      context: ./services/cello
+      context: .
+      dockerfile: ./services/cello/Dockerfile
     env_file:
       - .env
+    environment:
+      SERVICE_NAME: cello-service
+      INSTRUMENT_NAME: cello
+      INPUT_QUEUE: instrument.cello.note
+      OUTPUT_ROUTING_KEY: instrument.cello.output
+      INSTRUMENT_WORKER_ENABLED: "true"
     depends_on:
       - rabbitmq
     ports:
