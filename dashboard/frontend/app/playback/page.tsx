@@ -1,13 +1,14 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useState } from "react";
 
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { StatePanel } from "@/components/shared/state-panel";
 import { PlaybackControlForm } from "@/features/playback/playback-control-form";
-import { startPlayback, stopPlayback } from "@/lib/api/dashboard-api";
-import { SCORE_OPTIONS } from "@/lib/constants/scores";
+import { fetchScores, startPlayback, stopPlayback, uploadScore } from "@/lib/api/dashboard-api";
 import { playbackFormSchema } from "@/features/playback/schema";
 import { useSessionStore } from "@/stores/session-store";
 import { useToastStore } from "@/stores/toast-store";
@@ -18,15 +19,30 @@ type FormState = {
 };
 
 const initialState: FormState = {
-  score_id: SCORE_OPTIONS[0]?.id ?? "",
+  score_id: "",
   initial_bpm: 120
 };
 
 export default function PlaybackPage() {
   const [form, setForm] = useState<FormState>(initialState);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
   const { sessionId, status, setRunning, setStopped, setFailed } = useSessionStore();
   const pushToast = useToastStore((state) => state.push);
+
+  const scoresQuery = useQuery({
+    queryKey: ["scores"],
+    queryFn: fetchScores,
+    refetchInterval: 4000
+  });
+
+  const scores = scoresQuery.data ?? [];
+
+  useEffect(() => {
+    if (!form.score_id && scores.length > 0) {
+      setForm((prev) => ({ ...prev, score_id: scores[0].id }));
+    }
+  }, [form.score_id, scores]);
 
   const startMutation = useMutation({
     mutationFn: startPlayback,
@@ -51,6 +67,19 @@ export default function PlaybackPage() {
     }
   });
 
+  const uploadMutation = useMutation({
+    mutationFn: uploadScore,
+    onSuccess: (created) => {
+      pushToast({ type: "success", title: "Score uploaded", description: created.name });
+      setSelectedFile(null);
+      setForm((prev) => ({ ...prev, score_id: created.id }));
+      scoresQuery.refetch();
+    },
+    onError: (error: Error) => {
+      pushToast({ type: "error", title: "Upload failed", description: error.message });
+    }
+  });
+
   const onStart = () => {
     const parsed = playbackFormSchema.safeParse(form);
     if (!parsed.success) {
@@ -60,6 +89,14 @@ export default function PlaybackPage() {
     }
     setValidationMessage(null);
     startMutation.mutate(parsed.data);
+  };
+
+  const onUpload = () => {
+    if (!selectedFile) {
+      pushToast({ type: "info", title: "Select a MIDI file first" });
+      return;
+    }
+    uploadMutation.mutate(selectedFile);
   };
 
   const onStop = () => {
@@ -77,18 +114,23 @@ export default function PlaybackPage() {
           <PlaybackControlForm
             scoreId={form.score_id}
             bpm={form.initial_bpm}
+            scores={scores.map((score) => ({ id: score.id, name: score.name }))}
+            selectedFileName={selectedFile?.name ?? null}
+            uploadPending={uploadMutation.isPending}
             validationMessage={validationMessage}
             startPending={startMutation.isPending}
             stopPending={stopMutation.isPending}
             canStop={Boolean(sessionId)}
             onScoreChange={(scoreId) => setForm((prev) => ({ ...prev, score_id: scoreId }))}
             onBpmChange={(bpm) => setForm((prev) => ({ ...prev, initial_bpm: bpm }))}
+            onFileChange={(file) => setSelectedFile(file)}
+            onUpload={onUpload}
             onStart={onStart}
             onStop={onStop}
           />
         </StatePanel>
 
-        <StatePanel title="Session Status" description="Current runtime status for the demo.">
+        <StatePanel title="Session Status" description="Current runtime status for the demo and audio output.">
           <div className="space-y-2 text-sm">
             <p>
               <span className="text-[var(--text-muted)]">Status:</span> <strong>{status}</strong>
@@ -104,6 +146,10 @@ export default function PlaybackPage() {
               <span className="text-[var(--text-muted)]">Stop action:</span>{" "}
               {stopMutation.isSuccess ? "success" : stopMutation.isError ? "error" : "idle"}
             </p>
+            <div className="pt-2">
+              <p className="mb-1 text-[var(--text-muted)]">Latest rendered audio:</p>
+              <audio controls className="w-full" src={`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"}/api/v1/playback/audio/latest`} />
+            </div>
           </div>
         </StatePanel>
       </div>

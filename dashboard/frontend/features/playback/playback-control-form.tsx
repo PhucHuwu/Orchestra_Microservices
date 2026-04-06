@@ -1,16 +1,24 @@
 import React from "react";
 
-import { SCORE_OPTIONS } from "@/lib/constants/scores";
+type ScoreItem = {
+  id: string;
+  name: string;
+};
 
 type PlaybackControlFormProps = {
   scoreId: string;
   bpm: number;
+  scores: ScoreItem[];
+  selectedFileName: string | null;
+  uploadPending: boolean;
   validationMessage: string | null;
   startPending: boolean;
   stopPending: boolean;
   canStop: boolean;
   onScoreChange: (scoreId: string) => void;
   onBpmChange: (bpm: number) => void;
+  onFileChange: (file: File | null) => void;
+  onUpload: () => void;
   onStart: () => void;
   onStop: () => void;
 };
@@ -25,13 +33,36 @@ export function PlaybackControlForm(props: PlaybackControlFormProps) {
           onChange={(event) => props.onScoreChange(event.target.value)}
           className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2"
         >
-          {SCORE_OPTIONS.map((score) => (
+          {props.scores.map((score) => (
             <option key={score.id} value={score.id}>
-              {score.label}
+              {score.name}
             </option>
           ))}
         </select>
       </label>
+
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3">
+        <label className="block text-sm font-medium text-[var(--text-base)]">
+          Upload MIDI (.mid)
+          <input
+            type="file"
+            accept=".mid,audio/midi,audio/x-midi"
+            onChange={(event) => props.onFileChange(event.target.files?.[0] ?? null)}
+            className="mt-2 block w-full text-sm"
+          />
+        </label>
+        <div className="mt-2 flex items-center justify-between gap-3 text-sm">
+          <span className="truncate text-[var(--text-muted)]">{props.selectedFileName ?? "No file selected"}</span>
+          <button
+            type="button"
+            onClick={props.onUpload}
+            disabled={!props.selectedFileName || props.uploadPending}
+            className="rounded-xl border border-[var(--border)] bg-[var(--card-muted)] px-3 py-2 font-semibold disabled:opacity-60"
+          >
+            {props.uploadPending ? "Uploading..." : "Upload"}
+          </button>
+        </div>
+      </div>
 
       <label className="block text-sm font-medium text-[var(--text-base)]">
         Initial BPM

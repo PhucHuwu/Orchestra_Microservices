@@ -27,9 +27,10 @@ Default UI URL: `http://localhost:3000`
 ## Screen structure
 
 - `/playback`
-  - score selector + initial BPM input
+  - score selector + upload MIDI (.mid) + initial BPM input
   - start/stop playback session
   - running/stopped/failed session state
+  - audio player preview tu `GET /api/v1/playback/audio/latest`
 - `/tempo`
   - BPM slider + numeric input
   - apply BPM command

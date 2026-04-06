@@ -38,10 +38,14 @@ services:
       context: ./conductor
     env_file:
       - .env
+    environment:
+      SCORE_DIR: ${SCORE_DIR:-/shared-scores}
     depends_on:
       - rabbitmq
     ports:
       - "${ORCHESTRA_BIND_HOST:-0.0.0.0}:8101:8000"
+    volumes:
+      - shared_scores:/shared-scores
     networks:
       - orchestra_net
 
@@ -138,11 +142,18 @@ services:
       context: ./dashboard/backend
     env_file:
       - .env
+    environment:
+      CONDUCTOR_BASE_URL: ${CONDUCTOR_BASE_URL:-http://conductor:8000}
+      SCORE_STORAGE_DIR: ${SCORE_STORAGE_DIR:-/shared-scores}
+      AUDIO_OUTPUT_DIR: ${AUDIO_OUTPUT_DIR:-/shared-audio}
     depends_on:
       - rabbitmq
       - postgres
     ports:
       - "${ORCHESTRA_BIND_HOST:-0.0.0.0}:${DASHBOARD_API_PORT:-8000}:8000"
+    volumes:
+      - shared_scores:/shared-scores
+      - shared_audio:/shared-audio
     networks:
       - orchestra_net
 
@@ -169,3 +180,5 @@ networks:
 volumes:
   rabbitmq_data:
   postgres_data:
+  shared_scores:
+  shared_audio:

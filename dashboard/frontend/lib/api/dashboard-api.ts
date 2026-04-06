@@ -2,6 +2,8 @@ import {
   metricsOverviewSchema,
   playbackStartResponseSchema,
   playbackStopResponseSchema,
+  scoreOptionSchema,
+  scoreUploadResponseSchema,
   servicesHealthSchema,
   tempoResponseSchema
 } from "@/lib/api/contracts";
@@ -39,4 +41,14 @@ export async function fetchMetricsOverview() {
 
 export async function fetchServicesHealth() {
   return apiGet("/api/v1/services/health", servicesHealthSchema);
+}
+
+export async function fetchScores() {
+  return apiGet("/api/v1/scores", scoreOptionSchema.array());
+}
+
+export async function uploadScore(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiPost("/api/v1/scores/upload", formData, scoreUploadResponseSchema);
 }

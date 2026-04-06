@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from pathlib import Path
 from datetime import UTC, datetime
 from uuid import UUID
 from uuid import uuid4
@@ -32,6 +33,8 @@ class DashboardService:
         self._metrics_client = metrics_client
         self._snapshot_task: asyncio.Task[None] | None = None
         self._snapshot_stop = asyncio.Event()
+        self._scores_dir = Path(self._settings.score_storage_dir).resolve()
+        self._scores_dir.mkdir(parents=True, exist_ok=True)
 
     async def start_background_tasks(self) -> None:
         if self._snapshot_task is not None:
@@ -50,6 +53,15 @@ class DashboardService:
         if score is None:
             raise ApiError(error_code="SCORE_NOT_FOUND", message="Score not found", status_code=404)
 
+        score_file_name = self._score_file_name(score.source_path)
+        score_file_path = self._scores_dir / score_file_name
+        if not score_file_path.exists():
+            raise ApiError(
+                error_code="SCORE_FILE_NOT_FOUND",
+                message="Score file is missing. Please upload a MIDI file first.",
+                status_code=400,
+            )
+
         session = PlaybackSession(
             id=uuid4(),
             score_id=score.id,
@@ -60,16 +72,27 @@ class DashboardService:
         db.add(session)
         db.commit()
 
-        self._publisher.publish_json(
-            routing_key=self._settings.playback_control_queue,
-            payload={
-                "action": "start",
-                "session_id": str(session.id),
-                "score_id": str(score.id),
-                "initial_bpm": initial_bpm,
-                "issued_at": datetime.now(UTC).isoformat(),
-            },
-        )
+        try:
+            self._publisher.publish_json(
+                routing_key=self._settings.playback_control_queue,
+                payload={
+                    "action": "start",
+                    "session_id": str(session.id),
+                    "score_id": str(score.id),
+                    "initial_bpm": initial_bpm,
+                    "issued_at": datetime.now(UTC).isoformat(),
+                },
+            )
+
+            self._call_conductor_start(
+                session_id=session.id,
+                score_path=score_file_name,
+                initial_bpm=initial_bpm,
+            )
+        except ApiError:
+            session.status = "failed"
+            db.commit()
+            raise
 
         return {"session_id": str(session.id), "status": "running"}
 
@@ -93,6 +116,8 @@ class DashboardService:
                 "issued_at": datetime.now(UTC).isoformat(),
             },
         )
+
+        self._call_conductor_stop(session.id)
 
         return {"status": "stopped"}
 
@@ -127,7 +152,58 @@ class DashboardService:
             },
         )
 
+        self._call_conductor_tempo(session.id, new_bpm, issued_by)
+
         return {"status": "accepted"}
+
+    def list_scores(self, db: Session) -> list[dict[str, str]]:
+        stmt = select(Score).order_by(Score.created_at.desc())
+        scores = db.execute(stmt).scalars().all()
+        response: list[dict[str, str]] = []
+        for score in scores:
+            score_file_name = self._score_file_name(score.source_path)
+            if not (self._scores_dir / score_file_name).exists():
+                continue
+            response.append(
+                {
+                    "id": str(score.id),
+                    "name": score.name,
+                    "source_type": score.source_type,
+                    "source_path": score.source_path,
+                }
+            )
+        return response
+
+    def save_uploaded_score(self, db: Session, filename: str, content: bytes) -> dict[str, str]:
+        safe_name = Path(filename).name
+        if not safe_name.lower().endswith(".mid"):
+            raise ApiError(
+                error_code="INVALID_SCORE_FILE",
+                message="Only .mid files are supported",
+                status_code=400,
+            )
+
+        score_id = uuid4()
+        file_name = f"{score_id.hex}.mid"
+        file_path = self._scores_dir / file_name
+        file_path.write_bytes(content)
+
+        score = Score(
+            id=score_id,
+            name=Path(safe_name).stem,
+            source_type="midi",
+            source_path=file_name,
+            created_at=datetime.now(UTC),
+        )
+        db.add(score)
+        db.commit()
+
+        return {
+            "id": str(score.id),
+            "name": score.name,
+            "source_type": score.source_type,
+            "source_path": score.source_path,
+        }
 
     async def metrics_overview(self) -> dict:
         queues, _ = await self._fetch_queues_with_retry()
@@ -262,6 +338,50 @@ class DashboardService:
             message="Unable to query RabbitMQ Management API",
             status_code=503,
         )
+
+    def _score_file_name(self, source_path: str) -> str:
+        return Path(source_path).name
+
+    def _call_conductor_start(self, session_id: UUID, score_path: str, initial_bpm: int) -> None:
+        self._call_conductor(
+            path="/v1/conductor/start",
+            payload={
+                "score_path": score_path,
+                "initial_bpm": initial_bpm,
+                "session_id": str(session_id),
+            },
+            timeout=12.0,
+        )
+
+    def _call_conductor_stop(self, session_id: UUID) -> None:
+        self._call_conductor(
+            path="/v1/conductor/stop",
+            payload={"session_id": str(session_id)},
+            timeout=6.0,
+        )
+
+    def _call_conductor_tempo(self, session_id: UUID, new_bpm: int, issued_by: str) -> None:
+        self._call_conductor(
+            path="/v1/conductor/tempo",
+            payload={
+                "session_id": str(session_id),
+                "new_bpm": new_bpm,
+                "issued_by": issued_by,
+            },
+            timeout=6.0,
+        )
+
+    def _call_conductor(self, path: str, payload: dict[str, str | int], timeout: float) -> None:
+        url = f"{self._settings.conductor_base_url.rstrip('/')}{path}"
+        try:
+            response = httpx.post(url, json=payload, timeout=timeout)
+            response.raise_for_status()
+        except httpx.HTTPError as exc:
+            raise ApiError(
+                error_code="CONDUCTOR_UNAVAILABLE",
+                message="Conductor service is unavailable",
+                status_code=503,
+            ) from exc
 
     async def _snapshot_loop(self) -> None:
         from app.db.session import SessionLocal

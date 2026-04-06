@@ -2,12 +2,15 @@ import asyncio
 from datetime import UTC, datetime
 
 from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import File, UploadFile
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import Response
+from fastapi.responses import FileResponse, Response
+from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
 from sqlalchemy.orm import Session
 
 from app.api import ApiError, api_error_handler, success_response, validation_error_handler
+from app.audio_renderer import PlaybackAudioRenderer
 from app.config import settings
 from app.db.session import get_db_session
 from app.logging_config import configure_logging
@@ -19,6 +22,13 @@ from app.services import DashboardService
 app = FastAPI(title="Dashboard API", version="0.1.0")
 app.add_exception_handler(ApiError, api_error_handler)
 app.add_exception_handler(RequestValidationError, validation_error_handler)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[origin.strip() for origin in settings.cors_allow_origins.split(",") if origin.strip()],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 HTTP_REQUESTS_TOTAL = Counter(
     "dashboard_http_requests_total",
@@ -44,16 +54,19 @@ dashboard_service = DashboardService(
     publisher=publisher_provider.get(),
     metrics_client=metrics_client,
 )
+audio_renderer = PlaybackAudioRenderer(settings=settings)
 
 
 @app.on_event("startup")
 async def on_startup() -> None:
     configure_logging()
     await dashboard_service.start_background_tasks()
+    audio_renderer.start()
 
 
 @app.on_event("shutdown")
 async def on_shutdown() -> None:
+    audio_renderer.stop()
     await dashboard_service.stop_background_tasks()
     await metrics_client.close()
     publisher_provider.close()
@@ -80,6 +93,46 @@ def start_playback(request: PlaybackStartRequest, db: Session = Depends(get_db_s
         initial_bpm=request.initial_bpm,
     )
     return success_response(result)
+
+
+@app.get("/api/v1/scores")
+def list_scores(db: Session = Depends(get_db_session)) -> dict:
+    _track("/api/v1/scores", "GET")
+    scores = dashboard_service.list_scores(db)
+    return success_response(scores)
+
+
+@app.post("/api/v1/scores/upload")
+async def upload_score(file: UploadFile = File(...), db: Session = Depends(get_db_session)) -> dict:
+    _track("/api/v1/scores/upload", "POST")
+    content = await file.read()
+    if not content:
+        raise ApiError(
+            error_code="EMPTY_SCORE_FILE",
+            message="Uploaded file is empty",
+            status_code=400,
+        )
+    if file.filename is None:
+        raise ApiError(
+            error_code="INVALID_SCORE_FILE",
+            message="File name is required",
+            status_code=400,
+        )
+    created = dashboard_service.save_uploaded_score(db=db, filename=file.filename, content=content)
+    return success_response(created)
+
+
+@app.get("/api/v1/playback/audio/latest")
+def latest_audio() -> Response:
+    _track("/api/v1/playback/audio/latest", "GET")
+    audio_file = audio_renderer.latest_file_path
+    if not audio_file.exists():
+        raise ApiError(
+            error_code="AUDIO_NOT_READY",
+            message="Audio is not generated yet",
+            status_code=404,
+        )
+    return FileResponse(path=str(audio_file), media_type="audio/wav", filename="latest.wav")
 
 
 @app.post("/api/v1/playback/stop")

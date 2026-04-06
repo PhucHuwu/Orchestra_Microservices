@@ -9,6 +9,9 @@ Dashboard backend cung cấp API điều khiển playback/tempo, thu thập metr
 - `POST /api/v1/playback/start`
 - `POST /api/v1/playback/stop`
 - `POST /api/v1/tempo`
+- `GET /api/v1/scores`
+- `POST /api/v1/scores/upload` (multipart form, field `file`)
+- `GET /api/v1/playback/audio/latest` (WAV file)
 - `GET /api/v1/metrics/overview`
 - `GET /api/v1/services/health`
 - `WS /ws/metrics` (push mỗi 1 giây)
@@ -32,6 +35,13 @@ Response envelope chuẩn:
 - `METRICS_STREAM_INTERVAL_SECONDS` (default: `1.0`)
 - `SNAPSHOT_INTERVAL_SECONDS` (default: `5.0`)
 - `RABBITMQ_TIMEOUT_SECONDS` (default: `2.0`)
+- `CONDUCTOR_BASE_URL` (default: `http://conductor:8000`)
+- `SCORE_STORAGE_DIR` (default: `/shared-scores`)
+- `AUDIO_OUTPUT_DIR` (default: `/shared-audio`)
+- `AUDIO_INPUT_QUEUE` (default: `audio.render.input`)
+- `AUDIO_INPUT_ROUTING_KEY` (default: `playback.output`)
+- `AUDIO_SAMPLE_RATE` (default: `22050`)
+- `CORS_ALLOW_ORIGINS` (default: `http://localhost:3000`)
 
 ## Chạy local
 

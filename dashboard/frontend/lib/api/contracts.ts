@@ -64,8 +64,12 @@ export const metricsWsSchema = z.object({
 
 export const scoreOptionSchema = z.object({
   id: z.string().uuid(),
-  label: z.string()
+  name: z.string(),
+  source_type: z.string(),
+  source_path: z.string()
 });
+
+export const scoreUploadResponseSchema = scoreOptionSchema;
 
 export type PlaybackStatus = z.infer<typeof playbackStatusSchema>;
 export type PlaybackStartResponse = z.infer<typeof playbackStartResponseSchema>;
@@ -74,3 +78,4 @@ export type TempoResponse = z.infer<typeof tempoResponseSchema>;
 export type MetricsOverview = z.infer<typeof metricsOverviewSchema>;
 export type ServiceHealthItem = z.infer<typeof serviceHealthItemSchema>;
 export type MetricsWsPayload = z.infer<typeof metricsWsSchema>;
+export type ScoreOption = z.infer<typeof scoreOptionSchema>;
