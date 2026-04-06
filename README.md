@@ -51,6 +51,23 @@ Baseline skeleton for an event-driven Orchestra Microservices project, based on 
 - Dashboard API health: `http://localhost:8000/health`
 - Dashboard UI: `http://localhost:3000`
 
+## Conda environment
+
+Create and activate Python environment for local development:
+
+```bash
+conda env create -f environment.yml
+conda activate orchestra-microservices
+```
+
+Verify tools:
+
+```bash
+python --version
+ruff --version
+pytest --version
+```
+
 ## Notes
 
 - This repository currently contains skeleton modules and contracts only.
