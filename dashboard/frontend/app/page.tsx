@@ -1,27 +1,47 @@
-const cards = [
-  "Playback Control",
-  "Realtime Tempo",
-  "System Monitoring",
-  "Fault Demo",
+import Link from "next/link";
+
+import { DashboardShell } from "@/components/layout/dashboard-shell";
+
+const modules = [
+  {
+    title: "Playback",
+    href: "/playback",
+    description: "Start/stop session, chọn score MIDI, theo dõi trạng thái phiên."
+  },
+  {
+    title: "Tempo",
+    href: "/tempo",
+    description: "Điều chỉnh BPM realtime bằng slider/input và xác nhận thời điểm cập nhật."
+  },
+  {
+    title: "Monitoring",
+    href: "/monitoring",
+    description: "Giám sát queue depth, consumer, message rate, health và latency tổng quan."
+  },
+  {
+    title: "Fault Demo",
+    href: "/fault-demo",
+    description: "Kích hoạt kịch bản lỗi và theo dõi timeline sự kiện demo."
+  }
 ];
 
 export default function HomePage() {
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 md:px-8">
-      <h1 className="text-4xl font-semibold">Orchestra Dashboard Skeleton</h1>
-      <p className="mt-2 text-lg">Baseline UI for control and observability screens.</p>
-
-      <section className="mt-8 grid gap-4 md:grid-cols-2">
-        {cards.map((card) => (
-          <article
-            key={card}
-            className="rounded-xl border border-black/10 bg-[var(--card)] p-5 shadow-sm"
+    <DashboardShell>
+      <section className="grid gap-5 sm:grid-cols-2">
+        {modules.map((module) => (
+          <Link
+            key={module.href}
+            href={module.href}
+            className="card-surface group block rounded-2xl p-6 transition hover:-translate-y-0.5"
           >
-            <h2 className="text-2xl">{card}</h2>
-            <p className="mt-2 text-sm opacity-80">Placeholder widget and route to be implemented.</p>
-          </article>
+            <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">Screen</p>
+            <h2 className="mt-2 font-heading text-3xl text-[var(--text-strong)]">{module.title}</h2>
+            <p className="mt-3 text-sm text-[var(--text-base)]">{module.description}</p>
+            <p className="mt-5 text-sm font-medium text-[var(--accent-strong)]">Open screen -></p>
+          </Link>
         ))}
       </section>
-    </main>
+    </DashboardShell>
   );
 }

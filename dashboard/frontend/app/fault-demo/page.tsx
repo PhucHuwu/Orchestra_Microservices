@@ -1,0 +1,147 @@
+"use client";
+
+import { useState } from "react";
+
+import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { StatePanel } from "@/components/shared/state-panel";
+import { useToastStore } from "@/stores/toast-store";
+
+type Scenario = {
+  id: "consumer-lag" | "service-crash-recovery" | "competing-consumers" | "iot-reconnect";
+  label: string;
+  description: string;
+};
+
+type TimelineItem = {
+  id: string;
+  ts: string;
+  scenario: string;
+  action: "run" | "cleanup";
+};
+
+const scenarios: Scenario[] = [
+  {
+    id: "consumer-lag",
+    label: "Consumer lag",
+    description: "Mô phỏng hàng đợi tăng do consumer xử lý chậm."
+  },
+  {
+    id: "service-crash-recovery",
+    label: "Crash & recovery",
+    description: "Mô phỏng service chết rồi khôi phục lại."
+  },
+  {
+    id: "competing-consumers",
+    label: "Scale consumer",
+    description: "Mô phỏng nhiều consumer cạnh tranh cùng queue."
+  },
+  {
+    id: "iot-reconnect",
+    label: "IoT reconnect",
+    description: "Mô phỏng ngắt kết nối IoT rồi tự reconnect."
+  }
+];
+
+const BACKEND_FAULT_ENDPOINT = process.env.NEXT_PUBLIC_FAULT_API_BASE_URL;
+
+async function callFaultEndpoint(action: "run" | "cleanup", scenario: Scenario["id"]) {
+  if (!BACKEND_FAULT_ENDPOINT) {
+    return { simulated: true };
+  }
+
+  const response = await fetch(`${BACKEND_FAULT_ENDPOINT}/api/v1/fault/${action}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scenario })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Fault API failed (${response.status})`);
+  }
+
+  return response.json();
+}
+
+export default function FaultDemoPage() {
+  const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  const [pendingKey, setPendingKey] = useState<string | null>(null);
+  const pushToast = useToastStore((state) => state.push);
+
+  const trigger = async (scenario: Scenario, action: "run" | "cleanup") => {
+    const key = `${action}-${scenario.id}`;
+    setPendingKey(key);
+    try {
+      await callFaultEndpoint(action, scenario.id);
+      const item: TimelineItem = {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        ts: new Date().toISOString(),
+        scenario: scenario.label,
+        action
+      };
+      setTimeline((prev) => [item, ...prev]);
+      pushToast({
+        type: "success",
+        title: `${action === "run" ? "Triggered" : "Cleanup"} ${scenario.label}`
+      });
+    } catch (error) {
+      pushToast({ type: "error", title: "Fault scenario failed", description: (error as Error).message });
+    } finally {
+      setPendingKey(null);
+    }
+  };
+
+  return (
+    <DashboardShell>
+      <div className="grid gap-5 lg:grid-cols-[1.1fr,0.9fr]">
+        <StatePanel
+          title="Fault Scenarios"
+          description="Preset theo runbook: consumer lag, crash/recovery, scale consumer, IoT reconnect."
+        >
+          <div className="space-y-3">
+            {scenarios.map((scenario) => (
+              <div key={scenario.id} className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
+                <p className="font-semibold text-[var(--text-strong)]">{scenario.label}</p>
+                <p className="mt-1 text-sm text-[var(--text-muted)]">{scenario.description}</p>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void trigger(scenario, "run")}
+                    disabled={pendingKey !== null}
+                    className="rounded-xl bg-[var(--accent-strong)] px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
+                  >
+                    {pendingKey === `run-${scenario.id}` ? "Running..." : "Run"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void trigger(scenario, "cleanup")}
+                    disabled={pendingKey !== null}
+                    className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-xs font-semibold text-[var(--text-base)] disabled:opacity-60"
+                  >
+                    {pendingKey === `cleanup-${scenario.id}` ? "Cleaning..." : "Cleanup"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </StatePanel>
+
+        <StatePanel title="Event Timeline" description="Log sự kiện trigger fault theo thứ tự thời gian mới nhất.">
+          {timeline.length === 0 ? (
+            <p className="text-sm text-[var(--text-muted)]">Chưa có sự kiện nào.</p>
+          ) : (
+            <ol className="space-y-2">
+              {timeline.map((item) => (
+                <li key={item.id} className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 text-sm">
+                  <p className="font-medium text-[var(--text-strong)]">{item.scenario}</p>
+                  <p className="text-xs text-[var(--text-muted)]">
+                    action={item.action} at {new Date(item.ts).toLocaleString()}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          )}
+        </StatePanel>
+      </div>
+    </DashboardShell>
+  );
+}
