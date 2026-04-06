@@ -1,0 +1,115 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    hostname: rabbitmq
+    env_file:
+      - .env
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+      - "${RABBITMQ_MQTT_PORT:-1883}:1883"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./configs/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+
+  postgres:
+    image: postgres:15
+    hostname: postgres
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  conductor:
+    build:
+      context: ./conductor
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+    ports:
+      - "8101:8000"
+
+  violin-service:
+    build:
+      context: ./services/violin
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+    ports:
+      - "8201:8000"
+
+  piano-service:
+    build:
+      context: ./services/piano
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+    ports:
+      - "8202:8000"
+
+  drums-service:
+    build:
+      context: ./services/drums
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+    ports:
+      - "8203:8000"
+
+  cello-service:
+    build:
+      context: ./services/cello
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+    ports:
+      - "8204:8000"
+
+  mixer:
+    build:
+      context: ./mixer
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+    ports:
+      - "8301:8000"
+
+  dashboard-api:
+    build:
+      context: ./dashboard/backend
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+      - postgres
+    ports:
+      - "${DASHBOARD_API_PORT:-8000}:8000"
+
+  dashboard-web:
+    build:
+      context: ./dashboard/frontend
+    env_file:
+      - .env
+    depends_on:
+      - dashboard-api
+    ports:
+      - "${DASHBOARD_WEB_PORT:-3000}:3000"
+
+volumes:
+  rabbitmq_data:
+  postgres_data:
