@@ -61,13 +61,13 @@ export const serviceHealthItemSchema = z.object({
   latency_ms: z.number().int().nullable().optional(),
   queue_depth: z.number().int().nonnegative(),
   consumer_count: z.number().int().nonnegative(),
-  captured_at: z.string().datetime().nullable().optional()
+  captured_at: z.string().nullable().optional()
 });
 
 export const servicesHealthSchema = z.array(serviceHealthItemSchema);
 
 export const metricsWsSchema = z.object({
-  ts: z.string().datetime(),
+  ts: z.string(),
   metrics: z.object({
     queue_depth: z.record(z.string(), z.number().int().nonnegative()),
     consumer_count: z.record(z.string(), z.number().int().nonnegative()),
