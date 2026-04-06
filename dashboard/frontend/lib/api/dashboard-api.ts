@@ -4,6 +4,7 @@ import {
   playbackStopResponseSchema,
   scoreOptionSchema,
   scoreUploadResponseSchema,
+  serviceToggleItemSchema,
   servicesHealthSchema,
   tempoResponseSchema
 } from "@/lib/api/contracts";
@@ -51,4 +52,12 @@ export async function uploadScore(file: File) {
   const formData = new FormData();
   formData.append("file", file);
   return apiPost("/api/v1/scores/upload", formData, scoreUploadResponseSchema);
+}
+
+export async function fetchServiceControls() {
+  return apiGet("/api/v1/services/control", serviceToggleItemSchema.array());
+}
+
+export async function setServiceControl(body: { service_name: string; enabled: boolean }) {
+  return apiPost("/api/v1/services/control", body, serviceToggleItemSchema);
 }

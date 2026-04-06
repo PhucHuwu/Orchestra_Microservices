@@ -1,127 +1,143 @@
 from __future__ import annotations
 
-import json
-import math
-import threading
-import time
-import wave
+import logging
+import os
+import subprocess
 from pathlib import Path
-from typing import Any
 
-import pika
-from pika.exceptions import AMQPError
+from mido import MetaMessage, MidiFile, MidiTrack
 
-from app.config import Settings
-
-BACKOFF_SECONDS = (1, 2, 5, 10)
+LOGGER = logging.getLogger(__name__)
+TRACK_INSTRUMENTS = ("violin", "piano", "drums", "cello")
 
 
 class PlaybackAudioRenderer:
-    def __init__(self, settings: Settings) -> None:
-        self._settings = settings
-        self._output_dir = Path(settings.audio_output_dir).resolve()
+    def __init__(
+        self,
+        sample_rate: int,
+        output_dir: str,
+        soundfont_path: str,
+        rabbitmq_url: str,
+        exchange_name: str,
+        output_queue: str,
+    ) -> None:
+        self._sample_rate = sample_rate
+        self._soundfont_path = Path(soundfont_path)
+        self._output_dir = Path(output_dir).resolve()
         self._output_dir.mkdir(parents=True, exist_ok=True)
         self._latest_file = self._output_dir / "latest.wav"
+        self._working_midi = self._output_dir / "latest_render.mid"
 
-        self._sample_rate = settings.audio_sample_rate
-        self._samples: list[int] = []
-        self._samples_lock = threading.Lock()
-        self._stop_event = threading.Event()
-        self._thread: threading.Thread | None = None
+        self._enabled = {
+            "violin": True,
+            "piano": True,
+            "drums": True,
+            "cello": True,
+        }
+        self._source_midi: Path | None = None
+
+        _ = rabbitmq_url
+        _ = exchange_name
+        _ = output_queue
 
     @property
     def latest_file_path(self) -> Path:
         return self._latest_file
 
     def start(self) -> None:
-        if self._thread is not None and self._thread.is_alive():
-            return
-        self._stop_event.clear()
-        self._thread = threading.Thread(target=self._run, daemon=True)
-        self._thread.start()
+        return
 
     def stop(self) -> None:
-        self._stop_event.set()
-        if self._thread is not None:
-            self._thread.join(timeout=3)
+        return
 
-    def _run(self) -> None:
-        attempt = 0
-        while not self._stop_event.is_set():
-            connection: pika.BlockingConnection | None = None
-            channel = None
-            try:
-                connection = pika.BlockingConnection(pika.URLParameters(self._settings.rabbitmq_url))
-                channel = connection.channel()
-                channel.exchange_declare(
-                    exchange=self._settings.exchange_name,
-                    exchange_type="topic",
-                    durable=True,
-                )
-                channel.queue_declare(queue=self._settings.audio_input_queue, durable=True)
-                channel.queue_bind(
-                    exchange=self._settings.exchange_name,
-                    queue=self._settings.audio_input_queue,
-                    routing_key=self._settings.audio_input_routing_key,
-                )
+    def reset_session(self) -> None:
+        if self._latest_file.exists():
+            self._latest_file.unlink()
 
-                attempt = 0
-                while not self._stop_event.is_set():
-                    method, _, body = channel.basic_get(
-                        queue=self._settings.audio_input_queue,
-                        auto_ack=False,
-                    )
-                    if method is None:
-                        time.sleep(0.05)
-                        continue
+    def set_instrument_enabled(self, instrument: str, enabled: bool) -> None:
+        key = instrument.strip().lower()
+        if key in self._enabled:
+            self._enabled[key] = enabled
+            self.rerender_current()
 
-                    try:
-                        payload = json.loads(body.decode("utf-8"))
-                        pitch = int(payload.get("pitch", 60))
-                        duration = float(payload.get("duration", 0.2))
-                        volume = int(payload.get("volume", 80))
-                        self._append_note(pitch=pitch, duration=duration, volume=volume)
-                        channel.basic_ack(delivery_tag=method.delivery_tag)
-                    except Exception:
-                        channel.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
-            except AMQPError:
-                delay = BACKOFF_SECONDS[min(attempt, len(BACKOFF_SECONDS) - 1)]
-                attempt += 1
-                time.sleep(delay)
-            finally:
-                if channel is not None and channel.is_open:
-                    channel.close()
-                if connection is not None and connection.is_open:
-                    connection.close()
+    def render_midi_file(self, midi_path: str) -> Path:
+        self._source_midi = Path(midi_path).resolve()
+        if not self._source_midi.exists():
+            raise FileNotFoundError(f"MIDI file not found: {self._source_midi}")
+        if not self._soundfont_path.exists():
+            raise FileNotFoundError(f"SoundFont file not found: {self._soundfont_path}")
 
-    def _append_note(self, pitch: int, duration: float, volume: int) -> None:
-        safe_pitch = max(0, min(127, pitch))
-        safe_duration = max(0.03, min(4.0, duration))
-        safe_volume = max(0, min(127, volume))
+        self._render_current_state()
+        return self._latest_file
 
-        frequency = 440.0 * (2 ** ((safe_pitch - 69) / 12))
-        sample_count = int(self._sample_rate * safe_duration)
-        amplitude = int((safe_volume / 127.0) * 12000)
+    def rerender_current(self) -> Path | None:
+        if self._source_midi is None:
+            return None
+        self._render_current_state()
+        return self._latest_file
 
-        note_samples: list[int] = []
-        for i in range(sample_count):
-            t = i / self._sample_rate
-            note_samples.append(int(amplitude * math.sin(2 * math.pi * frequency * t)))
+    def _render_current_state(self) -> None:
+        assert self._source_midi is not None
+        filtered = self._build_filtered_midi(self._source_midi)
+        filtered.save(str(self._working_midi))
 
-        silence_count = int(self._sample_rate * 0.01)
-        note_samples.extend([0] * silence_count)
+        temp_wav = self._output_dir / "latest.tmp.wav"
+        command = [
+            "fluidsynth",
+            "-ni",
+            str(self._soundfont_path),
+            str(self._working_midi),
+            "-F",
+            str(temp_wav),
+            "-r",
+            str(self._sample_rate),
+        ]
+        result = subprocess.run(command, capture_output=True, text=True, check=False)
+        if result.returncode != 0:
+            raise RuntimeError(f"fluidsynth failed: {result.stderr[-500:]}")
+        if not temp_wav.exists() or temp_wav.stat().st_size == 0:
+            raise RuntimeError("Rendered WAV is empty")
+        os.replace(temp_wav, self._latest_file)
 
-        with self._samples_lock:
-            self._samples.extend(note_samples)
-            self._write_latest_locked()
+    def _build_filtered_midi(self, source: Path) -> MidiFile:
+        source_midi = MidiFile(str(source))
+        output = MidiFile(ticks_per_beat=source_midi.ticks_per_beat)
 
-    def _write_latest_locked(self) -> None:
-        with wave.open(str(self._latest_file), "wb") as wav_file:
-            wav_file.setnchannels(1)
-            wav_file.setsampwidth(2)
-            wav_file.setframerate(self._sample_rate)
-            frames = bytearray()
-            for sample in self._samples:
-                clamped = max(-32768, min(32767, sample))
-                frames.extend(int(clamped).to_bytes(2, byteorder="little", signed=True))
-            wav_file.writeframes(frames)
+        for track_index, track in enumerate(source_midi.tracks):
+            out_track = MidiTrack()
+            muted_accumulated_ticks = 0
+            track_instrument = self._infer_track_instrument(track_index, track)
+
+            preserve_all = track_instrument is None
+            for msg in track:
+                if preserve_all:
+                    msg_copy = msg.copy(time=int(msg.time) + muted_accumulated_ticks)
+                    muted_accumulated_ticks = 0
+                    out_track.append(msg_copy)
+                    continue
+
+                instrument = self._infer_message_instrument(msg, track_instrument)
+                if instrument is not None and not self._enabled.get(instrument, True):
+                    muted_accumulated_ticks += int(msg.time)
+                    continue
+
+                msg_copy = msg.copy(time=int(msg.time) + muted_accumulated_ticks)
+                muted_accumulated_ticks = 0
+                out_track.append(msg_copy)
+
+            if len(out_track) == 0:
+                out_track.append(MetaMessage("end_of_track", time=0))
+            output.tracks.append(out_track)
+
+        return output
+
+    def _infer_track_instrument(self, track_index: int, track: MidiTrack) -> str | None:
+        has_notes = any(msg.type in {"note_on", "note_off"} for msg in track)
+        if not has_notes:
+            return None
+        return TRACK_INSTRUMENTS[track_index % len(TRACK_INSTRUMENTS)]
+
+    def _infer_message_instrument(self, msg, track_instrument: str | None) -> str | None:
+        if hasattr(msg, "channel") and msg.channel == 9:
+            return "drums"
+        return track_instrument

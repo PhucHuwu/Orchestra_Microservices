@@ -11,7 +11,7 @@ Dashboard backend cung cấp API điều khiển playback/tempo, thu thập metr
 - `POST /api/v1/tempo`
 - `GET /api/v1/scores`
 - `POST /api/v1/scores/upload` (multipart form, field `file`)
-- `GET /api/v1/playback/audio/latest` (WAV file)
+- `GET /api/v1/playback/audio/latest` (WAV file, generated from selected MIDI on start)
 - `GET /api/v1/metrics/overview`
 - `GET /api/v1/services/health`
 - `WS /ws/metrics` (push mỗi 1 giây)

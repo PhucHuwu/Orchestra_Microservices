@@ -52,6 +52,14 @@ class ConductorTempoRequest(BaseModel):
     issued_by: str = Field(default="dashboard", min_length=1, max_length=80)
 
 
+class ConductorEnabledRequest(BaseModel):
+    enabled: bool
+
+
+class ConductorEnabledStatus(BaseModel):
+    enabled: bool
+
+
 class ConductorStatus(BaseModel):
     status: Literal["running", "stopped", "failed"] = "stopped"
     session_id: UUID | None = None

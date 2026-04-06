@@ -322,6 +322,7 @@ class InstrumentWorker:
         return InstrumentOutputEvent(
             note_id=note_event.note_id,
             instrument=self._settings.instrument_name,
+            beat_time=note_event.beat_time,
             rendered_at=rendered_at,
             latency_ms=latency_ms,
             audio_hint={
@@ -372,8 +373,14 @@ class InstrumentWorker:
         return note_id in self._processed_note_ids
 
     def _safe_close(self) -> None:
-        if self._connection is not None and self._connection.is_open:
-            self._connection.close()
+        try:
+            if self._connection is not None and self._connection.is_open:
+                self._connection.close()
+        except Exception:  # noqa: BLE001
+            LOGGER.warning(
+                "worker_connection_close_failed",
+                extra={"service": self._settings.service_name},
+            )
         self._connection = None
         self._channel = None
 

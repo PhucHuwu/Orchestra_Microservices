@@ -11,7 +11,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-SAMPLE_SCORE_ID = "11111111-1111-1111-1111-111111111111"
+SAMPLE_SCORE_ID = "11111111-1111-4111-8111-111111111111"
 
 revision = "0001_initial_schema"
 down_revision = None

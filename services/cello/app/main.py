@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from contextlib import asynccontextmanager
+from threading import Lock
 from threading import Thread
 
 from fastapi import FastAPI
@@ -32,17 +33,40 @@ worker_enabled = os.getenv("INSTRUMENT_WORKER_ENABLED", "false").lower() in {
     "yes",
     "on",
 }
+worker_lock = Lock()
+
+
+def _worker_running() -> bool:
+    return worker_thread is not None and worker_thread.is_alive()
+
+
+def _start_worker_unlocked() -> None:
+    global worker_thread
+    if _worker_running():
+        return
+    worker_thread = Thread(target=worker.start, daemon=True)
+    worker_thread.start()
+
+
+def _stop_worker_unlocked() -> None:
+    global worker_thread
+    if not _worker_running():
+        worker_thread = None
+        return
+    worker.stop()
+    if worker_thread is not None:
+        worker_thread.join(timeout=2.0)
+    worker_thread = None
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    global worker_thread
     if worker_enabled:
-        worker_thread = Thread(target=worker.start, daemon=True)
-        worker_thread.start()
+        with worker_lock:
+            _start_worker_unlocked()
     yield
-    if worker_enabled:
-        worker.stop()
+    with worker_lock:
+        _stop_worker_unlocked()
 
 
 app = FastAPI(title="Cello Service", version="0.1.0", lifespan=lifespan)
@@ -57,5 +81,38 @@ def health() -> dict:
         "input_queue": settings.input_queue,
         "output_routing_key": settings.output_routing_key,
         "worker_enabled": worker_enabled,
+        "worker_running": _worker_running(),
         "metrics": worker.metrics_snapshot(),
     }
+
+
+@app.get("/control/worker")
+def worker_control_status() -> dict:
+    return {
+        "enabled": worker_enabled,
+        "running": _worker_running(),
+    }
+
+
+@app.post("/control/worker/start")
+def worker_control_start() -> dict:
+    global worker_enabled
+    with worker_lock:
+        worker_enabled = True
+        _start_worker_unlocked()
+        return {
+            "enabled": worker_enabled,
+            "running": _worker_running(),
+        }
+
+
+@app.post("/control/worker/stop")
+def worker_control_stop() -> dict:
+    global worker_enabled
+    with worker_lock:
+        worker_enabled = False
+        _stop_worker_unlocked()
+        return {
+            "enabled": worker_enabled,
+            "running": _worker_running(),
+        }

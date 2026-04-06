@@ -21,6 +21,29 @@ class TempoUpdateRequest(BaseModel):
     issued_by: str = Field(default="dashboard", min_length=1, max_length=80)
 
 
+class ServiceToggleRequest(BaseModel):
+    service_name: str = Field(min_length=1, max_length=80)
+    enabled: bool
+
+
+class ServiceToggleItem(BaseModel):
+    service_name: str
+    enabled: bool
+    reachable: bool
+    worker_enabled: bool | None = None
+    status: str
+    message: str | None = None
+
+
+class InteractionEdge(BaseModel):
+    from_service: str
+    to_service: str
+    queue: str
+    depth: int
+    consumers: int
+    message_rate: float
+
+
 class MetricsOverview(BaseModel):
     model_config = ConfigDict(extra="ignore")
 

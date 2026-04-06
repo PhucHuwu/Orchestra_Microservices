@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Fraunces, IBM_Plex_Sans } from "next/font/google";
 import { ReactNode } from "react";
 
+import { PersistentPlaybackAudio } from "@/components/shared/persistent-playback-audio";
 import { Providers } from "./providers";
 
 const headingFont = Fraunces({
@@ -27,7 +28,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className={`${headingFont.variable} ${bodyFont.variable}`}>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <PersistentPlaybackAudio />
+        </Providers>
       </body>
     </html>
   );

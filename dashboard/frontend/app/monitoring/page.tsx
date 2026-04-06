@@ -1,15 +1,25 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { InteractionFlowTable } from "@/components/monitoring/interaction-flow-table";
 import { MetricLineChart } from "@/components/monitoring/metric-line-chart";
+import { ServiceToggleGrid } from "@/components/monitoring/service-toggle-grid";
 import { StatePanel } from "@/components/shared/state-panel";
-import { fetchMetricsOverview, fetchServicesHealth } from "@/lib/api/dashboard-api";
+import {
+  fetchMetricsOverview,
+  fetchServiceControls,
+  fetchServicesHealth,
+  setServiceControl
+} from "@/lib/api/dashboard-api";
 import { MetricsWsClient } from "@/lib/ws/metrics-ws";
 import { toTitle } from "@/lib/utils/format";
 import { useMetricsStore } from "@/stores/metrics-store";
+import { useSessionStore } from "@/stores/session-store";
+import { useToastStore } from "@/stores/toast-store";
 
 type Point = { name: string; value: number };
 
@@ -21,6 +31,9 @@ export default function MonitoringPage() {
   const { latest, socketStatus, setLatest, setSocketStatus } = useMetricsStore();
   const [queueSeries, setQueueSeries] = useState<Point[]>([]);
   const [rateSeries, setRateSeries] = useState<Point[]>([]);
+  const [pendingService, setPendingService] = useState<string | null>(null);
+  const pushToast = useToastStore((state) => state.push);
+  const bumpAudioToken = useSessionStore((state) => state.bumpAudioToken);
 
   const overviewQuery = useQuery({
     queryKey: ["metrics-overview"],
@@ -32,6 +45,30 @@ export default function MonitoringPage() {
     queryKey: ["services-health"],
     queryFn: fetchServicesHealth,
     refetchInterval: 10_000
+  });
+
+  const controlQuery = useQuery({
+    queryKey: ["services-control"],
+    queryFn: fetchServiceControls,
+    refetchInterval: 4000
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: setServiceControl,
+    onSuccess: (item) => {
+      controlQuery.refetch();
+      bumpAudioToken();
+      pushToast({
+        type: "success",
+        title: `${item.service_name} ${item.enabled ? "started" : "stopped"}`
+      });
+    },
+    onError: (error: Error) => {
+      pushToast({ type: "error", title: "Toggle failed", description: error.message });
+    },
+    onSettled: () => {
+      setPendingService(null);
+    }
   });
 
   useEffect(() => {
@@ -60,6 +97,13 @@ export default function MonitoringPage() {
   );
 
   const healthRows = healthQuery.data ?? latest?.metrics.services ?? [];
+  const interactions = latest?.metrics.interactions ?? [];
+  const serviceControls = controlQuery.data ?? latest?.metrics.toggles ?? [];
+
+  const onToggleService = (serviceName: string, enabled: boolean) => {
+    setPendingService(serviceName);
+    toggleMutation.mutate({ service_name: serviceName, enabled });
+  };
 
   return (
     <DashboardShell>
@@ -110,7 +154,7 @@ export default function MonitoringPage() {
           </StatePanel>
 
           <StatePanel title="Realtime Charts" description="Trend charts for total queue depth and message rate.">
-            {queueSeries.length === 0 ? (
+            {socketStatus !== "connected" && queueSeries.length === 0 ? (
               <p className="text-sm text-[var(--text-muted)]">Waiting realtime stream...</p>
             ) : (
               <div className="grid gap-4 lg:grid-cols-2">
@@ -118,6 +162,26 @@ export default function MonitoringPage() {
                 <MetricLineChart data={rateSeries} color="#b45309" />
               </div>
             )}
+          </StatePanel>
+
+          <StatePanel
+            title="Interaction Flow"
+            description="Realtime queue interaction between services (producer -> consumer)."
+          >
+            <InteractionFlowTable
+              edges={
+                interactions.length > 0
+                  ? interactions
+                  : Object.entries(overview?.queue_depth ?? {}).map(([queue]) => ({
+                      from_service: "unknown",
+                      to_service: "unknown",
+                      queue,
+                      depth: overview?.queue_depth[queue] ?? 0,
+                      consumers: overview?.consumer_count[queue] ?? 0,
+                      message_rate: overview?.message_rate[queue] ?? 0
+                    }))
+              }
+            />
           </StatePanel>
         </div>
 
@@ -150,6 +214,17 @@ export default function MonitoringPage() {
                 </div>
               ))}
             </div>
+          </StatePanel>
+
+          <StatePanel
+            title="Service Controls"
+            description="Start/stop each worker service and observe queue interaction impact in realtime."
+          >
+            <ServiceToggleGrid
+              items={serviceControls}
+              pendingService={pendingService}
+              onToggle={onToggleService}
+            />
           </StatePanel>
         </div>
       </div>

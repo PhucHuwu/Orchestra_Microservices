@@ -36,4 +36,9 @@ def _scheduled_beat_time(raw_payload: dict[str, Any]) -> float:
         value = raw_payload.get(key)
         if isinstance(value, int | float):
             return float(value)
+    audio_hint = raw_payload.get("audio_hint")
+    if isinstance(audio_hint, dict):
+        beat = audio_hint.get("beat_time")
+        if isinstance(beat, int | float):
+            return float(beat)
     return 0.0

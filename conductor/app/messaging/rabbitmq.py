@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 import time
 from typing import Any
 
@@ -21,8 +22,13 @@ class RabbitMQPublisher:
         self._settings = settings
         self._connection: pika.BlockingConnection | None = None
         self._channel: BlockingChannel | None = None
+        self._lock = threading.Lock()
 
     def connect(self) -> None:
+        with self._lock:
+            self._connect_unlocked()
+
+    def _connect_unlocked(self) -> None:
         attempt = 0
         while True:
             try:
@@ -70,39 +76,44 @@ class RabbitMQPublisher:
                 time.sleep(delay)
 
     def close(self) -> None:
-        if self._connection is not None and self._connection.is_open:
-            self._connection.close()
-        self._connection = None
-        self._channel = None
+        with self._lock:
+            if self._connection is not None and self._connection.is_open:
+                self._connection.close()
+            self._connection = None
+            self._channel = None
 
     def publish_json(self, routing_key: str, payload: dict[str, Any]) -> None:
-        if self._channel is None or self._connection is None or self._connection.is_closed:
-            self.connect()
+        with self._lock:
+            if self._channel is None or self._connection is None or self._connection.is_closed:
+                self._connect_unlocked()
 
-        body = json.dumps(payload).encode("utf-8")
-        properties = pika.BasicProperties(content_type="application/json", delivery_mode=2)
+            body = json.dumps(payload).encode("utf-8")
+            properties = pika.BasicProperties(content_type="application/json", delivery_mode=2)
 
-        try:
-            assert self._channel is not None
-            self._channel.basic_publish(
-                exchange=self._settings.exchange_name,
-                routing_key=routing_key,
-                body=body,
-                properties=properties,
-                mandatory=False,
-            )
-        except AMQPError:
-            LOGGER.exception("publish_failed", extra={"routing_key": routing_key})
-            self.close()
-            self.connect()
-            assert self._channel is not None
-            self._channel.basic_publish(
-                exchange=self._settings.exchange_name,
-                routing_key=routing_key,
-                body=body,
-                properties=properties,
-                mandatory=False,
-            )
+            try:
+                assert self._channel is not None
+                self._channel.basic_publish(
+                    exchange=self._settings.exchange_name,
+                    routing_key=routing_key,
+                    body=body,
+                    properties=properties,
+                    mandatory=False,
+                )
+            except AMQPError:
+                LOGGER.exception("publish_failed", extra={"routing_key": routing_key})
+                if self._connection is not None and self._connection.is_open:
+                    self._connection.close()
+                self._connection = None
+                self._channel = None
+                self._connect_unlocked()
+                assert self._channel is not None
+                self._channel.basic_publish(
+                    exchange=self._settings.exchange_name,
+                    routing_key=routing_key,
+                    body=body,
+                    properties=properties,
+                    mandatory=False,
+                )
 
 
 def create_tempo_consumer_channel(

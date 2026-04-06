@@ -46,6 +46,9 @@ class MixerWorker:
             self._thread.join(timeout=2.0)
         self._client.close()
 
+    def is_running(self) -> bool:
+        return self._thread is not None and self._thread.is_alive()
+
     def _run(self) -> None:
         self._client.connect()
         while not self._stop_event.is_set():

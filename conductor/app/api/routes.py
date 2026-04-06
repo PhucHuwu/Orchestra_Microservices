@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException
 
 from app.models import (
+    ConductorEnabledRequest,
+    ConductorEnabledStatus,
     ConductorStartRequest,
     ConductorStatus,
     ConductorStopRequest,
@@ -31,7 +33,12 @@ def health() -> dict:
 
 @router.post("/v1/conductor/start", response_model=ConductorStatus)
 def start(payload: ConductorStartRequest) -> ConductorStatus:
-    return _runtime().start(payload)
+    try:
+        return _runtime().start(payload)
+    except RuntimeError as exc:
+        if str(exc) == "conductor_disabled":
+            raise HTTPException(status_code=409, detail="Conductor is disabled") from exc
+        raise
 
 
 @router.post("/v1/conductor/stop", response_model=ConductorStatus)
@@ -52,3 +59,14 @@ def tempo(payload: ConductorTempoRequest) -> ConductorStatus:
 @router.get("/v1/conductor/status", response_model=ConductorStatus)
 def status() -> ConductorStatus:
     return _runtime().status()
+
+
+@router.get("/v1/conductor/enabled", response_model=ConductorEnabledStatus)
+def enabled_status() -> ConductorEnabledStatus:
+    return ConductorEnabledStatus(enabled=_runtime().is_enabled())
+
+
+@router.post("/v1/conductor/enabled", response_model=ConductorEnabledStatus)
+def set_enabled(payload: ConductorEnabledRequest) -> ConductorEnabledStatus:
+    enabled = _runtime().set_enabled(payload.enabled)
+    return ConductorEnabledStatus(enabled=enabled)

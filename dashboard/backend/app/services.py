@@ -8,17 +8,63 @@ from uuid import UUID
 from uuid import uuid4
 
 import httpx
+import pika
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api import ApiError
+from app.audio_renderer import PlaybackAudioRenderer
 from app.config import Settings
 from app.db.models import PlaybackSession, Score, ServiceHealthSnapshot, TempoCommandAudit
 from app.metrics import RabbitMQManagementClient, parse_queue_stats
 from app.rabbitmq_client import RabbitMQPublisher
-from app.schemas import ServiceHealthItem
+from app.schemas import InteractionEdge, ServiceHealthItem, ServiceToggleItem
 
 LOGGER = logging.getLogger(__name__)
+
+SERVICE_ENDPOINTS = {
+    "violin-service": {"url_attr": "violin_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
+    "piano-service": {"url_attr": "piano_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
+    "drums-service": {"url_attr": "drums_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
+    "cello-service": {"url_attr": "cello_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
+    "mixer": {"url_attr": "mixer_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
+    "conductor": {"url_attr": "conductor_service_url", "toggle_path": "/v1/conductor/enabled", "health_path": "/health"},
+}
+
+SERVICE_TO_INSTRUMENT = {
+    "violin-service": "violin",
+    "piano-service": "piano",
+    "drums-service": "drums",
+    "cello-service": "cello",
+}
+
+INSTRUMENT_INPUT_QUEUE = {
+    "violin": "instrument.violin.note",
+    "piano": "instrument.piano.note",
+    "drums": "instrument.drums.beat",
+    "cello": "instrument.cello.note",
+}
+
+SERVICE_CONTROL_ORDER = (
+    "conductor",
+    "violin-service",
+    "piano-service",
+    "drums-service",
+    "cello-service",
+    "mixer",
+)
+
+QUEUE_FLOW_EDGES = [
+    ("conductor", "violin-service", "instrument.violin.note"),
+    ("conductor", "piano-service", "instrument.piano.note"),
+    ("conductor", "drums-service", "instrument.drums.beat"),
+    ("conductor", "cello-service", "instrument.cello.note"),
+    ("violin-service", "mixer", "instrument.output"),
+    ("piano-service", "mixer", "instrument.output"),
+    ("drums-service", "mixer", "instrument.output"),
+    ("cello-service", "mixer", "instrument.output"),
+    ("mixer", "dashboard-api", "playback.output"),
+]
 
 
 class DashboardService:
@@ -27,10 +73,12 @@ class DashboardService:
         settings: Settings,
         publisher: RabbitMQPublisher,
         metrics_client: RabbitMQManagementClient,
+        audio_renderer: PlaybackAudioRenderer,
     ) -> None:
         self._settings = settings
         self._publisher = publisher
         self._metrics_client = metrics_client
+        self._audio_renderer = audio_renderer
         self._snapshot_task: asyncio.Task[None] | None = None
         self._snapshot_stop = asyncio.Event()
         self._scores_dir = Path(self._settings.score_storage_dir).resolve()
@@ -73,6 +121,11 @@ class DashboardService:
         db.commit()
 
         try:
+            self._audio_renderer.render_midi_file(str(score_file_path))
+
+            for instrument in ("violin", "piano", "drums", "cello"):
+                self._audio_renderer.set_instrument_enabled(instrument, True)
+
             self._publisher.publish_json(
                 routing_key=self._settings.playback_control_queue,
                 payload={
@@ -93,6 +146,15 @@ class DashboardService:
             session.status = "failed"
             db.commit()
             raise
+        except Exception as exc:  # noqa: BLE001
+            session.status = "failed"
+            db.commit()
+            LOGGER.exception("audio_render_failed", extra={"score_path": str(score_file_path)})
+            raise ApiError(
+                error_code="AUDIO_RENDER_FAILED",
+                message="Failed to render audio from MIDI",
+                status_code=500,
+            ) from exc
 
         return {"session_id": str(session.id), "status": "running"}
 
@@ -274,6 +336,8 @@ class DashboardService:
     async def ws_metrics_payload(self, db: Session) -> dict:
         overview = await self.metrics_overview()
         services = await self.services_health()
+        interactions = self._build_interactions(overview)
+        toggles = await self.service_control_status()
         return {
             "ts": datetime.now(UTC).isoformat(),
             "metrics": {
@@ -282,8 +346,115 @@ class DashboardService:
                 "message_rate": overview["message_rate"],
                 "health_summary": overview["health_summary"],
                 "services": [service.model_dump(mode="json") for service in services],
+                "interactions": [item.model_dump(mode="json") for item in interactions],
+                "toggles": [item.model_dump(mode="json") for item in toggles],
             },
         }
+
+    async def service_control_status(self) -> list[ServiceToggleItem]:
+        items: list[ServiceToggleItem] = []
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            for service_name in SERVICE_CONTROL_ORDER:
+                config = SERVICE_ENDPOINTS[service_name]
+                base_url = self._service_base_url(service_name)
+                enabled = False
+                reachable = False
+                worker_enabled: bool | None = None
+                status = "down"
+                message: str | None = None
+
+                try:
+                    toggle_resp = await client.get(f"{base_url}{config['toggle_path']}")
+                    if toggle_resp.status_code < 400:
+                        reachable = True
+                        payload = toggle_resp.json()
+                        if isinstance(payload, dict):
+                            enabled = bool(payload.get("enabled", False))
+                except Exception as exc:  # noqa: BLE001
+                    message = str(exc)
+
+                try:
+                    health = await client.get(f"{base_url}{config['health_path']}")
+                    if health.status_code < 400:
+                        reachable = True
+                        health_json = health.json()
+                        if isinstance(health_json, dict):
+                            worker_enabled = (
+                                bool(health_json.get("worker_enabled"))
+                                if "worker_enabled" in health_json
+                                else None
+                            )
+                            if not enabled and worker_enabled is not None:
+                                enabled = worker_enabled
+                except Exception as exc:  # noqa: BLE001
+                    if message is None:
+                        message = str(exc)
+
+                if reachable:
+                    status = "enabled" if enabled else "disabled"
+
+                items.append(
+                    ServiceToggleItem(
+                        service_name=service_name,
+                        enabled=enabled,
+                        reachable=reachable,
+                        worker_enabled=worker_enabled,
+                        status=status,
+                        message=message,
+                    )
+                )
+
+        return items
+
+    async def set_service_enabled(
+        self,
+        db: Session,
+        service_name: str,
+        enabled: bool,
+    ) -> ServiceToggleItem:
+        service_key = service_name.strip()
+        if service_key not in SERVICE_ENDPOINTS:
+            raise ApiError(
+                error_code="SERVICE_NOT_SUPPORTED",
+                message=f"Unsupported service: {service_key}",
+                status_code=400,
+            )
+
+        config = SERVICE_ENDPOINTS[service_key]
+        base_url = self._service_base_url(service_key)
+
+        async with httpx.AsyncClient(timeout=6.0) as client:
+            if service_key == "conductor":
+                response = await client.post(
+                    f"{base_url}{config['toggle_path']}",
+                    json={"enabled": enabled},
+                )
+            else:
+                action = "start" if enabled else "stop"
+                response = await client.post(f"{base_url}{config['toggle_path']}/{action}")
+
+            if response.status_code >= 400:
+                raise ApiError(
+                    error_code="SERVICE_TOGGLE_FAILED",
+                    message=f"Failed to toggle {service_key} ({response.status_code})",
+                    status_code=502,
+                )
+
+        instrument = SERVICE_TO_INSTRUMENT.get(service_key)
+        if instrument is not None:
+            self._audio_renderer.set_instrument_enabled(instrument=instrument, enabled=enabled)
+            self._purge_instrument_queue(instrument)
+
+        latest = await self.service_control_status()
+        for item in latest:
+            if item.service_name == service_key:
+                return item
+
+        raise ApiError(
+            error_code="SERVICE_STATUS_UNAVAILABLE",
+            message=f"Unable to fetch status for {service_key}",
+            status_code=503,
+        )
 
     async def snapshot_once(self, db: Session) -> None:
         overview = await self.metrics_overview()
@@ -382,6 +553,80 @@ class DashboardService:
                 message="Conductor service is unavailable",
                 status_code=503,
             ) from exc
+
+    def _service_base_url(self, service_name: str) -> str:
+        url_attr = SERVICE_ENDPOINTS[service_name]["url_attr"]
+        return str(getattr(self._settings, url_attr)).rstrip("/")
+
+    def _build_interactions(self, overview: dict) -> list[InteractionEdge]:
+        queue_depth = overview.get("queue_depth", {})
+        consumer_count = overview.get("consumer_count", {})
+        message_rate = overview.get("message_rate", {})
+        edges: list[InteractionEdge] = []
+        for from_service, to_service, queue in QUEUE_FLOW_EDGES:
+            edges.append(
+                InteractionEdge(
+                    from_service=from_service,
+                    to_service=to_service,
+                    queue=queue,
+                    depth=int(queue_depth.get(queue, 0)),
+                    consumers=int(consumer_count.get(queue, 0)),
+                    message_rate=float(message_rate.get(queue, 0.0)),
+                )
+            )
+        return edges
+
+    def _purge_instrument_queue(self, instrument: str) -> None:
+        queue_name = INSTRUMENT_INPUT_QUEUE.get(instrument)
+        if queue_name is None:
+            return
+        connection = None
+        channel = None
+        try:
+            connection = pika.BlockingConnection(pika.URLParameters(self._settings.rabbitmq_url))
+            channel = connection.channel()
+            channel.queue_purge(queue=queue_name)
+        except Exception:
+            LOGGER.exception("instrument_queue_purge_failed", extra={"queue": queue_name})
+        finally:
+            try:
+                if channel is not None and channel.is_open:
+                    channel.close()
+            except Exception:
+                pass
+            try:
+                if connection is not None and connection.is_open:
+                    connection.close()
+            except Exception:
+                pass
+
+    def _resync_running_playback(self, db: Session) -> None:
+        stmt = (
+            select(PlaybackSession)
+            .where(PlaybackSession.status == "running")
+            .order_by(PlaybackSession.started_at.desc())
+        )
+        active = db.execute(stmt).scalars().first()
+        if active is None:
+            return
+
+        score = db.get(Score, active.score_id)
+        if score is None:
+            return
+
+        score_file_name = self._score_file_name(score.source_path)
+        self._audio_renderer.reset_session()
+
+        try:
+            self._call_conductor_stop(active.id)
+        except ApiError:
+            LOGGER.warning("resync_stop_failed", extra={"session_id": str(active.id)})
+
+        self._call_conductor_start(
+            session_id=active.id,
+            score_path=score_file_name,
+            initial_bpm=active.initial_bpm,
+        )
 
     async def _snapshot_loop(self) -> None:
         from app.db.session import SessionLocal

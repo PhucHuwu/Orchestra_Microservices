@@ -39,6 +39,7 @@ class AudioHint(BaseModel):
 class InstrumentOutputEvent(BaseModel):
     note_id: str
     instrument: str
+    beat_time: float = Field(ge=0)
     rendered_at: datetime
     latency_ms: int = Field(ge=0)
     audio_hint: AudioHint

@@ -18,6 +18,7 @@ class InstrumentOutputEvent(BaseModel):
 
     note_id: UUID
     instrument: Literal["violin", "piano", "drums", "cello"]
+    beat_time: float = Field(ge=0)
     rendered_at: datetime
     latency_ms: int = Field(ge=0)
     audio_hint: AudioHint

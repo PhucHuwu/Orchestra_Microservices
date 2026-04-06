@@ -146,10 +146,9 @@ export default function PlaybackPage() {
               <span className="text-[var(--text-muted)]">Stop action:</span>{" "}
               {stopMutation.isSuccess ? "success" : stopMutation.isError ? "error" : "idle"}
             </p>
-            <div className="pt-2">
-              <p className="mb-1 text-[var(--text-muted)]">Latest rendered audio:</p>
-              <audio controls className="w-full" src={`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"}/api/v1/playback/audio/latest`} />
-            </div>
+            <p className="pt-2 text-[var(--text-muted)]">
+              Audio player is pinned at the bottom and keeps playing across page navigation.
+            </p>
           </div>
         </StatePanel>
       </div>

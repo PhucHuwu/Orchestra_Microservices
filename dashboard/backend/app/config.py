@@ -41,6 +41,16 @@ class Settings(BaseSettings):
     audio_input_queue: str = Field(default="audio.render.input", alias="AUDIO_INPUT_QUEUE")
     audio_input_routing_key: str = Field(default="playback.output", alias="AUDIO_INPUT_ROUTING_KEY")
     audio_sample_rate: int = Field(default=22050, alias="AUDIO_SAMPLE_RATE")
+    soundfont_path: str = Field(
+        default="/usr/share/sounds/sf2/FluidR3_GM.sf2",
+        alias="SOUNDFONT_PATH",
+    )
+    violin_service_url: str = Field(default="http://violin-service:8000", alias="VIOLIN_SERVICE_URL")
+    piano_service_url: str = Field(default="http://piano-service:8000", alias="PIANO_SERVICE_URL")
+    drums_service_url: str = Field(default="http://drums-service:8000", alias="DRUMS_SERVICE_URL")
+    cello_service_url: str = Field(default="http://cello-service:8000", alias="CELLO_SERVICE_URL")
+    mixer_service_url: str = Field(default="http://mixer:8000", alias="MIXER_SERVICE_URL")
+    conductor_service_url: str = Field(default="http://conductor:8000", alias="CONDUCTOR_SERVICE_URL")
     cors_allow_origins: str = Field(default="http://localhost:3000", alias="CORS_ALLOW_ORIGINS")
 
 

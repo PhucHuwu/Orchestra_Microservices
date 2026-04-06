@@ -38,7 +38,21 @@ class RabbitMQPublisher:
                     exchange=self._exchange_name, exchange_type="topic", durable=True
                 )
                 for queue_name in self._control_queues:
-                    channel.queue_declare(queue=queue_name, durable=True)
+                    dlq_name = f"{queue_name}.dlq"
+                    channel.queue_declare(queue=dlq_name, durable=True)
+                    channel.queue_bind(
+                        exchange=self._exchange_name,
+                        queue=dlq_name,
+                        routing_key=dlq_name,
+                    )
+                    channel.queue_declare(
+                        queue=queue_name,
+                        durable=True,
+                        arguments={
+                            "x-dead-letter-exchange": self._exchange_name,
+                            "x-dead-letter-routing-key": dlq_name,
+                        },
+                    )
                     channel.queue_bind(
                         exchange=self._exchange_name,
                         queue=queue_name,

@@ -38,9 +38,12 @@ class ConductorRuntime:
         self._heartbeat_thread: threading.Thread | None = None
         self._notes: list[ParsedNote] = []
         self._bpm = 120
+        self._enabled = True
 
     def start(self, request: ConductorStartRequest) -> ConductorStatus:
         with self._lock:
+            if not self._enabled:
+                raise RuntimeError("conductor_disabled")
             if self._status.status == "running":
                 return self._status
 
@@ -97,6 +100,20 @@ class ConductorRuntime:
     def status(self) -> ConductorStatus:
         with self._lock:
             return self._status.model_copy(deep=True)
+
+    def set_enabled(self, enabled: bool) -> bool:
+        with self._lock:
+            self._enabled = enabled
+            if not enabled and self._status.status == "running":
+                self._stop_event.set()
+                self._status.status = "stopped"
+        if not enabled:
+            self._publisher.close()
+        return self._enabled
+
+    def is_enabled(self) -> bool:
+        with self._lock:
+            return self._enabled
 
     def set_tempo(self, command: TempoCommand) -> ConductorStatus:
         with self._lock:

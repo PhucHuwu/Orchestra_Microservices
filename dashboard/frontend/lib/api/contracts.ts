@@ -37,6 +37,24 @@ export const metricsOverviewSchema = z.object({
   })
 });
 
+export const interactionEdgeSchema = z.object({
+  from_service: z.string(),
+  to_service: z.string(),
+  queue: z.string(),
+  depth: z.number().int().nonnegative(),
+  consumers: z.number().int().nonnegative(),
+  message_rate: z.number().nonnegative()
+});
+
+export const serviceToggleItemSchema = z.object({
+  service_name: z.string(),
+  enabled: z.boolean(),
+  reachable: z.boolean(),
+  worker_enabled: z.boolean().nullable().optional(),
+  status: z.string(),
+  message: z.string().nullable().optional()
+});
+
 export const serviceHealthItemSchema = z.object({
   service_name: z.string(),
   status: z.string(),
@@ -58,7 +76,9 @@ export const metricsWsSchema = z.object({
       healthy_services: z.number().int().nonnegative(),
       degraded_services: z.number().int().nonnegative()
     }),
-    services: servicesHealthSchema
+    services: servicesHealthSchema,
+    interactions: interactionEdgeSchema.array(),
+    toggles: serviceToggleItemSchema.array()
   })
 });
 
@@ -79,3 +99,5 @@ export type MetricsOverview = z.infer<typeof metricsOverviewSchema>;
 export type ServiceHealthItem = z.infer<typeof serviceHealthItemSchema>;
 export type MetricsWsPayload = z.infer<typeof metricsWsSchema>;
 export type ScoreOption = z.infer<typeof scoreOptionSchema>;
+export type InteractionEdge = z.infer<typeof interactionEdgeSchema>;
+export type ServiceToggleItem = z.infer<typeof serviceToggleItemSchema>;

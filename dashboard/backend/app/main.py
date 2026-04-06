@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect
 from fastapi import File, UploadFile
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
 from sqlalchemy.orm import Session
@@ -16,7 +16,12 @@ from app.db.session import get_db_session
 from app.logging_config import configure_logging
 from app.metrics import RabbitMQManagementClient
 from app.rabbitmq_client import RabbitMQPublisher, RabbitMQPublisherProvider
-from app.schemas import PlaybackStartRequest, PlaybackStopRequest, TempoUpdateRequest
+from app.schemas import (
+    PlaybackStartRequest,
+    PlaybackStopRequest,
+    ServiceToggleRequest,
+    TempoUpdateRequest,
+)
 from app.services import DashboardService
 
 app = FastAPI(title="Dashboard API", version="0.1.0")
@@ -49,19 +54,27 @@ publisher_provider = RabbitMQPublisherProvider(
     )
 )
 metrics_client = RabbitMQManagementClient(settings)
+audio_renderer = PlaybackAudioRenderer(
+    sample_rate=settings.audio_sample_rate,
+    output_dir=settings.audio_output_dir,
+    soundfont_path=settings.soundfont_path,
+    rabbitmq_url=settings.rabbitmq_url,
+    exchange_name=settings.exchange_name,
+    output_queue="playback.output",
+)
 dashboard_service = DashboardService(
     settings=settings,
     publisher=publisher_provider.get(),
     metrics_client=metrics_client,
+    audio_renderer=audio_renderer,
 )
-audio_renderer = PlaybackAudioRenderer(settings=settings)
 
 
 @app.on_event("startup")
 async def on_startup() -> None:
     configure_logging()
-    await dashboard_service.start_background_tasks()
     audio_renderer.start()
+    await dashboard_service.start_background_tasks()
 
 
 @app.on_event("shutdown")
@@ -132,7 +145,11 @@ def latest_audio() -> Response:
             message="Audio is not generated yet",
             status_code=404,
         )
-    return FileResponse(path=str(audio_file), media_type="audio/wav", filename="latest.wav")
+    return Response(
+        content=audio_file.read_bytes(),
+        media_type="audio/wav",
+        headers={"Accept-Ranges": "bytes"},
+    )
 
 
 @app.post("/api/v1/playback/stop")
@@ -170,6 +187,24 @@ async def services_health(db: Session = Depends(get_db_session)) -> dict:
     return success_response([item.model_dump(mode="json") for item in health_items])
 
 
+@app.get("/api/v1/services/control")
+async def services_control() -> dict:
+    _track("/api/v1/services/control", "GET")
+    items = await dashboard_service.service_control_status()
+    return success_response([item.model_dump(mode="json") for item in items])
+
+
+@app.post("/api/v1/services/control")
+async def set_service_control(request: ServiceToggleRequest, db: Session = Depends(get_db_session)) -> dict:
+    _track("/api/v1/services/control", "POST")
+    item = await dashboard_service.set_service_enabled(
+        db=db,
+        service_name=request.service_name,
+        enabled=request.enabled,
+    )
+    return success_response(item.model_dump(mode="json"))
+
+
 @app.websocket("/ws/metrics")
 async def metrics_ws(websocket: WebSocket) -> None:
     await websocket.accept()
@@ -187,12 +222,18 @@ async def metrics_ws(websocket: WebSocket) -> None:
     except WebSocketDisconnect:
         return
     except Exception:  # noqa: BLE001
-        await websocket.send_json(
-            {
-                "success": False,
-                "error_code": "WS_STREAM_ERROR",
-                "message": "WebSocket stream interrupted",
-                "data": {"ts": datetime.now(UTC).isoformat()},
-            }
-        )
-        await websocket.close()
+        try:
+            await websocket.send_json(
+                {
+                    "success": False,
+                    "error_code": "WS_STREAM_ERROR",
+                    "message": "WebSocket stream interrupted",
+                    "data": {"ts": datetime.now(UTC).isoformat()},
+                }
+            )
+        except Exception:
+            pass
+        try:
+            await websocket.close()
+        except Exception:
+            pass
