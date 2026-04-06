@@ -76,3 +76,19 @@ Xây dựng lớp platform dùng chung cho toàn hệ thống: hạ tầng Docke
 - RabbitMQ topology + DLQ được bootstrap tự động.
 - Có shared library dùng lại cho BE và guideline rõ ràng.
 - Có fault toolkit + runbook để demo lặp lại được.
+
+## 5) Trạng thái cập nhật
+
+- [x] Task 1 - Docker Compose nền tảng (wiring/env/network LAN + chuẩn hóa `.env.example`).
+- [x] Task 2 - RabbitMQ topology bootstrap (script idempotent + exchange/queue/binding + DLQ instrument/playback).
+- [x] Task 3 - Shared library dùng chung BE (`libs/common/orchestra_common` + guideline tích hợp).
+- [x] Task 4 - Observability baseline (chuẩn field log chung + endpoint metrics mẫu `/metrics`).
+- [x] Task 5 - Fault injection toolkit (đủ 5 kịch bản + cleanup).
+- [x] Task 6 - CI quality gate cơ bản (chuẩn hóa lệnh lint/test trong `README.md` + `Makefile`).
+- [x] Task 7 - Runbook vận hành và handover (`docs/runbook.md` + checklist demo).
+
+### Ghi chú xác minh
+
+- Đã triển khai đầy đủ theo tài liệu BA và backlog task module Platform & Observability.
+- Đã kiểm tra syntax Python qua `python3 -m compileall` cho các module mới/chỉnh sửa.
+- Chưa verify chạy `ruff`/`pytest` trên máy hiện tại do thiếu tool trong runtime local.

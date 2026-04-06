@@ -8,7 +8,10 @@ def configure_logging() -> None:
         return
 
     handler = logging.StreamHandler()
-    formatter = jsonlogger.JsonFormatter("%(asctime)s %(levelname)s %(name)s %(message)s")
+    formatter = jsonlogger.JsonFormatter(
+        "%(asctime)s %(levelname)s %(name)s %(message)s "
+        "%(service_name)s %(event)s %(message_id)s %(session_id)s %(latency_ms)s"
+    )
     handler.setFormatter(formatter)
 
     root_logger.setLevel(logging.INFO)

@@ -72,3 +72,20 @@ pytest --version
 
 - This repository currently contains skeleton modules and contracts only.
 - Business logic, full API implementation, and demo fault scenarios are intentionally left for feature implementation phases.
+
+## Quality gate (local pre-merge)
+
+Chạy các lệnh sau trước khi merge:
+
+```bash
+make lint
+make test
+```
+
+Nếu chạy trực tiếp không qua Makefile:
+
+```bash
+ruff check .
+black --check .
+pytest
+```
