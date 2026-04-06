@@ -54,7 +54,7 @@ export default function PlaybackPage() {
   const onStart = () => {
     const parsed = playbackFormSchema.safeParse(form);
     if (!parsed.success) {
-      const message = parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ";
+      const message = parsed.error.issues[0]?.message ?? "Invalid input";
       setValidationMessage(message);
       return;
     }
@@ -64,7 +64,7 @@ export default function PlaybackPage() {
 
   const onStop = () => {
     if (!sessionId) {
-      pushToast({ type: "info", title: "No running session", description: "Không có session để dừng." });
+      pushToast({ type: "info", title: "No running session", description: "No session to stop." });
       return;
     }
     stopMutation.mutate({ session_id: sessionId });
@@ -88,7 +88,7 @@ export default function PlaybackPage() {
           />
         </StatePanel>
 
-        <StatePanel title="Session Status" description="Trạng thái chạy hiện tại cho buổi demo.">
+        <StatePanel title="Session Status" description="Current runtime status for the demo.">
           <div className="space-y-2 text-sm">
             <p>
               <span className="text-[var(--text-muted)]">Status:</span> <strong>{status}</strong>

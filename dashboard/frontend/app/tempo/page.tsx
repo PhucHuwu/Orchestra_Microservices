@@ -27,7 +27,7 @@ export default function TempoPage() {
       pushToast({
         type: "success",
         title: "Tempo updated",
-        description: `BPM ${value} đã được gửi.`
+        description: `BPM ${value} command sent.`
       });
     },
     onError: (error: Error) => {
@@ -40,15 +40,15 @@ export default function TempoPage() {
   const onApply = () => {
     const parsed = tempoFormSchema.safeParse({ new_bpm: value });
     if (!parsed.success) {
-      setValidationMessage(parsed.error.issues[0]?.message ?? "BPM không hợp lệ");
+      setValidationMessage(parsed.error.issues[0]?.message ?? "Invalid BPM value");
       return;
     }
 
     if (disabled || !sessionId) {
       pushToast({
         type: "info",
-        title: "Session chưa chạy",
-        description: "Cần Start playback trước khi đổi BPM."
+        title: "Session not running",
+        description: "Start playback before sending tempo command."
       });
       return;
     }
@@ -60,7 +60,7 @@ export default function TempoPage() {
   return (
     <DashboardShell>
       <div className="grid gap-5 lg:grid-cols-[1.1fr,0.9fr]">
-        <StatePanel title="Realtime Tempo" description="Điều chỉnh BPM qua POST /api/v1/tempo.">
+        <StatePanel title="Realtime Tempo" description="Adjust BPM via POST /api/v1/tempo.">
           <div className="space-y-4">
             <TempoControlForm
               value={value}
@@ -73,13 +73,13 @@ export default function TempoPage() {
 
             {disabled ? (
               <p className="rounded-xl border border-[var(--warning)] bg-[var(--warning-soft)] px-3 py-2 text-sm text-[var(--warning)]">
-                Session chưa chạy. Vui lòng Start playback trước khi gửi tempo command.
+                Session is not running. Start playback before sending tempo command.
               </p>
             ) : null}
           </div>
         </StatePanel>
 
-        <StatePanel title="Tempo State" description="BPM hiện tại và mốc cập nhật gần nhất.">
+        <StatePanel title="Tempo State" description="Current BPM and latest update timestamp.">
           <div className="space-y-2 text-sm">
             <p>
               <span className="text-[var(--text-muted)]">Session:</span> {sessionId ?? "-"}

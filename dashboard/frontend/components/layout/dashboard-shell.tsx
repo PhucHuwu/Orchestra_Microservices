@@ -27,7 +27,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             </Link>
             <h1 className="mt-1 font-heading text-4xl text-[var(--text-strong)]">Dashboard Frontend</h1>
             <p className="mt-2 text-sm text-[var(--text-base)]">
-              Điều khiển playback, tempo realtime, monitoring và fault demo theo chuẩn BA handover.
+              Playback control, realtime tempo, monitoring, and fault demo aligned with BA handover baseline.
             </p>
           </div>
           <SessionBanner />

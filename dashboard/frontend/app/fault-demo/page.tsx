@@ -23,22 +23,22 @@ const scenarios: Scenario[] = [
   {
     id: "consumer-lag",
     label: "Consumer lag",
-    description: "Mô phỏng hàng đợi tăng do consumer xử lý chậm."
+    description: "Simulate queue accumulation caused by slow consumers."
   },
   {
     id: "service-crash-recovery",
     label: "Crash & recovery",
-    description: "Mô phỏng service chết rồi khôi phục lại."
+    description: "Simulate service crash and recovery."
   },
   {
     id: "competing-consumers",
     label: "Scale consumer",
-    description: "Mô phỏng nhiều consumer cạnh tranh cùng queue."
+    description: "Simulate competing consumers on the same queue."
   },
   {
     id: "iot-reconnect",
     label: "IoT reconnect",
-    description: "Mô phỏng ngắt kết nối IoT rồi tự reconnect."
+    description: "Simulate IoT disconnect and reconnect."
   }
 ];
 
@@ -95,7 +95,7 @@ export default function FaultDemoPage() {
       <div className="grid gap-5 lg:grid-cols-[1.1fr,0.9fr]">
         <StatePanel
           title="Fault Scenarios"
-          description="Preset theo runbook: consumer lag, crash/recovery, scale consumer, IoT reconnect."
+          description="Runbook presets: consumer lag, crash/recovery, scale consumer, IoT reconnect."
         >
           <div className="space-y-3">
             {scenarios.map((scenario) => (
@@ -125,9 +125,9 @@ export default function FaultDemoPage() {
           </div>
         </StatePanel>
 
-        <StatePanel title="Event Timeline" description="Log sự kiện trigger fault theo thứ tự thời gian mới nhất.">
+        <StatePanel title="Event Timeline" description="Fault trigger events ordered from newest to oldest.">
           {timeline.length === 0 ? (
-            <p className="text-sm text-[var(--text-muted)]">Chưa có sự kiện nào.</p>
+            <p className="text-sm text-[var(--text-muted)]">No events yet.</p>
           ) : (
             <ol className="space-y-2">
               {timeline.map((item) => (

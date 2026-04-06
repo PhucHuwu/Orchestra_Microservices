@@ -1,3 +1,5 @@
+import React from "react";
+
 import { SCORE_OPTIONS } from "@/lib/constants/scores";
 
 type PlaybackControlFormProps = {

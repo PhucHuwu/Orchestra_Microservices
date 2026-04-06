@@ -67,7 +67,7 @@ export default function MonitoringPage() {
         <div className="space-y-5">
           <StatePanel
             title="System Metrics"
-            description="Queue depth, consumer count, message rate cập nhật realtime mỗi 1s qua WebSocket."
+            description="Queue depth, consumer count, and message rate updated every 1s via WebSocket."
           >
             {overviewQuery.isLoading && !overview ? (
               <p className="text-sm text-[var(--text-muted)]">Loading metrics...</p>
@@ -109,7 +109,7 @@ export default function MonitoringPage() {
             ) : null}
           </StatePanel>
 
-          <StatePanel title="Realtime Charts" description="Biểu đồ tổng queue depth và message rate.">
+          <StatePanel title="Realtime Charts" description="Trend charts for total queue depth and message rate.">
             {queueSeries.length === 0 ? (
               <p className="text-sm text-[var(--text-muted)]">Waiting realtime stream...</p>
             ) : (
@@ -122,13 +122,13 @@ export default function MonitoringPage() {
         </div>
 
         <div className="space-y-5">
-          <StatePanel title="Socket State" description="Trạng thái WS /ws/metrics.">
+          <StatePanel title="Socket State" description="Current WS /ws/metrics connection state.">
             <p className="text-sm">
               <span className="pill border-[var(--border)] bg-[var(--card)]">{socketStatus}</span>
             </p>
           </StatePanel>
 
-          <StatePanel title="Service Health" description="Tổng hợp trạng thái service từ /api/v1/services/health.">
+          <StatePanel title="Service Health" description="Service status overview from /api/v1/services/health.">
             {healthQuery.isLoading && healthRows.length === 0 ? (
               <p className="text-sm text-[var(--text-muted)]">Loading service health...</p>
             ) : null}
