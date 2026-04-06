@@ -12,7 +12,14 @@ Xây dựng `Conductor Service` độc lập: đọc MIDI, lập lịch `NoteEve
 
 ## 3) Backlog chi tiết (băm nhỏ)
 
+### Trạng thái tổng quan
+
+- ✅ Đã hoàn thành implement: Task 1 -> Task 7
+- ⚠️ Cần verify môi trường: chạy full test bằng `pytest` (máy hiện tại chưa có `pytest`)
+
 ### Task 1 - Khung service và cấu hình
+
+**Status:** ✅ Done
 
 - Tạo cấu trúc app FastAPI tối thiểu cho Conductor.
 - Tạo module config bằng `pydantic-settings`:
@@ -24,6 +31,8 @@ Xây dựng `Conductor Service` độc lập: đọc MIDI, lập lịch `NoteEve
 
 ### Task 2 - MIDI parser
 
+**Status:** ✅ Done
+
 - Tích hợp `mido` để đọc file `.mid` từ `scores/`.
 - Map track/note sang `instrument` theo quy tắc rõ ràng.
 - Chuẩn hóa thành model `NoteEvent` đúng schema:
@@ -31,6 +40,8 @@ Xây dựng `Conductor Service` độc lập: đọc MIDI, lập lịch `NoteEve
 - Viết unit test parser với ít nhất 1 file MIDI mẫu.
 
 ### Task 3 - Scheduler publish theo BPM
+
+**Status:** ✅ Done
 
 - Xây bộ lập lịch theo `initial_bpm`.
 - Publish vào exchange `orchestra.events` với routing key:
@@ -43,12 +54,16 @@ Xây dựng `Conductor Service` độc lập: đọc MIDI, lập lịch `NoteEve
 
 ### Task 4 - Tempo control runtime
 
+**Status:** ✅ Done (code) / ⚠️ Pending verify integration runtime trên môi trường có RabbitMQ + pytest
+
 - Consume queue `tempo.control`.
 - Parse `TempoCommand` và cập nhật BPM runtime không cần restart.
 - Audit log các lần đổi BPM (old/new/time).
 - Viết integration test mô phỏng đổi BPM khi đang chạy.
 
 ### Task 5 - Heartbeat và trạng thái chạy
+
+**Status:** ✅ Done
 
 - Publish heartbeat định kỳ vào `system.heartbeat`.
 - Tạo state machine phiên chạy: `running | stopped | failed`.
@@ -60,11 +75,15 @@ Xây dựng `Conductor Service` độc lập: đọc MIDI, lập lịch `NoteEve
 
 ### Task 6 - Độ tin cậy và logging
 
+**Status:** ✅ Done
+
 - Cài reconnect RabbitMQ theo backoff `1s, 2s, 5s, 10s`.
 - Structured log (`python-json-logger`) cho các event chính.
 - Xử lý lỗi publish/consume có retry hợp lý.
 
 ### Task 7 - Test và tài liệu module
+
+**Status:** ✅ Done (đã viết test + README) / ⚠️ Pending run full test suite do thiếu `pytest` local
 
 - Unit test cho parser, scheduler, tempo update.
 - Integration test với RabbitMQ local.
@@ -76,3 +95,8 @@ Xây dựng `Conductor Service` độc lập: đọc MIDI, lập lịch `NoteEve
 - Nhận lệnh tempo real-time thành công.
 - Có heartbeat, health endpoint, reconnect logic, structured log.
 - Test pass và có README module.
+
+**DoD trạng thái hiện tại:**
+
+- ✅ Đạt: 3/4 tiêu chí đầu (publish schema/routing, tempo runtime, heartbeat+health+reconnect+structured log)
+- ⚠️ Chưa chốt cuối: cần xác nhận "Test pass" trên môi trường đã cài đủ dependency
