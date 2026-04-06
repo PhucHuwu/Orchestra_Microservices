@@ -5,9 +5,13 @@ Revises:
 Create Date: 2026-04-06 00:00:00
 """
 
+from datetime import UTC, datetime
+
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+SAMPLE_SCORE_ID = "11111111-1111-1111-1111-111111111111"
 
 revision = "0001_initial_schema"
 down_revision = None
@@ -66,6 +70,23 @@ def upgrade() -> None:
         sa.Column("payload", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("reason", sa.Text(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    )
+
+    bind = op.get_bind()
+    bind.execute(
+        sa.text(
+            """
+            INSERT INTO scores (id, name, source_type, source_path, created_at)
+            VALUES (CAST(:id AS UUID), :name, :source_type, :source_path, :created_at)
+            """
+        ),
+        {
+            "id": SAMPLE_SCORE_ID,
+            "name": "Sample Symphony",
+            "source_type": "midi",
+            "source_path": "scores/sample.mid",
+            "created_at": datetime(2026, 4, 6, 0, 0, tzinfo=UTC),
+        },
     )
 
 
