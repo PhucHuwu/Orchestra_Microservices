@@ -4,6 +4,7 @@ import logging
 import threading
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 from uuid import UUID
 
@@ -30,6 +31,7 @@ SERVICE_ENDPOINTS = {
     "guitar-service": "guitar_service_url",
     "oboe-service": "oboe_service_url",
     "drums-service": "drums_service_url",
+    "mixer": "mixer_service_url",
 }
 
 
@@ -46,6 +48,18 @@ class ConductorRuntime:
         self._notes: list[ParsedNote] = []
         self._bpm = 120
         self._enabled = True
+        self._instrument_enabled = {
+            "guitar": True,
+            "oboe": True,
+            "drums": True,
+            "bass": True,
+        }
+        self._current_score_path: str | None = None
+        self._started_at_ts: float | None = None
+
+    @property
+    def settings(self) -> Settings:
+        return self._settings
 
     def start(self, request: ConductorStartRequest) -> ConductorStatus:
         with self._lock:
@@ -55,7 +69,9 @@ class ConductorRuntime:
                 return self._status
 
             self._notes = parse_midi_file(request.score_path, self._settings.score_dir)
+            self._current_score_path = request.score_path
             self._bpm = request.initial_bpm
+            self._started_at_ts = time.time()
             self._status = ConductorStatus(
                 status="running",
                 session_id=request.session_id,
@@ -94,6 +110,7 @@ class ConductorRuntime:
 
             self._stop_event.set()
             self._status.status = "stopped"
+            self._started_at_ts = None
             LOGGER.info(
                 "conductor_stopped",
                 extra={
@@ -183,6 +200,44 @@ class ConductorRuntime:
             response.raise_for_status()
             payload = response.json()
 
+            if service_name == "mixer" and enabled:
+                should_start = False
+                session_id: str | None = None
+                bpm = self._settings.default_bpm
+                with self._lock:
+                    should_start = self._status.status != "running"
+                    if self._status.session_id is not None:
+                        session_id = str(self._status.session_id)
+                    if self._status.bpm is not None:
+                        bpm = self._status.bpm
+                if should_start:
+                    self.start(
+                        ConductorStartRequest(
+                            score_path=self._settings.default_score_path,
+                            initial_bpm=self._settings.default_bpm,
+                        )
+                    )
+                    with self._lock:
+                        if self._status.session_id is not None:
+                            session_id = str(self._status.session_id)
+                        if self._status.bpm is not None:
+                            bpm = self._status.bpm
+
+                if session_id is not None:
+                    try:
+                        self._start_audio_playback(session_id=session_id, bpm=bpm)
+                    except Exception:  # noqa: BLE001
+                        LOGGER.exception("dashboard_audio_start_failed")
+
+        with self._lock:
+            if service_name == "guitar-service":
+                self._instrument_enabled["guitar"] = enabled
+            elif service_name == "oboe-service":
+                self._instrument_enabled["oboe"] = enabled
+            elif service_name == "drums-service":
+                self._instrument_enabled["drums"] = enabled
+                self._instrument_enabled["bass"] = enabled
+
         result = {
             "service_name": service_name,
             "enabled": bool(payload.get("enabled", enabled)) if isinstance(payload, dict) else enabled,
@@ -197,6 +252,112 @@ class ConductorRuntime:
             },
         )
         return result
+
+    def is_instrument_enabled(self, instrument: str) -> bool:
+        with self._lock:
+            return bool(self._instrument_enabled.get(instrument, True))
+
+    def stream_state(self) -> dict[str, Any]:
+        with self._lock:
+            return {
+                "running": self._status.status == "running",
+                "session_id": str(self._status.session_id) if self._status.session_id else None,
+                "score_path": self._current_score_path,
+                "bpm": int(self._bpm),
+                "started_at_ts": self._started_at_ts,
+                "enabled": dict(self._instrument_enabled),
+            }
+
+    def _start_audio_playback(self, session_id: str, bpm: int) -> None:
+        dashboard_api = str(self._settings.dashboard_api_url).rstrip("/")
+        timeout = httpx.Timeout(connect=5.0, read=120.0, write=20.0, pool=20.0)
+        with httpx.Client(timeout=timeout) as client:
+            scores_response = client.get(f"{dashboard_api}/api/v1/scores")
+            scores_response.raise_for_status()
+            payload = scores_response.json()
+
+            score_id = self._pick_default_score_id(payload)
+            if score_id is None:
+                score_id = self._upload_default_score(client, dashboard_api)
+            if score_id is None:
+                raise RuntimeError("No available score found in dashboard API")
+
+            client.post(
+                f"{dashboard_api}/api/v1/playback/stop",
+                json={"session_id": session_id},
+            )
+            try:
+                start_response = client.post(
+                    f"{dashboard_api}/api/v1/playback/start",
+                    json={"score_id": score_id, "initial_bpm": int(bpm)},
+                )
+                start_response.raise_for_status()
+            except httpx.ReadTimeout:
+                LOGGER.warning(
+                    "dashboard_playback_start_timeout",
+                    extra={
+                        "dashboard_api": dashboard_api,
+                        "score_id": score_id,
+                        "bpm": int(bpm),
+                    },
+                )
+
+    def fetch_latest_audio(self) -> tuple[bytes, str]:
+        dashboard_api = str(self._settings.dashboard_api_url).rstrip("/")
+        with httpx.Client(timeout=8.0) as client:
+            response = client.get(f"{dashboard_api}/api/v1/playback/audio/latest")
+            response.raise_for_status()
+            content_type = response.headers.get("content-type", "audio/wav")
+            return response.content, content_type
+
+    def _pick_default_score_id(self, payload: dict[str, Any]) -> str | None:
+        items = payload.get("data") if isinstance(payload, dict) else None
+        if not isinstance(items, list):
+            return None
+
+        target_name = self._settings.default_score_path.lower()
+        target_stem = Path(self._settings.default_score_path).stem.lower()
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            source_path = str(item.get("source_path", "")).lower()
+            display_name = str(item.get("name", "")).lower()
+            if source_path == target_name or display_name == target_stem:
+                score_id = item.get("id")
+                if score_id is not None:
+                    return str(score_id)
+
+        if len(items) == 0:
+            return None
+        first = items[0]
+        if isinstance(first, dict) and first.get("id") is not None:
+            return str(first["id"])
+        return None
+
+    def _upload_default_score(self, client: httpx.Client, dashboard_api: str) -> str | None:
+        score_file = Path(self._settings.score_dir) / self._settings.default_score_path
+        if not score_file.exists():
+            LOGGER.warning("default_score_missing", extra={"path": str(score_file)})
+            return None
+
+        with score_file.open("rb") as stream:
+            upload_resp = client.post(
+                f"{dashboard_api}/api/v1/scores/upload",
+                files={"file": (score_file.name, stream, "audio/midi")},
+            )
+
+        if upload_resp.status_code >= 400:
+            LOGGER.warning(
+                "default_score_upload_failed",
+                extra={"status_code": upload_resp.status_code, "body": upload_resp.text[:300]},
+            )
+            return None
+
+        payload = upload_resp.json()
+        data = payload.get("data") if isinstance(payload, dict) else None
+        if isinstance(data, dict) and data.get("id") is not None:
+            return str(data["id"])
+        return None
 
     def _run_scheduler(self) -> None:
         with self._lock:

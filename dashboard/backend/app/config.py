@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     mixer_service_url: str = Field(default="http://mixer:8000", alias="MIXER_SERVICE_URL")
     conductor_service_url: str = Field(default="http://conductor:8000", alias="CONDUCTOR_SERVICE_URL")
     fault_toolkit_session_id: str = Field(default="fault-demo-session", alias="FAULT_TOOLKIT_SESSION_ID")
-    cors_allow_origins: str = Field(default="http://localhost:3000", alias="CORS_ALLOW_ORIGINS")
+    cors_allow_origins: str = Field(default="http://localhost:8101", alias="CORS_ALLOW_ORIGINS")
 
 
 settings = Settings()

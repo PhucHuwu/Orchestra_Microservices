@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
+from fastapi import WebSocket, WebSocketDisconnect
 
 from app.models import (
     ConductorEnabledRequest,
@@ -28,6 +29,8 @@ def _runtime() -> ConductorRuntime:
     if runtime is None:
         raise HTTPException(status_code=503, detail="Conductor runtime unavailable")
     return runtime
+
+
 
 
 @router.get("/health")
@@ -97,6 +100,75 @@ def system_logs(limit: int = 200) -> dict:
     return {"items": recent_logs(limit)}
 
 
+@router.get("/v1/conductor/audio/latest")
+def latest_audio() -> Response:
+    try:
+        content, media_type = _runtime().fetch_latest_audio()
+        return Response(content=content, media_type=media_type)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"Failed to fetch audio: {exc}") from exc
+
+
+@router.websocket("/v1/conductor/audio/stream")
+async def audio_stream(websocket: WebSocket) -> None:
+    await websocket.accept()
+    runtime = _runtime()
+    settings = runtime.settings
+    connection = None
+    channel = None
+    try:
+        import asyncio
+        import json
+        import pika
+
+        params = pika.URLParameters(settings.rabbitmq_url)
+        connection = pika.BlockingConnection(params)
+        channel = connection.channel()
+        channel.exchange_declare(exchange=settings.exchange_name, exchange_type="topic", durable=True)
+        queue = channel.queue_declare(queue="", exclusive=True, auto_delete=True).method.queue
+        channel.queue_bind(exchange=settings.exchange_name, queue=queue, routing_key="playback.output")
+        channel.basic_qos(prefetch_count=300)
+
+        while True:
+            method, properties, body = channel.basic_get(queue=queue, auto_ack=False)
+            if method is None:
+                await asyncio.sleep(0.01)
+                continue
+
+            try:
+                payload = json.loads(body)
+                event = payload if isinstance(payload, dict) else {}
+                instrument = str(event.get("instrument", "guitar"))
+                if not runtime.is_instrument_enabled(instrument):
+                    channel.basic_ack(delivery_tag=method.delivery_tag)
+                    continue
+
+                await websocket.send_json(
+                    {
+                        "instrument": instrument,
+                        "pitch": int(event.get("pitch", 69)),
+                        "duration": float(event.get("duration", 0.18)),
+                        "volume": int(event.get("volume", 90)),
+                    }
+                )
+                channel.basic_ack(delivery_tag=method.delivery_tag)
+            except Exception:
+                channel.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+    except WebSocketDisconnect:
+        return
+    finally:
+        try:
+            if channel is not None and channel.is_open:
+                channel.close()
+        except Exception:
+            pass
+        try:
+            if connection is not None and connection.is_open:
+                connection.close()
+        except Exception:
+            pass
+
+
 @router.get("/ui", response_class=HTMLResponse)
 def ui_index() -> str:
     return """
@@ -125,12 +197,22 @@ def ui_index() -> str:
         <button onclick="toggleService('oboe-service', false)">Stop oboe-service</button>
         <button onclick="toggleService('drums-service', true)">Start drums-service</button>
         <button onclick="toggleService('drums-service', false)">Stop drums-service</button>
+        <button onclick="toggleService('mixer', true)">Start mixer</button>
+        <button onclick="toggleService('mixer', false)">Stop mixer</button>
       </div>
       <pre id='services'></pre>
     </div>
     <div class='card'>
       <h3>System Logs</h3>
       <pre id='logs'></pre>
+    </div>
+    <div class='card'>
+      <h3>Live Audio Stream</h3>
+      <div class='row'>
+        <button onclick='startStream()'>Start stream</button>
+        <button onclick='stopStream()'>Stop stream</button>
+      </div>
+      <pre id='audio-status'></pre>
     </div>
     <script>
       async function refresh() {
@@ -147,7 +229,106 @@ def ui_index() -> str:
         });
         await refresh();
       }
+      let ws = null;
+      let audioCtx = null;
+      let masterGain = null;
+
+      function midiToFreq(pitch) {
+        return 440 * Math.pow(2, (pitch - 69) / 12);
+      }
+
+      function instrumentWave(instrument) {
+        if (instrument === 'oboe') return 'triangle';
+        if (instrument === 'bass') return 'sawtooth';
+        return 'sine';
+      }
+
+      function playDrum(duration, volume) {
+        const bufferSize = Math.max(256, Math.floor(audioCtx.sampleRate * Math.min(0.25, duration)));
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        const amp = Math.min(1, Math.max(0.08, volume / 127));
+        for (let i = 0; i < bufferSize; i++) {
+          const env = 1 - i / bufferSize;
+          data[i] = (Math.random() * 2 - 1) * env * amp;
+        }
+        const src = audioCtx.createBufferSource();
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(amp, audioCtx.currentTime + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + Math.min(0.2, duration + 0.03));
+        src.buffer = buffer;
+        src.connect(gain).connect(masterGain);
+        src.start();
+        src.stop(audioCtx.currentTime + Math.min(0.25, duration + 0.04));
+      }
+
+      function playTone(ev) {
+        const instrument = ev.instrument || 'guitar';
+        const pitch = Number(ev.pitch || 69);
+        const duration = Math.max(0.03, Math.min(0.7, Number(ev.duration || 0.2)));
+        const volume = Math.max(1, Math.min(127, Number(ev.volume || 90)));
+        if (instrument === 'drums') {
+          playDrum(duration, volume);
+          return;
+        }
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = instrumentWave(instrument);
+        osc.frequency.setValueAtTime(midiToFreq(pitch), audioCtx.currentTime);
+
+        const amp = Math.min(0.9, Math.max(0.05, volume / 127));
+        const attack = 0.008;
+        const release = Math.min(0.3, duration * 0.75 + 0.04);
+        gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(amp, audioCtx.currentTime + attack);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration + release);
+
+        osc.connect(gain).connect(masterGain);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration + release + 0.02);
+      }
+
+      async function startStream() {
+        const status = document.getElementById('audio-status');
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 22050 });
+          masterGain = audioCtx.createGain();
+          masterGain.gain.value = 0.9;
+          masterGain.connect(audioCtx.destination);
+        }
+        if (audioCtx.state !== 'running') {
+          await audioCtx.resume();
+        }
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          status.textContent = 'Stream already running';
+          return;
+        }
+        const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+        ws = new WebSocket(`${protocol}://${location.host}/v1/conductor/audio/stream`);
+        ws.onopen = () => { status.textContent = 'Live stream connected'; };
+        ws.onmessage = (event) => {
+          try {
+            const ev = JSON.parse(event.data);
+            playTone(ev);
+          } catch (e) {
+          }
+        };
+        ws.onclose = () => { status.textContent = 'Stream stopped'; };
+        ws.onerror = () => { status.textContent = 'Stream error'; };
+      }
+
+      function stopStream() {
+        const status = document.getElementById('audio-status');
+        if (ws) {
+          ws.close();
+          ws = null;
+        }
+        status.textContent = 'Stream stopped by user';
+      }
       refresh();
+      setTimeout(startStream, 800);
       setInterval(refresh, 3000);
     </script>
   </body>

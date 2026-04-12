@@ -4,7 +4,7 @@ Tai lieu nay dung cho mo hinh khong co server rieng. May chay `conductor` dong v
 
 ## 1) So do phan vai
 
-- May A (host): `rabbitmq`, `conductor`, `dashboard-api`, `dashboard-web` (va `postgres` neu khong dung cloud DB).
+- May A (host): `rabbitmq`, `conductor`, `dashboard-api` (va `postgres` neu khong dung cloud DB).
 - May B: `mixer`.
 - May C: `guitar-service`.
 - May D: `oboe-service`.

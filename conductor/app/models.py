@@ -61,7 +61,7 @@ class ConductorEnabledStatus(BaseModel):
 
 
 class ServiceToggleRequest(BaseModel):
-    service_name: Literal["guitar-service", "oboe-service", "drums-service"]
+    service_name: Literal["guitar-service", "oboe-service", "drums-service", "mixer"]
     enabled: bool
 
 

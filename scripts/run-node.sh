@@ -62,7 +62,19 @@ AUX_IP="${7:-$HOST_IP}"
 
 ensure_docker_ready
 
+IS_SINGLE_NODE_LOCAL=0
+if [ "$HOST_IP" = "127.0.0.1" ] || [ "$HOST_IP" = "localhost" ]; then
+  if [ "$MIXER_IP" = "$HOST_IP" ] && [ "$GUITAR_IP" = "$HOST_IP" ] && [ "$OBOE_IP" = "$HOST_IP" ] && [ "$AUX_IP" = "$HOST_IP" ]; then
+    IS_SINGLE_NODE_LOCAL=1
+  fi
+fi
+
 cp .env.example .env
+
+mkdir -p scores
+if [ -f "Concierto-De-Aranjuez.mid" ] && [ ! -f "scores/Concierto-De-Aranjuez.mid" ]; then
+  cp "Concierto-De-Aranjuez.mid" "scores/Concierto-De-Aranjuez.mid"
+fi
 
 replace() {
   KEY="$1"
@@ -71,6 +83,16 @@ replace() {
     sed -i.bak "s|^${KEY}=.*|${KEY}=${VALUE}|" .env
   else
     printf "%s=%s\n" "$KEY" "$VALUE" >> .env
+  fi
+}
+
+get_value() {
+  KEY="$1"
+  LINE=$(grep "^${KEY}=" .env || true)
+  if [ -z "$LINE" ]; then
+    printf ""
+  else
+    printf "%s" "${LINE#*=}"
   fi
 }
 
@@ -83,24 +105,57 @@ case "$ROLE" in
     replace RABBITMQ_HOST "rabbitmq"
     replace RABBITMQ_URL "amqp://orchestra:orchestra@rabbitmq:5672/%2F"
     replace RABBITMQ_MGMT_API_URL "http://rabbitmq:15672/api"
-    replace CONDUCTOR_BASE_URL "http://${HOST_IP}:8101"
-    replace CONDUCTOR_SERVICE_URL "http://${HOST_IP}:8101"
-    replace MIXER_SERVICE_URL "http://${MIXER_IP}:8301"
-    replace GUITAR_SERVICE_URL "http://${GUITAR_IP}:8201"
-    replace OBOE_SERVICE_URL "http://${OBOE_IP}:8202"
-    replace DRUMS_SERVICE_URL "http://${AUX_IP}:8203"
-    replace BASS_SERVICE_URL "http://${AUX_IP}:8203"
+    if [ "$IS_SINGLE_NODE_LOCAL" -eq 1 ]; then
+      replace CONDUCTOR_BASE_URL "http://conductor:8000"
+      replace CONDUCTOR_SERVICE_URL "http://conductor:8000"
+      replace MIXER_SERVICE_URL "http://mixer:8000"
+      replace GUITAR_SERVICE_URL "http://guitar-service:8000"
+      replace OBOE_SERVICE_URL "http://oboe-service:8000"
+      replace DRUMS_SERVICE_URL "http://drums-service:8000"
+      replace BASS_SERVICE_URL "http://drums-service:8000"
+      replace DASHBOARD_API_URL "http://dashboard-api:8000"
+    else
+      replace CONDUCTOR_BASE_URL "http://${HOST_IP}:8101"
+      replace CONDUCTOR_SERVICE_URL "http://${HOST_IP}:8101"
+      replace MIXER_SERVICE_URL "http://${MIXER_IP}:8301"
+      replace GUITAR_SERVICE_URL "http://${GUITAR_IP}:8201"
+      replace OBOE_SERVICE_URL "http://${OBOE_IP}:8202"
+      replace DRUMS_SERVICE_URL "http://${AUX_IP}:8203"
+      replace BASS_SERVICE_URL "http://${AUX_IP}:8203"
+      replace DASHBOARD_API_URL "http://${HOST_IP}:8000"
+    fi
     replace NEXT_PUBLIC_API_BASE_URL "http://${HOST_IP}:8000"
     replace NEXT_PUBLIC_WS_URL "ws://${HOST_IP}:8000/ws/metrics"
-    replace CORS_ALLOW_ORIGINS "http://${HOST_IP}:3000"
+    replace CORS_ALLOW_ORIGINS "http://${HOST_IP}:8101"
 
     if [ "$DB_MODE" = "local" ]; then
-      docker compose --profile local-db up -d --build rabbitmq postgres conductor dashboard-api dashboard-web
+      replace DATABASE_URL "postgresql+psycopg://orchestra:orchestra@postgres:5432/orchestra"
     else
-      docker compose up -d --build rabbitmq conductor dashboard-api dashboard-web
+      DATABASE_URL_VALUE=$(get_value DATABASE_URL)
+      case "$DATABASE_URL_VALUE" in
+        ""|*@postgres:*|*@postgres/*)
+          echo "DbMode=cloud requires external DATABASE_URL in .env (Prisma/Postgres cloud)." >&2
+          echo "Update DATABASE_URL then rerun, or use db-mode local." >&2
+          exit 1
+          ;;
+      esac
+    fi
+
+    if [ "$DB_MODE" = "local" ]; then
+      if [ "$IS_SINGLE_NODE_LOCAL" -eq 1 ]; then
+        docker compose --profile local-db up -d --build rabbitmq postgres conductor dashboard-api mixer guitar-service oboe-service drums-service
+      else
+        docker compose --profile local-db up -d --build rabbitmq postgres conductor dashboard-api
+      fi
+    else
+      if [ "$IS_SINGLE_NODE_LOCAL" -eq 1 ]; then
+        docker compose up -d --build rabbitmq conductor dashboard-api mixer guitar-service oboe-service drums-service
+      else
+        docker compose up -d --build rabbitmq conductor dashboard-api
+      fi
     fi
     bootstrap_topology
-    docker compose logs -f rabbitmq conductor dashboard-api dashboard-web
+    docker compose logs -f rabbitmq conductor dashboard-api
     ;;
   mixer)
     docker compose up -d --build --no-deps mixer

@@ -27,8 +27,6 @@
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "${ORCHESTRA_BIND_HOST:-0.0.0.0}:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -46,7 +44,7 @@
     ports:
       - "${ORCHESTRA_BIND_HOST:-0.0.0.0}:8101:8000"
     volumes:
-      - shared_scores:/shared-scores
+      - ./scores:/shared-scores
     networks:
       - orchestra_net
 
@@ -141,20 +139,8 @@
     ports:
       - "${ORCHESTRA_BIND_HOST:-0.0.0.0}:${DASHBOARD_API_PORT:-8000}:8000"
     volumes:
-      - shared_scores:/shared-scores
+      - ./scores:/shared-scores
       - shared_audio:/shared-audio
-    networks:
-      - orchestra_net
-
-  dashboard-web:
-    build:
-      context: ./dashboard/frontend
-    env_file:
-      - .env
-    depends_on:
-      - dashboard-api
-    ports:
-      - "${ORCHESTRA_BIND_HOST:-0.0.0.0}:${DASHBOARD_WEB_PORT:-3000}:3000"
     networks:
       - orchestra_net
 
@@ -169,6 +155,5 @@ networks:
 volumes:
   rabbitmq_data:
   postgres_data:
-  shared_scores:
   shared_audio:
 
