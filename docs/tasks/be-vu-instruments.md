@@ -1,13 +1,13 @@
-# Task BE - Vũ (Module Instrument Services)
+﻿# Task BE - Vũ (Module Instrument Services)
 
 ## 1) Mục tiêu module
 
-Xây dựng cụm `Instrument Services` (violin, piano, drums, cello) theo một khung chung, mỗi service consume queue riêng, xử lý note, phát `InstrumentOutputEvent` cho Mixer.
+Xây dựng cụm `Instrument Services` (guitar, oboe, drums, bass) theo một khung chung, mỗi service consume queue riêng, xử lý note, phát `InstrumentOutputEvent` cho Mixer.
 
 ## 2) Ranh giới trách nhiệm (không chồng chéo)
 
-- Chỉ làm trong `services/violin/`, `services/piano/`, `services/drums/`, `services/cello/` và thư viện dùng chung nội bộ instrument.
-- Không sửa `conductor/`, `mixer/`, `dashboard/`, `iot-device/`.
+- Chỉ làm trong `services/guitar/`, `services/oboe/`, `services/drums/`, `services/bass/` và thư viện dùng chung nội bộ instrument.
+- Không sửa `conductor/`, `mixer/`, `dashboard/`.
 - Không thay đổi message contract đã chốt.
 
 ## 3) Backlog chi tiết (băm nhỏ)
@@ -25,10 +25,10 @@ Xây dựng cụm `Instrument Services` (violin, piano, drums, cello) theo một
 
 ### Task 2 - Triển khai 4 worker độc lập
 
-- Violin consume `instrument.violin.note`.
-- Piano consume `instrument.piano.note`.
+- Guitar consume `instrument.guitar.note`.
+- Oboe consume `instrument.oboe.note`.
 - Drums consume `instrument.drums.beat`.
-- Cello consume `instrument.cello.note`.
+- Bass consume `instrument.bass.note`.
 - Mỗi worker có Dockerfile riêng và endpoint `GET /health`.
 
 ### Task 3 - Xử lý `NoteEvent` và idempotency
@@ -74,7 +74,7 @@ Xây dựng cụm `Instrument Services` (violin, piano, drums, cello) theo một
 ## 5) Trạng thái cập nhật
 
 - [x] Task 1 - Tạo framework dùng chung cho 4 instrument.
-- [x] Task 2 - Triển khai 4 worker độc lập (violin/piano/drums/cello) + health endpoint.
+- [x] Task 2 - Triển khai 4 worker độc lập (guitar/oboe/drums/bass) + health endpoint.
 - [x] Task 3 - Xử lý `NoteEvent` và idempotency theo `note_id`.
 - [x] Task 4 - Phát `InstrumentOutputEvent` đúng schema và routing key output.
 - [x] Task 5 - Retry, DLQ, reconnect theo policy (max retry 3, backoff 1/2/5/10).
@@ -85,3 +85,4 @@ Xây dựng cụm `Instrument Services` (violin, piano, drums, cello) theo một
 
 - Đã hoàn tất implementation theo tài liệu.
 - Chưa xác minh pass test ngay trên môi trường hiện tại do thiếu `pytest`/`ruff` trong runtime local.
+

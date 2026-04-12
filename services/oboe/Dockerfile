@@ -1,12 +1,13 @@
-FROM python:3.11-slim
+﻿FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY services/cello/requirements.txt ./requirements.txt
+COPY services/oboe/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY services/__init__.py ./services/__init__.py
 COPY services/instruments_shared ./services/instruments_shared
-COPY services/cello/app ./app
+COPY services/oboe/app ./app
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+

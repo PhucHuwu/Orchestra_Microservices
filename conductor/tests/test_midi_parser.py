@@ -32,7 +32,7 @@ def test_parse_midi_file_maps_instruments_and_notes(tmp_path: Path) -> None:
     notes = parse_midi_file("sample.mid", score_dir=str(score_dir))
 
     assert len(notes) == 2
-    assert notes[0].instrument == "violin"
+    assert notes[0].instrument == "guitar"
     assert notes[0].pitch == 64
     assert notes[0].duration == 1.0
     assert notes[0].volume == 96

@@ -46,7 +46,7 @@ def test_mixer_consumes_and_publishes_playback_event() -> None:
 
     payload = {
         "note_id": str(uuid4()),
-        "instrument": "violin",
+        "instrument": "guitar",
         "rendered_at": "2026-04-06T10:10:00Z",
         "latency_ms": 20,
         "scheduled_beat_time": 4.5,
@@ -54,11 +54,11 @@ def test_mixer_consumes_and_publishes_playback_event() -> None:
     }
     channel.basic_publish(
         exchange=settings.exchange_name,
-        routing_key="instrument.violin.output",
+        routing_key="instrument.guitar.output",
         body=(
             "{"
             f'"note_id":"{payload["note_id"]}",'
-            '"instrument":"violin",'
+            '"instrument":"guitar",'
             '"rendered_at":"2026-04-06T10:10:00Z",'
             '"latency_ms":20,'
             '"scheduled_beat_time":4.5,'

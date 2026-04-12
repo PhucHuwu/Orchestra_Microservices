@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import time
 from datetime import datetime, timezone
@@ -39,8 +39,8 @@ def test_scheduler_publishes_ordered_routing_keys() -> None:
     session_id = uuid4()
 
     runtime._notes = [  # type: ignore[attr-defined]
-        ParsedNote(instrument="violin", pitch=64, duration=1.0, volume=90, beat_position=0.0),
-        ParsedNote(instrument="violin", pitch=65, duration=1.0, volume=91, beat_position=1.0),
+        ParsedNote(instrument="guitar", pitch=64, duration=1.0, volume=90, beat_position=0.0),
+        ParsedNote(instrument="guitar", pitch=65, duration=1.0, volume=91, beat_position=1.0),
         ParsedNote(instrument="drums", pitch=36, duration=0.5, volume=110, beat_position=1.5),
     ]
     runtime._bpm = 10000  # type: ignore[attr-defined]
@@ -52,8 +52,8 @@ def test_scheduler_publishes_ordered_routing_keys() -> None:
     published = runtime._publisher.published  # type: ignore[attr-defined]
     routing_keys = [item[0] for item in published]
     assert routing_keys == [
-        "instrument.violin.note",
-        "instrument.violin.note",
+        "instrument.guitar.note",
+        "instrument.guitar.note",
         "instrument.drums.beat",
     ]
     assert runtime.status().published_notes == 3
@@ -64,8 +64,8 @@ def test_tempo_update_while_running(monkeypatch) -> None:
     session_id = uuid4()
 
     notes = [
-        ParsedNote(instrument="violin", pitch=60, duration=1.0, volume=100, beat_position=0.0),
-        ParsedNote(instrument="piano", pitch=62, duration=1.0, volume=100, beat_position=1.0),
+        ParsedNote(instrument="guitar", pitch=60, duration=1.0, volume=100, beat_position=0.0),
+        ParsedNote(instrument="oboe", pitch=62, duration=1.0, volume=100, beat_position=1.0),
     ]
 
     monkeypatch.setattr("app.service.parse_midi_file", lambda *_args, **_kwargs: notes)
@@ -92,3 +92,4 @@ def test_tempo_update_while_running(monkeypatch) -> None:
     assert status.status in {"running", "stopped"}
     assert status.bpm == 180
     assert status.session_id == session_id
+

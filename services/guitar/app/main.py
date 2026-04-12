@@ -17,12 +17,12 @@ from services.instruments_shared.logging_config import configure_logging
 configure_logging()
 
 settings = InstrumentSettings(
-    SERVICE_NAME=os.getenv("SERVICE_NAME", "piano-service"),
-    INSTRUMENT_NAME=os.getenv("INSTRUMENT_NAME", "piano"),
-    INPUT_QUEUE=os.getenv("INPUT_QUEUE", "instrument.piano.note"),
+    SERVICE_NAME=os.getenv("SERVICE_NAME", "guitar-service"),
+    INSTRUMENT_NAME=os.getenv("INSTRUMENT_NAME", "guitar"),
+    INPUT_QUEUE=os.getenv("INPUT_QUEUE", "instrument.guitar.note"),
     OUTPUT_ROUTING_KEY=os.getenv(
         "OUTPUT_ROUTING_KEY",
-        default_output_routing_key(os.getenv("INSTRUMENT_NAME", "piano")),
+        default_output_routing_key(os.getenv("INSTRUMENT_NAME", "guitar")),
     ),
 )
 worker = InstrumentWorker(settings)
@@ -69,7 +69,7 @@ async def lifespan(_: FastAPI):
         _stop_worker_unlocked()
 
 
-app = FastAPI(title="Piano Service", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Guitar Service", version="0.1.0", lifespan=lifespan)
 
 
 @app.get("/health")

@@ -11,10 +11,10 @@ from services.instruments_shared import InstrumentSettings, InstrumentWorker
 
 def make_settings() -> InstrumentSettings:
     return InstrumentSettings(
-        SERVICE_NAME="violin-service",
-        INSTRUMENT_NAME="violin",
-        INPUT_QUEUE="instrument.violin.note",
-        OUTPUT_ROUTING_KEY="instrument.violin.output",
+        SERVICE_NAME="guitar-service",
+        INSTRUMENT_NAME="guitar",
+        INPUT_QUEUE="instrument.guitar.note",
+        OUTPUT_ROUTING_KEY="instrument.guitar.output",
         MAX_RETRIES=3,
     )
 
@@ -23,7 +23,7 @@ def make_note_payload(note_id: str = "note-1") -> bytes:
     payload = {
         "note_id": note_id,
         "session_id": "session-1",
-        "instrument": "violin",
+        "instrument": "guitar",
         "pitch": 60,
         "duration": 0.5,
         "volume": 100,
@@ -47,7 +47,7 @@ def test_process_body_success_ack(monkeypatch: Any) -> None:
     assert action == "ack"
     assert reason == "ok"
     assert len(published) == 1
-    assert published[0]["instrument"] == "violin"
+    assert published[0]["instrument"] == "guitar"
     assert published[0]["audio_hint"]["pitch"] == 60
 
 

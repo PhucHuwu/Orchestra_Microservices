@@ -1,1 +1,0 @@
-"""Violin instrument service package."""

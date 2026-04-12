@@ -1,4 +1,4 @@
-from pydantic import Field
+﻿from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -45,10 +45,10 @@ class Settings(BaseSettings):
         default="/usr/share/sounds/sf2/FluidR3_GM.sf2",
         alias="SOUNDFONT_PATH",
     )
-    violin_service_url: str = Field(default="http://violin-service:8000", alias="VIOLIN_SERVICE_URL")
-    piano_service_url: str = Field(default="http://piano-service:8000", alias="PIANO_SERVICE_URL")
+    guitar_service_url: str = Field(default="http://guitar-service:8000", alias="GUITAR_SERVICE_URL")
+    oboe_service_url: str = Field(default="http://oboe-service:8000", alias="OBOE_SERVICE_URL")
     drums_service_url: str = Field(default="http://drums-service:8000", alias="DRUMS_SERVICE_URL")
-    cello_service_url: str = Field(default="http://cello-service:8000", alias="CELLO_SERVICE_URL")
+    bass_service_url: str = Field(default="http://bass-service:8000", alias="BASS_SERVICE_URL")
     mixer_service_url: str = Field(default="http://mixer:8000", alias="MIXER_SERVICE_URL")
     conductor_service_url: str = Field(default="http://conductor:8000", alias="CONDUCTOR_SERVICE_URL")
     fault_toolkit_session_id: str = Field(default="fault-demo-session", alias="FAULT_TOOLKIT_SESSION_ID")
@@ -56,3 +56,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+

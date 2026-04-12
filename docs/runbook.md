@@ -1,4 +1,4 @@
-# Runbook vận hành Orchestra Microservices
+﻿# Runbook vận hành Orchestra Microservices
 
 ## 1) Startup toàn hệ thống
 
@@ -8,19 +8,39 @@
    cp .env.example .env
    ```
 
-2. Khởi chạy stack:
+2. (Khuyến nghị local dev) Tạo virtualenv Python và cài tool:
+
+   - macOS/Linux:
+
+     ```bash
+     python3 -m venv .venv
+     source .venv/bin/activate
+     python -m pip install --upgrade pip
+     python -m pip install -r requirements-dev.txt
+     ```
+
+   - Windows PowerShell:
+
+     ```powershell
+     python -m venv .venv
+     .\.venv\Scripts\Activate.ps1
+     python -m pip install --upgrade pip
+     python -m pip install -r requirements-dev.txt
+     ```
+
+3. Khởi chạy stack:
 
    ```bash
    make up
    ```
 
-3. Bootstrap topology RabbitMQ (idempotent, có thể chạy lại nhiều lần):
+4. Bootstrap topology RabbitMQ (idempotent, có thể chạy lại nhiều lần):
 
    ```bash
    make bootstrap-topology
    ```
 
-4. Xác nhận service chính đã sẵn sàng:
+5. Xác nhận service chính đã sẵn sàng:
 
    - RabbitMQ Management: `http://localhost:15672`
    - Dashboard API health: `http://localhost:8000/health`
@@ -63,8 +83,8 @@
 3. Kiểm tra topology queue trên RabbitMQ UI:
 
    - Exchange `orchestra.events` tồn tại, type `topic`, durable `true`.
-   - Queue chuẩn tồn tại: `instrument.violin.note`, `instrument.piano.note`, `instrument.drums.beat`, `instrument.cello.note`, `instrument.output`, `playback.output`, `tempo.control`, `system.heartbeat`.
-   - DLQ tồn tại cho các queue instrument và playback: `instrument.violin.note.dlq`, `instrument.piano.note.dlq`, `instrument.drums.beat.dlq`, `instrument.cello.note.dlq`, `playback.output.dlq`.
+   - Queue chuẩn tồn tại: `instrument.guitar.note`, `instrument.oboe.note`, `instrument.drums.beat`, `instrument.bass.note`, `instrument.output`, `playback.output`, `tempo.control`, `system.heartbeat`.
+   - DLQ tồn tại cho các queue instrument và playback: `instrument.guitar.note.dlq`, `instrument.oboe.note.dlq`, `instrument.drums.beat.dlq`, `instrument.bass.note.dlq`, `playback.output.dlq`.
 
 ## 4) Fault demo toolkit
 
@@ -83,7 +103,6 @@ Script fault toolkit nằm tại `scripts/fault_injection.py`.
   python scripts/fault_injection.py run --scenario service-crash-recovery
   python scripts/fault_injection.py run --scenario competing-consumers
   python scripts/fault_injection.py run --scenario bpm-runtime
-  python scripts/fault_injection.py run --scenario iot-reconnect
   ```
 
 - Cleanup từng kịch bản hoặc toàn bộ:
@@ -93,7 +112,6 @@ Script fault toolkit nằm tại `scripts/fault_injection.py`.
   python scripts/fault_injection.py cleanup --scenario service-crash-recovery
   python scripts/fault_injection.py cleanup --scenario competing-consumers
   python scripts/fault_injection.py cleanup --scenario bpm-runtime
-  python scripts/fault_injection.py cleanup --scenario iot-reconnect
   make fault-cleanup
   ```
 
@@ -107,8 +125,6 @@ Script fault toolkit nằm tại `scripts/fault_injection.py`.
 - Queue depth tăng cao, nhạc bị trễ:
   - Kiểm tra kịch bản `consumer-lag` có đang bật không.
   - Cleanup bằng `python scripts/fault_injection.py cleanup --scenario consumer-lag`.
-- IoT mất kết nối lâu:
-  - Chạy cleanup kịch bản `iot-reconnect` để nối lại network cho container `iot-device`.
 
 ## 6) Checklist demo trước khi trình bày
 
@@ -118,3 +134,4 @@ Script fault toolkit nằm tại `scripts/fault_injection.py`.
 - [ ] Tối thiểu các endpoint health trả `200`.
 - [ ] Dashboard API endpoint `/metrics` trả dữ liệu Prometheus.
 - [ ] Đã thử 1 kịch bản fault + cleanup thành công.
+

@@ -7,7 +7,7 @@ Xây dựng toàn bộ `Dashboard Frontend` (Next.js + TypeScript) để vận h
 ## 2) Ranh giới trách nhiệm
 
 - Chỉ làm frontend trong `dashboard/` (Next.js app).
-- Không chỉnh business logic backend của `conductor/`, `services/*`, `mixer/`, `iot-device/`.
+- Không chỉnh business logic backend của `conductor/`, `services/*`, `mixer/`.
 - Tích hợp đúng API/WS contract đã chốt trong `docs/ba-dev-handover-spec.md`.
 
 ## 3) Backlog chi tiết (băm nhỏ)
@@ -70,7 +70,7 @@ Xây dựng toàn bộ `Dashboard Frontend` (Next.js + TypeScript) để vận h
   - consumer lag
   - crash/recovery
   - scale consumer
-  - IoT reconnect
+  - network reconnect (service-side)
 - Hiển thị timeline sự kiện demo theo thứ tự thời gian.
 
 ### Task 8 - Trạng thái UX và khả năng dùng demo

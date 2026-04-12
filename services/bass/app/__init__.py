@@ -1,0 +1,1 @@
+"""Bass instrument service package."""

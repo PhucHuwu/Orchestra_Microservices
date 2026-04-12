@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import asyncio
 import logging
@@ -23,46 +23,46 @@ from app.schemas import InteractionEdge, ServiceHealthItem, ServiceToggleItem
 LOGGER = logging.getLogger(__name__)
 
 SERVICE_ENDPOINTS = {
-    "violin-service": {"url_attr": "violin_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
-    "piano-service": {"url_attr": "piano_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
+    "guitar-service": {"url_attr": "guitar_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
+    "oboe-service": {"url_attr": "oboe_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
     "drums-service": {"url_attr": "drums_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
-    "cello-service": {"url_attr": "cello_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
+    "bass-service": {"url_attr": "bass_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
     "mixer": {"url_attr": "mixer_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
     "conductor": {"url_attr": "conductor_service_url", "toggle_path": "/v1/conductor/enabled", "health_path": "/health"},
 }
 
 SERVICE_TO_INSTRUMENT = {
-    "violin-service": "violin",
-    "piano-service": "piano",
+    "guitar-service": "guitar",
+    "oboe-service": "oboe",
     "drums-service": "drums",
-    "cello-service": "cello",
+    "bass-service": "bass",
 }
 
 INSTRUMENT_INPUT_QUEUE = {
-    "violin": "instrument.violin.note",
-    "piano": "instrument.piano.note",
+    "guitar": "instrument.guitar.note",
+    "oboe": "instrument.oboe.note",
     "drums": "instrument.drums.beat",
-    "cello": "instrument.cello.note",
+    "bass": "instrument.bass.note",
 }
 
 SERVICE_CONTROL_ORDER = (
     "conductor",
-    "violin-service",
-    "piano-service",
+    "guitar-service",
+    "oboe-service",
     "drums-service",
-    "cello-service",
+    "bass-service",
     "mixer",
 )
 
 QUEUE_FLOW_EDGES = [
-    ("conductor", "violin-service", "instrument.violin.note"),
-    ("conductor", "piano-service", "instrument.piano.note"),
+    ("conductor", "guitar-service", "instrument.guitar.note"),
+    ("conductor", "oboe-service", "instrument.oboe.note"),
     ("conductor", "drums-service", "instrument.drums.beat"),
-    ("conductor", "cello-service", "instrument.cello.note"),
-    ("violin-service", "mixer", "instrument.output"),
-    ("piano-service", "mixer", "instrument.output"),
+    ("conductor", "bass-service", "instrument.bass.note"),
+    ("guitar-service", "mixer", "instrument.output"),
+    ("oboe-service", "mixer", "instrument.output"),
     ("drums-service", "mixer", "instrument.output"),
-    ("cello-service", "mixer", "instrument.output"),
+    ("bass-service", "mixer", "instrument.output"),
     ("mixer", "dashboard-api", "playback.output"),
 ]
 
@@ -123,7 +123,7 @@ class DashboardService:
         try:
             self._audio_renderer.render_midi_file(str(score_file_path), bpm=initial_bpm)
 
-            for instrument in ("violin", "piano", "drums", "cello"):
+            for instrument in ("guitar", "oboe", "drums", "bass"):
                 self._audio_renderer.set_instrument_enabled(instrument, True)
 
             self._publisher.publish_json(
@@ -659,3 +659,4 @@ class DashboardService:
 
 def time_now_ms() -> float:
     return datetime.now(UTC).timestamp() * 1000
+

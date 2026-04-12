@@ -1,1 +1,0 @@
-"""Cello instrument service package."""

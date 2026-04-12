@@ -11,7 +11,7 @@ def test_note_event_validates_and_normalizes_timestamp() -> None:
         {
             "note_id": "n-1",
             "session_id": "s-1",
-            "instrument": "violin",
+            "instrument": "guitar",
             "pitch": 60,
             "duration": 0.5,
             "volume": 100,
@@ -28,7 +28,7 @@ def test_note_event_rejects_invalid_pitch() -> None:
         NoteEvent.model_validate(
             {
                 "note_id": "n-2",
-                "instrument": "violin",
+                "instrument": "guitar",
                 "pitch": 200,
                 "duration": 0.5,
                 "volume": 100,

@@ -17,12 +17,12 @@ from services.instruments_shared.logging_config import configure_logging
 configure_logging()
 
 settings = InstrumentSettings(
-    SERVICE_NAME=os.getenv("SERVICE_NAME", "cello-service"),
-    INSTRUMENT_NAME=os.getenv("INSTRUMENT_NAME", "cello"),
-    INPUT_QUEUE=os.getenv("INPUT_QUEUE", "instrument.cello.note"),
+    SERVICE_NAME=os.getenv("SERVICE_NAME", "bass-service"),
+    INSTRUMENT_NAME=os.getenv("INSTRUMENT_NAME", "bass"),
+    INPUT_QUEUE=os.getenv("INPUT_QUEUE", "instrument.bass.note"),
     OUTPUT_ROUTING_KEY=os.getenv(
         "OUTPUT_ROUTING_KEY",
-        default_output_routing_key(os.getenv("INSTRUMENT_NAME", "cello")),
+        default_output_routing_key(os.getenv("INSTRUMENT_NAME", "bass")),
     ),
 )
 worker = InstrumentWorker(settings)
@@ -69,7 +69,7 @@ async def lifespan(_: FastAPI):
         _stop_worker_unlocked()
 
 
-app = FastAPI(title="Cello Service", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Bass Service", version="0.1.0", lifespan=lifespan)
 
 
 @app.get("/health")

@@ -1,10 +1,10 @@
-EXCHANGE_NAME = "orchestra.events"
+﻿EXCHANGE_NAME = "orchestra.events"
 
 QUEUES = {
-    "instrument.violin.note": "instrument.violin.note",
-    "instrument.piano.note": "instrument.piano.note",
+    "instrument.guitar.note": "instrument.guitar.note",
+    "instrument.oboe.note": "instrument.oboe.note",
     "instrument.drums.beat": "instrument.drums.beat",
-    "instrument.cello.note": "instrument.cello.note",
+    "instrument.bass.note": "instrument.bass.note",
     "instrument.output": "instrument.*.output",
     "playback.output": "playback.output",
     "tempo.control": "tempo.control",
@@ -18,3 +18,4 @@ def dead_letter_queue_name(queue_name: str) -> str:
 
 def dead_letter_routing_key(queue_name: str) -> str:
     return dead_letter_queue_name(queue_name)
+

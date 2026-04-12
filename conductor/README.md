@@ -81,12 +81,12 @@ Response (ví dụ):
 ## Quy tắc map MIDI -> instrument
 
 - Dựa vào `track_name`:
-  - chứa `violin` -> `violin`
-  - chứa `piano` hoặc `keys` -> `piano`
+  - chứa `guitar` hoặc `violin` -> `guitar`
+  - chứa `oboe` hoặc `piano` hoặc `keys` -> `oboe`
   - chứa `drum` hoặc `percussion` -> `drums`
-  - chứa `cello` hoặc `bass` -> `cello`
+  - chứa `bass` hoặc `cello` -> `bass`
 - Nếu channel là `9` -> `drums`
-- Fallback theo index track: `violin -> piano -> cello -> drums`
+- Fallback theo index track: `guitar -> oboe -> bass -> drums`
 
 ## Test
 

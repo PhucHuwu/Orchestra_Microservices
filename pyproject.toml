@@ -1,4 +1,4 @@
-[tool.black]
+﻿[tool.black]
 line-length = 100
 target-version = ["py311"]
 
@@ -18,9 +18,10 @@ addopts = "-q"
 testpaths = [
   "conductor/tests",
   "mixer/tests",
-  "services/violin/tests",
-  "services/piano/tests",
+  "services/guitar/tests",
+  "services/oboe/tests",
   "services/drums/tests",
-  "services/cello/tests",
+  "services/bass/tests",
   "dashboard/backend/tests",
 ]
+

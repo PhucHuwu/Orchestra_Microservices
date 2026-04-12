@@ -7,7 +7,7 @@ Xây dựng backend cho Dashboard: API điều khiển playback/tempo, thu thậ
 ## 2) Ranh giới trách nhiệm (không chồng chéo)
 
 - Chỉ làm trong backend của `dashboard/` (FastAPI) và phần DB migration liên quan dashboard.
-- Không sửa `conductor/`, `services/*`, `mixer/`, `iot-device/`.
+- Không sửa `conductor/`, `services/*`, `mixer/`.
 - Không làm frontend Next.js trong phạm vi task này.
 
 ## 3) Backlog chi tiết (băm nhỏ)

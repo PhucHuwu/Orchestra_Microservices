@@ -17,14 +17,12 @@ SCENARIO_CONSUMER_LAG = "consumer-lag"
 SCENARIO_SERVICE_CRASH = "service-crash-recovery"
 SCENARIO_COMPETING_CONSUMERS = "competing-consumers"
 SCENARIO_BPM_RUNTIME = "bpm-runtime"
-SCENARIO_IOT_RECONNECT = "iot-reconnect"
 
 SCENARIOS = [
     SCENARIO_CONSUMER_LAG,
     SCENARIO_SERVICE_CRASH,
     SCENARIO_COMPETING_CONSUMERS,
     SCENARIO_BPM_RUNTIME,
-    SCENARIO_IOT_RECONNECT,
 ]
 
 
@@ -107,25 +105,25 @@ def publish_json(ctx: Context, routing_key: str, payload: dict) -> None:
 
 
 def scenario_consumer_lag_run(ctx: Context) -> None:
-    run_shell(f"{ctx.compose_cmd} pause violin-service")
+    run_shell(f"{ctx.compose_cmd} pause guitar-service")
     now = datetime.now(UTC).isoformat()
     for index in range(100):
         payload = {
             "note_id": str(uuid4()),
             "session_id": ctx.session_id,
-            "instrument": "violin",
+            "instrument": "guitar",
             "pitch": 60 + (index % 12),
             "duration": 0.25,
             "volume": 90,
             "beat_time": float(index) * 0.25,
             "timestamp": now,
         }
-        publish_json(ctx, "instrument.violin.note", payload)
+        publish_json(ctx, "instrument.guitar.note", payload)
     set_state_flag(SCENARIO_CONSUMER_LAG, True)
 
 
 def scenario_consumer_lag_cleanup(ctx: Context) -> None:
-    maybe_run_shell(f"{ctx.compose_cmd} unpause violin-service")
+    maybe_run_shell(f"{ctx.compose_cmd} unpause guitar-service")
     set_state_flag(SCENARIO_CONSUMER_LAG, False)
 
 
@@ -140,12 +138,12 @@ def scenario_service_crash_cleanup(ctx: Context) -> None:
 
 
 def scenario_competing_consumers_run(ctx: Context) -> None:
-    run_shell(f"{ctx.compose_cmd} up -d --scale violin-service=3 violin-service")
+    run_shell(f"{ctx.compose_cmd} up -d --scale guitar-service=3 guitar-service")
     set_state_flag(SCENARIO_COMPETING_CONSUMERS, True)
 
 
 def scenario_competing_consumers_cleanup(ctx: Context) -> None:
-    maybe_run_shell(f"{ctx.compose_cmd} up -d --scale violin-service=1 violin-service")
+    maybe_run_shell(f"{ctx.compose_cmd} up -d --scale guitar-service=1 guitar-service")
     set_state_flag(SCENARIO_COMPETING_CONSUMERS, False)
 
 
@@ -171,24 +169,11 @@ def scenario_bpm_runtime_cleanup(ctx: Context) -> None:
     set_state_flag(SCENARIO_BPM_RUNTIME, False)
 
 
-def scenario_iot_reconnect_run(ctx: Context) -> None:
-    disconnected = maybe_run_shell(
-        f"docker network disconnect {ctx.orchestra_network_name} iot-device"
-    )
-    set_state_flag(SCENARIO_IOT_RECONNECT, disconnected)
-
-
-def scenario_iot_reconnect_cleanup(ctx: Context) -> None:
-    maybe_run_shell(f"docker network connect {ctx.orchestra_network_name} iot-device")
-    set_state_flag(SCENARIO_IOT_RECONNECT, False)
-
-
 RUN_HANDLERS = {
     SCENARIO_CONSUMER_LAG: scenario_consumer_lag_run,
     SCENARIO_SERVICE_CRASH: scenario_service_crash_run,
     SCENARIO_COMPETING_CONSUMERS: scenario_competing_consumers_run,
     SCENARIO_BPM_RUNTIME: scenario_bpm_runtime_run,
-    SCENARIO_IOT_RECONNECT: scenario_iot_reconnect_run,
 }
 
 CLEANUP_HANDLERS = {
@@ -196,7 +181,6 @@ CLEANUP_HANDLERS = {
     SCENARIO_SERVICE_CRASH: scenario_service_crash_cleanup,
     SCENARIO_COMPETING_CONSUMERS: scenario_competing_consumers_cleanup,
     SCENARIO_BPM_RUNTIME: scenario_bpm_runtime_cleanup,
-    SCENARIO_IOT_RECONNECT: scenario_iot_reconnect_cleanup,
 }
 
 

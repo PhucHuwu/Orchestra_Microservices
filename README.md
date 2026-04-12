@@ -5,10 +5,10 @@ Baseline skeleton for an event-driven Orchestra Microservices project, based on 
 ## Stack baseline
 
 - Python 3.11+ services (`FastAPI`, `pika`, `SQLAlchemy`, `Alembic`)
-- RabbitMQ 3.x (AMQP + MQTT plugin)
+- RabbitMQ 3.x (AMQP)
 - PostgreSQL 15+
 - Dashboard API (`FastAPI`) + Dashboard UI (`Next.js 14`)
-- IoT playback firmware target: ESP32 MicroPython
+- Local audio playback via dashboard backend (computer speakers)
 
 ## Repository structure
 
@@ -16,15 +16,14 @@ Baseline skeleton for an event-driven Orchestra Microservices project, based on 
 .
 ├── conductor/
 ├── services/
-│   ├── violin/
-│   ├── piano/
+│   ├── guitar/
+│   ├── oboe/
 │   ├── drums/
-│   └── cello/
+│   └── bass/
 ├── mixer/
 ├── dashboard/
 │   ├── backend/
 │   └── frontend/
-├── iot-device/
 ├── scores/
 ├── libs/common/
 ├── configs/rabbitmq/
@@ -51,13 +50,26 @@ Baseline skeleton for an event-driven Orchestra Microservices project, based on 
 - Dashboard API health: `http://localhost:8000/health`
 - Dashboard UI: `http://localhost:3000`
 
-## Conda environment
+## Python virtual environment (venv)
 
-Create and activate Python environment for local development:
+Create and activate Python environment for local development.
+
+macOS/Linux:
 
 ```bash
-conda env create -f environment.yml
-conda activate orchestra-microservices
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements-dev.txt
+```
+
+Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements-dev.txt
 ```
 
 Verify tools:

@@ -1,6 +1,6 @@
 # Mixer Service
 
-Mixer Service consume `InstrumentOutputEvent` từ queue `instrument.output`, map sang `PlaybackEvent`, sau đó publish vào `playback.output` để IoT playback consume.
+Mixer Service consume `InstrumentOutputEvent` từ queue `instrument.output`, map sang `PlaybackEvent`, sau đó publish vào `playback.output` để dashboard backend nhận và render audio ra loa máy tính.
 
 ## Flow
 

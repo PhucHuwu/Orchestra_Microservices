@@ -1,187 +1,184 @@
-# Phân tích thiết kế hệ thống theo chuẩn BA
+# Phan tich thiet ke he thong theo chuan BA (ban khong IoT)
 
-## 1. Thông tin tài liệu
+## 1. Thong tin tai lieu
 
-- Dự án: Orchestra Microservices
-- Nguồn yêu cầu: `docs/project.md`
-- Mục đích: Chuẩn hóa phân tích nghiệp vụ và thiết kế hệ thống mức logic để làm cơ sở cho SRS, thiết kế kỹ thuật và demo.
+- Du an: Orchestra Microservices
+- Nguon yeu cau: `docs/project.md`
+- Muc dich: Chuan hoa phan tich nghiep vu va thiet ke he thong muc logic de lam co so cho SRS, thiet ke ky thuat va demo.
 
-## 2. Bối cảnh nghiệp vụ
+## 2. Boi canh nghiep vu
 
-### 2.1 Vấn đề cần giải quyết
+### 2.1 Van de can giai quyet
 
-Dự án cần mô phỏng các khái niệm hệ thống phân tán theo cách trực quan. Người học không chỉ nhìn metric mà còn nghe được tác động của sự cố phân tán qua âm thanh (lag, crash, out-of-sync, reconnect).
+Du an can mo phong cac khai niem he thong phan tan theo cach truc quan. Nguoi hoc khong chi nhin metric ma con nghe duoc tac dong cua su co phan tan qua am thanh (lag, crash, out-of-sync, reconnect).
 
-### 2.2 Mục tiêu kinh doanh/học thuật
+### 2.2 Muc tieu hoc thuat
 
-- Tạo hệ thống microservices có khả năng demo trên laptop và thiết bị IoT giá rẻ.
-- Minh họa đầy đủ dòng sự kiện qua RabbitMQ theo mô hình event-driven.
-- Chứng minh các khái niệm: consumer lag, back-pressure, message durability, reconnect, competing consumers, dynamic configuration.
+- Tao he thong microservices co kha nang demo tren laptop/local LAN.
+- Minh hoa day du dong su kien qua RabbitMQ theo mo hinh event-driven.
+- Chung minh cac khai niem: consumer lag, back-pressure, message durability, reconnect, competing consumers, dynamic configuration.
 
-### 2.3 Giá trị mang lại
+### 2.3 Gia tri mang lai
 
-- Tăng tính trực quan khi học môn hệ thống phân tán.
-- Dễ trình bày và đánh giá trong bài báo cáo/đồ án.
-- Có khả năng tái hiện sự cố để phục vụ giảng dạy.
+- Tang tinh truc quan khi hoc mon he thong phan tan.
+- De trinh bay va danh gia trong bai bao cao/do an.
+- Co kha nang tai hien su co de phuc vu giang day.
 
-## 3. Phạm vi (Scope)
+## 3. Pham vi (Scope)
 
 ### 3.1 In-scope
 
-- RabbitMQ 3.x (single node) và Management UI (`:15672`).
+- RabbitMQ 3.x (single node) va Management UI (`:15672`).
 - Conductor Service.
-- Instrument Services (violin, piano, drums, cello; tối thiểu 2 service hoạt động độc lập theo tiêu chí đánh giá).
-- Mixer Service tổng hợp output.
-- Dashboard Service theo dõi metric real-time.
-- IoT Playback Service trên ESP32 subscribe `playback.output` và phát âm.
-- Message schema cho `NoteEvent` và luồng điều khiển BPM qua `tempo.control`.
-- Hỗ trợ triển khai local đa máy trong LAN: 1 máy chạy 1 service hoặc 1 máy chạy nhiều service.
-- Demo các kịch bản lỗi có chủ đích theo tài liệu.
+- Instrument Services (guitar, oboe, drums, bass; toi thieu 2 service hoat dong doc lap).
+- Mixer Service tong hop output.
+- Dashboard Service theo doi metric real-time.
+- Message schema cho `NoteEvent` va luong dieu khien BPM qua `tempo.control`.
+- Ho tro trien khai local da may trong LAN: 1 may chay 1 service hoac 1 may chay nhieu service.
+- Demo cac kich ban loi co chu dich theo tai lieu.
+- Local audio playback tren loa may tinh.
 
 ### 3.2 Out-of-scope
 
-- Triển khai production cloud, multi-region, HA cấp cao.
-- Bảo mật cấp doanh nghiệp (SSO, KMS, PKI đầy đủ).
-- Yêu cầu chất lượng âm thanh mức chuyên nghiệp.
+- Trien khai production cloud, multi-region, HA cap cao.
+- Bao mat cap doanh nghiep (SSO, KMS, PKI day du).
+- Yeu cau chat luong am thanh muc chuyen nghiep.
+- Thiet bi IoT/firmware rieng.
 
-## 4. Stakeholders và Actors
+## 4. Stakeholders va Actors
 
 ### 4.1 Stakeholders
 
-- Giảng viên/hội đồng chấm điểm.
-- Nhóm sinh viên phát triển.
-- Người demo vận hành hệ thống.
-- Người xem buổi demo.
+- Giang vien/hoi dong cham diem.
+- Nhom sinh vien phat trien.
+- Nguoi demo van hanh he thong.
+- Nguoi xem buoi demo.
 
 ### 4.2 System actors
 
 - RabbitMQ Broker.
 - Docker runtime (compose).
-- ESP32 IoT device.
+- Dashboard web client (nguoi van hanh).
 
 ## 5. Functional requirements (FR)
 
-- **FR-01 - Score ingestion:** Conductor đọc file MIDI (.mid) làm đầu vào chuẩn, parse note event theo BPM.
-- **FR-02 - Event publishing:** Conductor publish note vào exchange/queue đúng instrument.
-- **FR-03 - Tempo control:** Conductor lắng nghe `tempo.control` và thay đổi BPM real-time.
-- **FR-04 - Heartbeat sync:** Conductor phát heartbeat định kỳ để các service đồng bộ nhịp.
-- **FR-05 - Instrument consume/process:** Mỗi Instrument service consume queue riêng, xử lý note, phát output cho Mixer.
-- **FR-06 - Mixing:** Mixer nhận output từ instrument services, tổng hợp và publish vào `playback.output`.
-- **FR-07 - IoT playback:** ESP32 subscribe `playback.output` qua MQTT, phát âm theo `pitch`, `duration`, `volume`.
-- **FR-08 - Dashboard monitoring:** Hiển thị queue depth, consumer lag, message rate, health service, latency beat.
-- **FR-09 - Reconnect handling:** Service và IoT tự reconnect khi mất kết nối RabbitMQ/WiFi.
-- **FR-10 - Fault demo support:** Hỗ trợ 5 kịch bản demo lỗi theo tài liệu yêu cầu.
-- **FR-11 - Local multi-machine deployment:** Các service có thể chạy phân tán trên nhiều máy local trong cùng LAN, đồng thời hỗ trợ gom nhiều service trên một máy.
+- **FR-01 - Score ingestion:** Conductor doc file MIDI (.mid) lam dau vao chuan, parse note event theo BPM.
+- **FR-02 - Event publishing:** Conductor publish note vao exchange/queue dung instrument.
+- **FR-03 - Tempo control:** Conductor lang nghe `tempo.control` va thay doi BPM real-time.
+- **FR-04 - Heartbeat sync:** Conductor phat heartbeat dinh ky de cac service dong bo nhip.
+- **FR-05 - Instrument consume/process:** Moi Instrument service consume queue rieng, xu ly note, phat output cho Mixer.
+- **FR-06 - Mixing:** Mixer nhan output tu instrument services, tong hop va publish vao `playback.output`.
+- **FR-07 - Local playback:** Dashboard backend nhan luong playback, render audio va phat tren loa may tinh.
+- **FR-08 - Dashboard monitoring:** Hien thi queue depth, consumer lag, message rate, health service, latency beat.
+- **FR-09 - Reconnect handling:** Service tu reconnect khi mat ket noi RabbitMQ/network.
+- **FR-10 - Fault demo support:** Ho tro cac kich ban demo loi theo tai lieu yeu cau.
+- **FR-11 - Local multi-machine deployment:** Cac service co the chay phan tan tren nhieu may local trong LAN.
 
 ## 6. Non-functional requirements (NFR)
 
 ### 6.1 Performance
 
-- Độ trễ end-to-end (Conductor publish -> IoT phát): `< 200ms` trong LAN thông thường.
-- RabbitMQ xử lý tối thiểu `100 msg/s`.
-- Dashboard cập nhật metrics mỗi `1s`.
+- Do tre end-to-end (Conductor publish -> local playback): `< 200ms` trong LAN thong thuong.
+- RabbitMQ xu ly toi thieu `100 msg/s`.
+- Dashboard cap nhat metrics moi `1s`.
 
 ### 6.2 Reliability
 
-- Queue được cấu hình durable.
-- Service có reconnect strategy khi mất broker.
-- IoT có reconnect strategy cho WiFi và MQTT.
-- Cấu hình kết nối broker phải hỗ trợ địa chỉ mạng LAN (không phụ thuộc `localhost`).
+- Queue duoc cau hinh durable.
+- Service co reconnect strategy khi mat broker.
+- Cau hinh ket noi broker ho tro dia chi mang LAN (khong phu thuoc `localhost`).
 
 ### 6.3 Observability
 
-- Dashboard hiển thị real-time queue depth, consumer count, message rate.
-- Mỗi service log trạng thái kết nối và tổng số message đã xử lý.
-- RabbitMQ Management UI sẵn sàng trên cổng `15672`.
+- Dashboard hien thi real-time queue depth, consumer count, message rate.
+- Moi service log trang thai ket noi va tong so message da xu ly.
+- RabbitMQ Management UI san sang tren cong `15672`.
 
 ### 6.4 Constraints
 
-- Chi phí thấp, ưu tiên chạy local bằng Docker Compose.
-- IoT device không chứa business logic (chỉ playback).
-- Không bắt buộc thuê server/cloud; có thể dùng hoàn toàn máy local trong LAN.
+- Chi phi thap, uu tien chay local bang Docker Compose.
+- Khong phu thuoc phan cung IoT.
+- Khong bat buoc thue server/cloud.
 
 ## 7. Use case view
 
-- **UC-01 - Start playback:** Người vận hành khởi động hệ thống, nạp score, bắt đầu bản nhạc.
-- **UC-02 - Change BPM runtime:** Người vận hành gửi lệnh BPM qua Dashboard, hệ thống cập nhật tốc độ ngay.
-- **UC-03 - Observe system health:** Người vận hành theo dõi metrics và health để phát hiện bất thường.
-- **UC-04 - Inject consumer lag:** Cố ý gây chậm instrument service, quan sát queue depth và âm thanh lệch nhịp.
-- **UC-05 - Simulate crash/recovery:** Dừng service giữa chừng, khởi động lại và theo dõi backlog replay.
-- **UC-06 - IoT reconnect test:** Ngắt WiFi ESP32, kết nối lại và xác nhận phát bù message.
-- **UC-07 - Horizontal scale test:** Tăng số instance instrument và quan sát competing consumers.
+- **UC-01 - Start playback:** Nguoi van hanh khoi dong he thong, nap score, bat dau ban nhac.
+- **UC-02 - Change BPM runtime:** Nguoi van hanh gui lenh BPM qua Dashboard, he thong cap nhat toc do ngay.
+- **UC-03 - Observe system health:** Nguoi van hanh theo doi metrics va health de phat hien bat thuong.
+- **UC-04 - Inject consumer lag:** Co y gay cham instrument service, quan sat queue depth va am thanh lech nhip.
+- **UC-05 - Simulate crash/recovery:** Dung service giua chung, khoi dong lai va theo doi backlog replay.
+- **UC-06 - Horizontal scale test:** Tang so instance instrument va quan sat competing consumers.
 
 ## 8. Domain model (logical)
 
-### 8.1 Thực thể chính
+### 8.1 Thuc the chinh
 
-- `Score`: Nguồn dữ liệu nhạc đầu vào chuẩn (MIDI .mid).
-- `NoteEvent`: Đơn vị sự kiện nhạc được publish qua broker.
-- `TempoCommand`: Lệnh thay đổi BPM.
-- `InstrumentOutput`: Kết quả xử lý note của từng instrument.
-- `PlaybackEvent`: Sự kiện tổng hợp sau Mixer gửi đến IoT.
-- `ServiceHealth`: Trạng thái sống/chết/latency của service.
+- `Score`: Nguon du lieu nhac dau vao chuan (MIDI .mid).
+- `NoteEvent`: Don vi su kien nhac duoc publish qua broker.
+- `TempoCommand`: Lenh thay doi BPM.
+- `InstrumentOutput`: Ket qua xu ly note cua tung instrument.
+- `PlaybackEvent`: Su kien tong hop sau Mixer gui den local renderer.
+- `ServiceHealth`: Trang thai song/chet/latency cua service.
 - `QueueMetric`: Queue depth, consumer count, message rate.
 
-### 8.2 Message contract chính (NoteEvent)
-
-Theo tài liệu gốc:
+### 8.2 Message contract chinh (NoteEvent)
 
 - `note_id` (UUID)
-- `instrument` (violin/piano/drums/cello)
+- `instrument` (guitar/oboe/drums/bass)
 - `pitch` (0-127)
-- `duration` (giây)
+- `duration` (giay)
 - `volume` (0-127)
-- `beat_time` (giây)
+- `beat_time` (giay)
 - `timestamp` (ISO 8601)
 
 ## 9. Event flow logic
 
-1. Conductor nạp score và sinh `NoteEvent` theo lịch beat.
-2. Conductor publish vào `orchestra.events` với routing key theo instrument.
-3. Instrument service consume và xử lý note.
-4. Instrument publish output đến Mixer.
-5. Mixer tổng hợp và publish vào `playback.output`.
-6. IoT consume `playback.output` và phát âm.
-7. Dashboard lấy metric từ RabbitMQ API + service logs/endpoint để hiển thị.
+1. Conductor nap score va sinh `NoteEvent` theo lich beat.
+2. Conductor publish vao `orchestra.events` voi routing key theo instrument.
+3. Instrument service consume va xu ly note.
+4. Instrument publish output den Mixer.
+5. Mixer tong hop va publish vao `playback.output`.
+6. Dashboard backend consume/render `playback.output` va frontend phat audio.
+7. Dashboard lay metric tu RabbitMQ API + service endpoints de hien thi.
 
-Nhánh điều khiển:
+Nhanh dieu khien:
 
-1. Dashboard gửi `TempoCommand` vào `tempo.control`.
-2. Conductor nhận lệnh và cập nhật BPM runtime.
-3. Luồng publish note mới được điều chỉnh theo BPM mới.
+1. Dashboard gui `TempoCommand` vao `tempo.control`.
+2. Conductor nhan lenh va cap nhat BPM runtime.
+3. Luong publish note moi duoc dieu chinh theo BPM moi.
 
 ## 10. Logical architecture decomposition
 
-- **Presentation layer:** Dashboard web (FastAPI + WebSocket + HTML/JS).
+- **Presentation layer:** Dashboard web (FastAPI + WebSocket + Next.js).
 - **Application layer:** Conductor, Instrument services, Mixer.
 - **Integration layer:** RabbitMQ (topic exchange, durable queues).
-- **Edge/device layer:** ESP32 playback consumer.
+- **Playback layer:** Dashboard backend audio renderer.
 - **Cross-cutting:** Logging, health check, metrics collection.
 
-## 11. Risk và gap analysis
+## 11. Risk va gap analysis
 
-### 11.1 Rủi ro chính
+### 11.1 Rui ro chinh
 
-- Message ordering bị ảnh hưởng khi scale competing consumers.
-- Độ trễ vượt ngưỡng 200ms khi queue depth tăng cao.
-- IoT reconnect không ổn định gây ngắt quãng demo.
-- Mismatch schema giữa service gây fail consume.
+- Message ordering bi anh huong khi scale competing consumers.
+- Do tre vuot nguong 200ms khi queue depth tang cao.
+- Mismatch schema giua service gay fail consume.
+- Soundfont/audio dependency thieu tren may moi.
 
-### 11.2 Khoảng trống yêu cầu cần bổ sung
+### 11.2 Khoang trong yeu cau can bo sung
 
-- Chưa định nghĩa rõ ack/retry/dead-letter policy cho từng queue.
-- Chưa chốt cách đo consumer lag (event-time lag hay queue-depth proxy).
-- Chưa có acceptance criteria chi tiết dạng Given-When-Then cho từng FR.
-- Chưa có contract rõ giữa Instrument -> Mixer (ngoài NoteEvent).
-- Chưa mô tả permission/cơ chế auth RabbitMQ cho role service.
+- Chua dinh nghia ro ack/retry/dead-letter policy cho tung queue.
+- Chua chot cach do consumer lag (event-time lag hay queue-depth proxy).
+- Chua co acceptance criteria chi tiet dang Given-When-Then cho tung FR.
+- Chua co contract ro giua Instrument -> Mixer (ngoai NoteEvent).
+- Chua mo ta permission/co che auth RabbitMQ cho role service.
 
-## 12. Requirement traceability matrix (RTM) rút gọn
+## 12. Requirement traceability matrix (RTM) rut gon
 
-| Requirement | Mục tiêu đánh giá liên quan | Tiêu chí thành công |
+| Requirement | Muc tieu danh gia lien quan | Tieu chi thanh cong |
 |---|---|---|
-| FR-01, FR-02 | Conductor publish đúng note theo BPM | Note đúng routing key, đúng timestamp/beat |
-| FR-05 | Instrument độc lập | Ít nhất 2 instrument hoạt động độc lập |
-| FR-06, FR-07 | IoT playback thật | IoT nhận và phát âm thanh từ `playback.output` |
-| FR-08 + NFR-Obs | Dashboard monitoring | Cập nhật metric 1s, hiển thị health và lag |
-| FR-10 | Demo fault scenarios | Trình bày tối thiểu 3 kịch bản lỗi có chủ đích |
-| NFR-Rel | Message durability/recovery | Queue durable, reconnect thành công |
+| FR-01, FR-02 | Conductor publish dung note theo BPM | Note dung routing key, dung timestamp/beat |
+| FR-05 | Instrument doc lap | It nhat 2 instrument hoat dong doc lap |
+| FR-06, FR-07 | Local playback | Dashboard phat dung am thanh tu `playback.output` |
+| FR-08 + NFR-Obs | Dashboard monitoring | Cap nhat metric 1s, hien thi health va lag |
+| FR-10 | Demo fault scenarios | Trinh bay toi thieu 3 kich ban loi co chu dich |
+| NFR-Rel | Message durability/recovery | Queue durable, reconnect thanh cong |

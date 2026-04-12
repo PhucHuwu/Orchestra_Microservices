@@ -8,7 +8,7 @@ import { useSessionStore } from "@/stores/session-store";
 import { useToastStore } from "@/stores/toast-store";
 
 type Scenario = {
-  id: "consumer-lag" | "service-crash-recovery" | "competing-consumers" | "iot-reconnect";
+  id: "consumer-lag" | "service-crash-recovery" | "competing-consumers";
   label: string;
   description: string;
 };
@@ -36,11 +36,6 @@ const scenarios: Scenario[] = [
     label: "Scale consumer",
     description: "Giả lập competing consumers trên cùng một queue."
   },
-  {
-    id: "iot-reconnect",
-    label: "IoT reconnect",
-    description: "Giả lập IoT disconnect và reconnect."
-  }
 ];
 
 const BACKEND_FAULT_ENDPOINT = process.env.NEXT_PUBLIC_FAULT_API_BASE_URL;
@@ -96,10 +91,10 @@ export default function FaultDemoPage() {
   return (
     <DashboardShell>
       <div className="grid gap-5 lg:grid-cols-[1.1fr,0.9fr]">
-        <StatePanel
-          title="Các Fault Scenario"
-          description="Preset theo runbook: consumer lag, crash/recovery, scale consumer, IoT reconnect."
-        >
+          <StatePanel
+            title="Các Fault Scenario"
+            description="Preset theo runbook: consumer lag, crash/recovery, scale consumer."
+          >
           <div className="space-y-3">
             {scenarios.map((scenario) => (
               <div key={scenario.id} className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">

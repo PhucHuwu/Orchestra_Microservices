@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Literal
@@ -7,11 +7,11 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Field
 
 
-INSTRUMENTS = ("violin", "piano", "drums", "cello")
+INSTRUMENTS = ("guitar", "oboe", "drums", "bass")
 
 
 class ParsedNote(BaseModel):
-    instrument: Literal["violin", "piano", "drums", "cello"]
+    instrument: Literal["guitar", "oboe", "drums", "bass"]
     pitch: int = Field(ge=0, le=127)
     duration: float = Field(gt=0)
     volume: int = Field(ge=0, le=127)
@@ -21,7 +21,7 @@ class ParsedNote(BaseModel):
 class NoteEvent(BaseModel):
     note_id: UUID = Field(default_factory=uuid4)
     session_id: UUID
-    instrument: Literal["violin", "piano", "drums", "cello"]
+    instrument: Literal["guitar", "oboe", "drums", "bass"]
     pitch: int = Field(ge=0, le=127)
     duration: float = Field(gt=0)
     volume: int = Field(ge=0, le=127)
@@ -71,10 +71,10 @@ class ConductorStatus(BaseModel):
 
 def routing_key_for_instrument(instrument: str) -> str:
     mapping = {
-        "violin": "instrument.violin.note",
-        "piano": "instrument.piano.note",
+        "guitar": "instrument.guitar.note",
+        "oboe": "instrument.oboe.note",
         "drums": "instrument.drums.beat",
-        "cello": "instrument.cello.note",
+        "bass": "instrument.bass.note",
     }
     if instrument not in mapping:
         raise ValueError(f"Unsupported instrument: {instrument}")
@@ -83,3 +83,4 @@ def routing_key_for_instrument(instrument: str) -> str:
 
 def utcnow_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+

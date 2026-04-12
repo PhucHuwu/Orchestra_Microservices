@@ -1,4 +1,4 @@
-# Task BE - Phúc (Module Conductor Service)
+﻿# Task BE - Phúc (Module Conductor Service)
 
 ## 1) Mục tiêu module
 
@@ -7,7 +7,7 @@ Xây dựng `Conductor Service` độc lập: đọc MIDI, lập lịch `NoteEve
 ## 2) Ranh giới trách nhiệm (không chồng chéo)
 
 - Chỉ làm trong thư mục `conductor/`.
-- Không sửa code của `services/*`, `mixer/`, `dashboard/`, `iot-device/`.
+- Không sửa code của `services/*`, `mixer/`, `dashboard/`.
 - Chỉ dùng contract đã chốt trong tài liệu (`docs/ba-dev-handover-spec.md`).
 
 ## 3) Backlog chi tiết (băm nhỏ)
@@ -45,10 +45,10 @@ Xây dựng `Conductor Service` độc lập: đọc MIDI, lập lịch `NoteEve
 
 - Xây bộ lập lịch theo `initial_bpm`.
 - Publish vào exchange `orchestra.events` với routing key:
-  - `instrument.violin.note`
-  - `instrument.piano.note`
+  - `instrument.guitar.note`
+  - `instrument.oboe.note`
   - `instrument.drums.beat`
-  - `instrument.cello.note`
+  - `instrument.bass.note`
 - Bảo đảm thứ tự note trong cùng instrument.
 - Bật publisher confirm; log khi publish fail.
 
@@ -100,3 +100,4 @@ Xây dựng `Conductor Service` độc lập: đọc MIDI, lập lịch `NoteEve
 
 - ✅ Đạt: 3/4 tiêu chí đầu (publish schema/routing, tempo runtime, heartbeat+health+reconnect+structured log)
 - ⚠️ Chưa chốt cuối: cần xác nhận "Test pass" trên môi trường đã cài đủ dependency
+

@@ -12,7 +12,7 @@ def test_map_to_playback_event_uses_audio_hint_and_scheduled_beat_time() -> None
 
     event = InstrumentOutputEvent(
         note_id=note_id,
-        instrument="violin",
+        instrument="guitar",
         rendered_at=rendered_at,
         latency_ms=35,
         audio_hint=AudioHint(pitch=64, duration=0.5, volume=90),
@@ -22,7 +22,7 @@ def test_map_to_playback_event_uses_audio_hint_and_scheduled_beat_time() -> None
     playback = map_to_playback_event(event, raw_payload=raw_payload, emitted_at=emitted_at)
 
     assert playback.note_id == note_id
-    assert playback.instrument == "violin"
+    assert playback.instrument == "guitar"
     assert playback.pitch == 64
     assert playback.duration == 0.5
     assert playback.volume == 90

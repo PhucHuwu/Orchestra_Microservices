@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import argparse
 import logging
@@ -14,10 +14,10 @@ EXCHANGE_NAME = "orchestra.events"
 EXCHANGE_TYPE = "topic"
 
 STANDARD_BINDINGS = {
-    "instrument.violin.note": "instrument.violin.note",
-    "instrument.piano.note": "instrument.piano.note",
+    "instrument.guitar.note": "instrument.guitar.note",
+    "instrument.oboe.note": "instrument.oboe.note",
     "instrument.drums.beat": "instrument.drums.beat",
-    "instrument.cello.note": "instrument.cello.note",
+    "instrument.bass.note": "instrument.bass.note",
     "instrument.output": "instrument.*.output",
     "playback.output": "playback.output",
     "tempo.control": "tempo.control",
@@ -25,10 +25,10 @@ STANDARD_BINDINGS = {
 }
 
 DLQ_ENABLED_QUEUES = {
-    "instrument.violin.note",
-    "instrument.piano.note",
+    "instrument.guitar.note",
+    "instrument.oboe.note",
     "instrument.drums.beat",
-    "instrument.cello.note",
+    "instrument.bass.note",
     "playback.output",
 }
 
@@ -111,3 +111,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

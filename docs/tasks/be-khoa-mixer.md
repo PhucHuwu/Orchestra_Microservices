@@ -2,12 +2,12 @@
 
 ## 1) Mục tiêu module
 
-Xây dựng `Mixer Service` độc lập: nhận output từ các instrument, chuẩn hóa thành `PlaybackEvent`, publish vào `playback.output` cho IoT consume.
+Xây dựng `Mixer Service` độc lập: nhận output từ các instrument, chuẩn hóa thành `PlaybackEvent`, publish vào `playback.output` cho local playback consume.
 
 ## 2) Ranh giới trách nhiệm (không chồng chéo)
 
 - Chỉ làm trong thư mục `mixer/`.
-- Không sửa `conductor/`, `services/*`, `dashboard/`, `iot-device/`.
+- Không sửa `conductor/`, `services/*`, `dashboard/`.
 - Không đổi contract `InstrumentOutputEvent` và `PlaybackEvent`.
 
 ## 3) Backlog chi tiết (băm nhỏ)

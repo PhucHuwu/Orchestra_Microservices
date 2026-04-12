@@ -272,18 +272,18 @@ async def _run_fault_scenario(action: str, scenario: str, db: Session) -> None:
         if action == "run":
             await dashboard_service.set_service_enabled(
                 db=db,
-                service_name="violin-service",
+                service_name="guitar-service",
                 enabled=False,
             )
             publisher = publisher_provider.get()
             now = datetime.now(UTC).isoformat()
             for idx in range(120):
                 publisher.publish_json(
-                    routing_key="instrument.violin.note",
+                    routing_key="instrument.guitar.note",
                     payload={
                         "note_id": str(uuid4()),
                         "session_id": settings.fault_toolkit_session_id,
-                        "instrument": "violin",
+                        "instrument": "guitar",
                         "pitch": 60 + (idx % 12),
                         "duration": 0.2,
                         "volume": 90,
@@ -294,7 +294,7 @@ async def _run_fault_scenario(action: str, scenario: str, db: Session) -> None:
         else:
             await dashboard_service.set_service_enabled(
                 db=db,
-                service_name="violin-service",
+                service_name="guitar-service",
                 enabled=True,
             )
         return
@@ -322,7 +322,7 @@ async def _run_fault_scenario(action: str, scenario: str, db: Session) -> None:
         )
         return
 
-    if scenario_key in {"competing-consumers", "iot-reconnect"}:
+    if scenario_key in {"competing-consumers"}:
         raise ApiError(
             error_code="FAULT_SCENARIO_UNAVAILABLE",
             message=f"Scenario {scenario_key} is unavailable in this local runtime",

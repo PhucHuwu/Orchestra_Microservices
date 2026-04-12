@@ -1,0 +1,1 @@
+"""Guitar instrument service package."""

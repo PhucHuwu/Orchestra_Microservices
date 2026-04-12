@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import os
 from contextlib import asynccontextmanager
@@ -17,12 +17,12 @@ from services.instruments_shared.logging_config import configure_logging
 configure_logging()
 
 settings = InstrumentSettings(
-    SERVICE_NAME=os.getenv("SERVICE_NAME", "violin-service"),
-    INSTRUMENT_NAME=os.getenv("INSTRUMENT_NAME", "violin"),
-    INPUT_QUEUE=os.getenv("INPUT_QUEUE", "instrument.violin.note"),
+    SERVICE_NAME=os.getenv("SERVICE_NAME", "oboe-service"),
+    INSTRUMENT_NAME=os.getenv("INSTRUMENT_NAME", "oboe"),
+    INPUT_QUEUE=os.getenv("INPUT_QUEUE", "instrument.oboe.note"),
     OUTPUT_ROUTING_KEY=os.getenv(
         "OUTPUT_ROUTING_KEY",
-        default_output_routing_key(os.getenv("INSTRUMENT_NAME", "violin")),
+        default_output_routing_key(os.getenv("INSTRUMENT_NAME", "oboe")),
     ),
 )
 worker = InstrumentWorker(settings)
@@ -69,7 +69,7 @@ async def lifespan(_: FastAPI):
         _stop_worker_unlocked()
 
 
-app = FastAPI(title="Violin Service", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Oboe Service", version="0.1.0", lifespan=lifespan)
 
 
 @app.get("/health")
@@ -116,3 +116,4 @@ def worker_control_stop() -> dict:
             "enabled": worker_enabled,
             "running": _worker_running(),
         }
+

@@ -1,4 +1,4 @@
-services:
+﻿services:
   rabbitmq:
     image: rabbitmq:3.13-management
     hostname: rabbitmq
@@ -10,7 +10,6 @@ services:
     ports:
       - "${ORCHESTRA_BIND_HOST:-0.0.0.0}:${RABBITMQ_PORT:-5672}:5672"
       - "${ORCHESTRA_BIND_HOST:-0.0.0.0}:${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
-      - "${ORCHESTRA_BIND_HOST:-0.0.0.0}:${RABBITMQ_MQTT_PORT:-1883}:1883"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
       - ./configs/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
@@ -49,17 +48,17 @@ services:
     networks:
       - orchestra_net
 
-  violin-service:
+  guitar-service:
     build:
       context: .
-      dockerfile: ./services/violin/Dockerfile
+      dockerfile: ./services/guitar/Dockerfile
     env_file:
       - .env
     environment:
-      SERVICE_NAME: violin-service
-      INSTRUMENT_NAME: violin
-      INPUT_QUEUE: instrument.violin.note
-      OUTPUT_ROUTING_KEY: instrument.violin.output
+      SERVICE_NAME: guitar-service
+      INSTRUMENT_NAME: guitar
+      INPUT_QUEUE: instrument.guitar.note
+      OUTPUT_ROUTING_KEY: instrument.guitar.output
       INSTRUMENT_WORKER_ENABLED: "true"
     depends_on:
       - rabbitmq
@@ -68,17 +67,17 @@ services:
     networks:
       - orchestra_net
 
-  piano-service:
+  oboe-service:
     build:
       context: .
-      dockerfile: ./services/piano/Dockerfile
+      dockerfile: ./services/oboe/Dockerfile
     env_file:
       - .env
     environment:
-      SERVICE_NAME: piano-service
-      INSTRUMENT_NAME: piano
-      INPUT_QUEUE: instrument.piano.note
-      OUTPUT_ROUTING_KEY: instrument.piano.output
+      SERVICE_NAME: oboe-service
+      INSTRUMENT_NAME: oboe
+      INPUT_QUEUE: instrument.oboe.note
+      OUTPUT_ROUTING_KEY: instrument.oboe.output
       INSTRUMENT_WORKER_ENABLED: "true"
     depends_on:
       - rabbitmq
@@ -106,17 +105,17 @@ services:
     networks:
       - orchestra_net
 
-  cello-service:
+  bass-service:
     build:
       context: .
-      dockerfile: ./services/cello/Dockerfile
+      dockerfile: ./services/bass/Dockerfile
     env_file:
       - .env
     environment:
-      SERVICE_NAME: cello-service
-      INSTRUMENT_NAME: cello
-      INPUT_QUEUE: instrument.cello.note
-      OUTPUT_ROUTING_KEY: instrument.cello.output
+      SERVICE_NAME: bass-service
+      INSTRUMENT_NAME: bass
+      INPUT_QUEUE: instrument.bass.note
+      OUTPUT_ROUTING_KEY: instrument.bass.output
       INSTRUMENT_WORKER_ENABLED: "true"
     depends_on:
       - rabbitmq
@@ -187,3 +186,4 @@ volumes:
   postgres_data:
   shared_scores:
   shared_audio:
+

@@ -1,274 +1,224 @@
-**TÀI LIỆU YÊU CẦU DỰ ÁN**
+**TAI LIEU YEU CAU DU AN**
 
 **Orchestra Microservices**
 
-Mô phỏng hệ thống phân tán bằng âm nhạc & IoT
+Mo phong he thong phan tan bang am nhac (phat truc tiep tren loa may tinh)
 
-|            |                                         |
-|------------|-----------------------------------------|
-| Phiên bản: | 1.0                                     |
-| Đối tượng: | Sinh viên / Nhóm đồ án môn học          |
-| Lĩnh vực:  | Hệ thống phân tán · Message Queue · IoT |
+|            |                                      |
+|------------|--------------------------------------|
+| Phien ban: | 1.1                                  |
+| Doi tuong: | Sinh vien / Nhom do an mon hoc       |
+| Linh vuc:  | He thong phan tan · Message Queue    |
 
-**1. Tổng quan dự án**
+**1. Tong quan du an**
 
-**1.1 Ý tưởng cốt lõi**
+**1.1 Y tuong cot loi**
 
-Dự án xây dựng một hệ thống microservices phân tán, trong đó mỗi service đóng vai trò một nhạc cụ trong giàn hợp xướng. Các service cần phải được đồng bộ hoá thông qua hàng đợi RabbitMQ để chơi nhạc một cách có trật tự, không hỗn loạn.
+Du an xay dung mot he thong microservices phan tan, trong do moi service dong vai tro mot nhac cu trong gian hop xuong. Cac service duoc dong bo thong qua RabbitMQ de choi nhac dung nhip va dung thu tu.
 
-Điểm đặc biệt: mọi khái niệm phức tạp của hệ thống phân tán đều được \"nghe thấy\" trực tiếp qua âm thanh --- consumer lag làm nhạc bị trễ, service chết khiến một nhạc cụ im lặng, network partition khiến bản nhạc lạc nhịp.
+Diem dac biet: cac khai niem he thong phan tan duoc "nghe thay" truc tiep qua am thanh tren loa may tinh: consumer lag lam nhac bi tre, service chet khien mot nhac cu im lang, thong luong tang cao gay meo nhip.
 
-**1.2 Bảng metaphor --- Âm nhạc vs Distributed Systems**
+**1.2 Bang metaphor - Am nhac vs Distributed Systems**
 
 |                             |                                           |
 |-----------------------------|-------------------------------------------|
-| **Âm nhạc**                 | **Hệ thống phân tán**                     |
-| Giàn hợp xướng              | Toàn bộ hệ thống microservices            |
-| Nhạc trưởng (Conductor)     | Conductor Service --- điều phối trung tâm |
-| Nhạc cụ (Violin, Piano\...) | Microservice độc lập                      |
-| Bản nhạc (Sheet music)      | Message schema / Event contract           |
-| Nhịp độ (Tempo / BPM)       | Message rate / Throughput                 |
-| Lạc nhịp (Out of sync)      | Consumer lag, Race condition              |
-| Nhạc cụ im lặng đột ngột    | Service crash / Circuit breaker           |
-| Nhạc cụ mới gia nhập        | Dynamic service discovery                 |
+| **Am nhac**                 | **He thong phan tan**                     |
+| Gian hop xuong              | Toan bo he thong microservices            |
+| Nhac truong (Conductor)     | Conductor Service - dieu phoi trung tam   |
+| Nhac cu (Guitar, Oboe...)   | Microservice doc lap                      |
+| Ban nhac (Sheet music)      | Message schema / Event contract           |
+| Nhip do (Tempo / BPM)       | Message rate / Throughput                 |
+| Lac nhip (Out of sync)      | Consumer lag, Race condition              |
+| Nhac cu im lang dot ngot    | Service crash / Circuit breaker           |
+| Nhac cu moi gia nhap        | Dynamic service discovery                 |
 
-**2. Kiến trúc hệ thống**
+**2. Kien truc he thong**
 
-**2.1 Tổng quan kiến trúc**
+**2.1 Tong quan kien truc**
 
-Hệ thống được thiết kế theo hướng tối giản chi phí phù hợp với sinh viên: logic microservices có thể chạy trên một hoặc nhiều máy tính local trong cùng mạng LAN (mỗi máy có thể chạy 1 service hoặc nhiều service) qua Docker Compose, kết hợp với một thiết bị IoT giá rẻ đóng vai trò \"loa thông minh\" --- nhận message từ queue và phát âm thanh thật.
+He thong duoc thiet ke theo huong toi gian chi phi phu hop voi sinh vien: logic microservices co the chay tren mot hoac nhieu may tinh local trong LAN (moi may co the chay 1 service hoac nhieu service) qua Docker Compose. Am thanh duoc render tai dashboard backend va phat tren loa may tinh.
 
 |                                                                                       |
 |---------------------------------------------------------------------------------------|
-| **Nguyên tắc thiết kế**                                                                                      |
-| • Toàn bộ microservices chạy local --- không cần thuê server                                                 |
-| • Hỗ trợ mô hình đa máy local trong LAN: 1 máy/1 service hoặc 1 máy/nhiều service                           |
-| • IoT device chỉ làm 1 việc: lắng nghe queue và phát âm --- không chứa business logic                        |
-| • Chi phí phần cứng thực tế: 80.000 -- 200.000 VND (ESP32 + buzzer/loa nhỏ)                                  |
-| • Mọi tính năng phân tán vẫn được demo đầy đủ và nghe thấy được                                              |
+| **Nguyen tac thiet ke**                                                               |
+| • Toan bo microservices chay local - khong can thue server                            |
+| • Ho tro mo hinh da may local trong LAN: 1 may/1 service hoac 1 may/nhieu service    |
+| • Khong phu thuoc phan cung IoT                                                       |
+| • Moi tinh nang phan tan van duoc demo day du va nghe thay ro rang                    |
 
-**2.2 Ba tầng hệ thống**
+**2.2 Hai tang he thong**
 
-**Tầng 1 --- Docker Compose (Cụm máy local hoặc một laptop)**
+**Tang 1 - Docker Compose (Cum may local hoac mot laptop)**
 
-Các services chạy trong container Docker trên một hoặc nhiều máy tính cá nhân (cùng LAN):
+Cac services chay trong container Docker:
 
-- RabbitMQ Broker: single node, bật Management UI tại cổng 15672 để quan sát queue real-time
+- RabbitMQ Broker: single node, bat Management UI tai cong 15672 de quan sat queue real-time.
+- Conductor Service: doc file MIDI (.mid), publish note event vao dung queue theo BPM.
+- Instrument Services (Guitar, Oboe, Drums, Bass): moi service la mot consumer doc lap.
+- Mixer Service: tong hop output tu cac nhac cu, publish vao `playback.output`.
+- Dashboard: hien thi consumer lag, queue depth, BPM, trang thai service va phat audio local.
 
-- Conductor Service: đọc file nhạc MIDI (.mid), publish note event vào đúng queue theo BPM
+**Tang 2 - Local Playback (Desktop/Web)**
 
-- Instrument Services (Violin, Piano, Drums, Cello): mỗi service là một consumer độc lập
+- Dashboard backend render audio tu MIDI/output event.
+- Dashboard frontend phat WAV qua audio player tren may tinh.
 
-- Mixer Service: tổng hợp output từ các nhạc cụ, publish vào playback.output queue
-
-- Dashboard: hiển thị consumer lag, queue depth, BPM, trạng thái từng service
-
-**Tầng 2 --- IoT Device (Phần cứng)**
-
-Một thiết bị phần cứng duy nhất kết nối WiFi vào cùng mạng LAN với cụm máy local (hoặc laptop chạy broker):
-
-- Subscribe vào queue playback.output
-
-- Nhận message chứa thông tin note: pitch, duration, volume
-
-- Phát âm thanh ra loa/buzzer tương ứng
-
-- Không chứa bất kỳ business logic nào --- đây là điểm quan trọng để minh hoạ tính tách biệt của microservices
-
-**2.3 Lựa chọn thiết bị IoT**
-
-|                         |                                                                          |                      |
-|-------------------------|--------------------------------------------------------------------------|----------------------|
-| **Thiết bị**       | **Ưu điểm**                                                   | **Chi phí**      |
-| **ESP32 (chốt)**   | WiFi tích hợp, DAC analog, cộng đồng lớn, dễ mua tại VN      | **80--120k VND** |
-
-**3. Đặc tả các services**
+**3. Dac ta cac services**
 
 **3.1 Conductor Service**
 
-Service trung tâm, chịu trách nhiệm điều phối toàn bộ bản nhạc.
+Service trung tam, chiu trach nhiem dieu phoi toan bo ban nhac.
 
-- Đọc file nhạc định dạng MIDI (.mid) làm đầu vào chuẩn
-
-- Chuẩn hóa nội bộ thành JSON event trong pipeline (không nhận JSON từ người dùng ở baseline)
-
-- Parse ra danh sách note event có timestamp theo BPM
-
-- Publish từng note vào đúng exchange/queue của nhạc cụ tương ứng
-
-- Hỗ trợ thay đổi BPM real-time qua queue tempo.control
-
-- Publish heartbeat event định kỳ để các service đồng bộ nhịp
+- Doc file nhac dinh dang MIDI (.mid) lam dau vao chuan.
+- Parse ra danh sach note event co timestamp theo BPM.
+- Publish tung note vao dung exchange/queue cua nhac cu tuong ung.
+- Ho tro thay doi BPM real-time qua queue `tempo.control`.
+- Publish heartbeat event dinh ky de cac service dong bo nhip.
 
 **3.2 Instrument Services**
 
-Mỗi nhạc cụ là một service độc lập, chạy trong Docker container riêng biệt.
+Moi nhac cu la mot service doc lap, chay trong Docker container rieng.
 
-|             |                        |                               |
-|-------------|------------------------|-------------------------------|
-| **Service** | **Queue subscribe**    | **Hành động**                 |
-| Violin      | instrument.violin.note | Phát giai điệu chính (melody) |
-| Piano       | instrument.piano.note  | Phát hoà âm (harmony)         |
-| Drums       | instrument.drums.beat  | Giữ nhịp (rhythm)             |
-| Cello       | instrument.cello.note  | Phát bè trầm (bass line)      |
+|             |                       |                                |
+|-------------|-----------------------|--------------------------------|
+| **Service** | **Queue subscribe**   | **Hanh dong**                  |
+| Guitar      | instrument.guitar.note| Phat giai dieu chinh (melody)  |
+| Oboe        | instrument.oboe.note  | Phat be doi thoai              |
+| Drums       | instrument.drums.beat | Giu nhip (rhythm)              |
+| Bass        | instrument.bass.note  | Phat be tram (bass line)       |
 
 **3.3 Mixer Service**
 
-Nhận output từ tất cả instrument services, tổng hợp và publish vào queue playback.output mà IoT device lắng nghe.
+Nhan output tu tat ca instrument services, tong hop va publish vao queue `playback.output`.
 
 **3.4 Dashboard Service**
 
-Giao diện web hiển thị real-time các chỉ số: consumer lag của từng queue, số note đã xử lý, latency giữa beat được lên lịch và beat thực tế, trạng thái health của từng service.
+Giao dien web hien thi real-time cac chi so: consumer lag cua tung queue, so note da xu ly, latency giua beat duoc len lich va beat thuc te, trang thai health cua tung service.
 
-**3.5 IoT Playback Service (trên thiết bị vật lý)**
+**3.5 Local Audio Playback**
 
-Service cực đơn giản, chạy trên ESP32. Toàn bộ logic gói gọn trong vòng lặp: kết nối WiFi, kết nối RabbitMQ qua MQTT plugin, subscribe topic `playback.output`, phát âm thanh. Không có business logic, không biết về Conductor hay các service khác.
+Dashboard backend nhan luong playback va render WAV bang soundfont + fluidsynth. Audio duoc phat tren loa may tinh thong qua dashboard web.
 
 **4. Message schema**
 
 **4.1 Note Event**
 
-Format JSON được publish vào queue của từng nhạc cụ:
+Format JSON duoc publish vao queue cua tung nhac cu:
 
-|                |                  |                                          |
-|----------------|------------------|------------------------------------------|
-| **Trường**     | **Kiểu dữ liệu** | **Mô tả**                                |
-| **note_id**    | string (UUID)    | Định danh duy nhất của note              |
-| **instrument** | string           | Tên nhạc cụ: violin, piano, drums, cello |
-| **pitch**      | integer (0--127) | Giá trị MIDI pitch (60 = C4)             |
-| **duration**   | float (giây)     | Thời gian giữ nốt (ví dụ: 0.5)           |
-| **volume**     | integer (0--127) | Độ to (MIDI velocity)                    |
-| **beat_time**  | float (giây)     | Thời điểm dự kiến phát theo BPM          |
-| **timestamp**  | ISO 8601         | Thời điểm Conductor publish message      |
+|                |                  |                                       |
+|----------------|------------------|---------------------------------------|
+| **Truong**     | **Kieu du lieu** | **Mo ta**                             |
+| **note_id**    | string (UUID)    | Dinh danh duy nhat cua note           |
+| **instrument** | string           | Ten nhac cu: guitar, oboe, drums, bass |
+| **pitch**      | integer (0--127) | Gia tri MIDI pitch (60 = C4)          |
+| **duration**   | float (giay)     | Thoi gian giu not                     |
+| **volume**     | integer (0--127) | Do to (MIDI velocity)                 |
+| **beat_time**  | float (giay)     | Thoi diem du kien phat theo BPM       |
+| **timestamp**  | ISO 8601         | Thoi diem Conductor publish message   |
 
 **4.2 RabbitMQ Exchange & Queue**
 
-- Exchange type: Topic exchange, tên: orchestra.events
+- Exchange type: Topic exchange, ten: `orchestra.events`.
+- Routing key pattern: `instrument.<name>.note` hoac `instrument.<name>.beat`.
+- Queue `playback.output`: nhan tong hop tu Mixer, dashboard backend subscribe/render local.
+- Queue `tempo.control`: Conductor lang nghe lenh thay doi BPM tu Dashboard.
 
-- Routing key pattern: instrument.\<name\>.note hoặc instrument.\<name\>.beat
+**5. Stack cong nghe**
 
-- Queue playback.output: nhận tổng hợp từ Mixer, IoT device subscribe vào đây
+|                      |                                                   |
+|----------------------|---------------------------------------------------|
+| **Thanh phan**       | **Cong nghe**                                     |
+| Message broker       | RabbitMQ 3.x - Management UI                      |
+| Microservices        | Python 3.11+ voi thu vien pika                    |
+| Am thanh (software)  | Dashboard backend render WAV + web audio player   |
+| Container hoa        | Docker & Docker Compose                           |
+| Dashboard            | FastAPI + WebSocket + Next.js                     |
+| File nhac dau vao    | MIDI (.mid)                                       |
+| Monitoring           | RabbitMQ Management API + Prometheus (tuy chon)   |
 
-- Queue tempo.control: Conductor lắng nghe lệnh thay đổi BPM từ Dashboard
-
-**5. Stack công nghệ**
-
-|                      |                                                 |
-|----------------------|-------------------------------------------------|
-| **Thành phần**       | **Công nghệ**                                   |
-| Message broker       | RabbitMQ 3.x --- Management UI, MQTT plugin     |
-| Microservices        | Python 3.11+ với thư viện pika                  |
-| Âm thanh (software)  | Không bắt buộc ở backend (playback chính trên ESP32) |
-| Container hoá        | Docker & Docker Compose                         |
-| IoT firmware (ESP32) | MicroPython + thư viện umqtt                    |
-| Dashboard            | FastAPI + WebSocket + Next.js                   |
-| File nhạc đầu vào    | MIDI (.mid) - định dạng chuẩn, phổ biến, dễ lấy dữ liệu |
-| Monitoring           | RabbitMQ Management API + Prometheus (tùy chọn) |
-
-**6. Kịch bản demo**
-
-Các kịch bản dưới đây được thiết kế để minh hoạ trực quan từng khái niệm của hệ thống phân tán --- người xem sẽ nghe thấy hậu quả của từng sự cố qua loa vật lý.
+**6. Kich ban demo**
 
 |                                                                                 |
 |---------------------------------------------------------------------------------|
-| **Demo 1 --- Consumer lag gây lạc nhịp**                                        |
-| Mô phỏng: Làm chậm nhân tạo một Instrument service (sleep delay).               |
-| Kết quả nghe thấy: Nhạc cụ đó bị trễ dần, queue tích lũy, toàn bản nhạc bị méo. |
-| Khái niệm học được: Consumer lag, back-pressure, queue depth monitoring.        |
+| **Demo 1 - Consumer lag gay lac nhip**                                          |
+| Mo phong: Lam cham nhan tao mot Instrument service (sleep delay).               |
+| Ket qua nghe thay: Nhac cu do bi tre dan, queue tich luy, toan ban nhac bi meo. |
 
 |                                                                                    |
 |------------------------------------------------------------------------------------|
-| **Demo 2 --- Service crash & recovery**                                            |
-| Mô phỏng: Dừng (docker stop) một Instrument service giữa chừng.                    |
-| Kết quả nghe thấy: Nhạc cụ đó im lặng hoàn toàn; khởi động lại thì message dồn về. |
-| Khái niệm học được: Message durability, consumer recovery, dead letter queue.      |
+| **Demo 2 - Service crash & recovery**                                              |
+| Mo phong: Dung (docker stop) mot Instrument service giua chung.                    |
+| Ket qua nghe thay: Nhac cu do im lang; khoi dong lai thi message don ve.           |
 
 |                                                                                |
 |--------------------------------------------------------------------------------|
-| **Demo 3 --- Scale horizontal (competing consumers)**                          |
-| Mô phỏng: Chạy 3 instance của Violin service cùng lúc.                         |
-| Kết quả nghe thấy: Mỗi instance chỉ nhận 1/3 note --- âm thanh bị rời rạc.     |
-| Khái niệm học được: Competing consumers, message ordering, partition strategy. |
+| **Demo 3 - Scale horizontal (competing consumers)**                          |
+| Mo phong: Chay 3 instance cua Guitar service cung luc.                        |
+| Ket qua nghe thay: Moi instance chi nhan mot phan note, am thanh bi roi rac. |
 
 |                                                                     |
 |---------------------------------------------------------------------|
-| **Demo 4 --- Thay đổi BPM real-time**                               |
-| Mô phỏng: Gửi message vào tempo.control queue từ Dashboard.         |
-| Kết quả nghe thấy: Toàn bộ giàn nhạc tăng/giảm tốc ngay lập tức.    |
-| Khái niệm học được: Dynamic configuration, broadcast event pattern. |
+| **Demo 4 - Thay doi BPM real-time**                                 |
+| Mo phong: Gui message vao queue `tempo.control` tu Dashboard.       |
+| Ket qua nghe thay: Toan bo gian nhac tang/giam toc ngay lap tuc.    |
 
-|                                                                                        |
-|----------------------------------------------------------------------------------------|
-| **Demo 5 --- IoT device ngắt kết nối & tự reconnect**                                  |
-| Mô phỏng: Ngắt WiFi của ESP32 rồi kết nối lại.                                         |
-| Kết quả nghe thấy: Âm thanh dừng, message tích lũy trong queue, khi reconnect phát bù. |
-| Khái niệm học được: Message persistence, client reconnect strategy, durable queue.     |
+**7. Cau truc thu muc du an**
 
-**7. Cấu trúc thư mục dự án**
+|                  |                             |
+|------------------|-----------------------------|
+| **Duong dan**    | **Mo ta**                   |
+| docker-compose.yml | Dinh nghia toan bo services |
+| conductor/       | Conductor Service - Python  |
+| services/guitar/ | Guitar Instrument Service   |
+| services/oboe/   | Oboe Instrument Service     |
+| services/drums/  | Drums Instrument Service    |
+| services/bass/   | Bass Instrument Service     |
+| mixer/           | Mixer Service               |
+| dashboard/       | Dashboard web app           |
+| scores/          | File nhac MIDI mau          |
+| docs/            | Tai lieu ky thuat           |
 
-|                    |                              |
-|--------------------|------------------------------|
-| **Đường dẫn**      | **Mô tả**                    |
-| docker-compose.yml | Định nghĩa toàn bộ services  |
-| conductor/         | Conductor Service --- Python |
-| services/violin/   | Violin Instrument Service    |
-| services/piano/    | Piano Instrument Service     |
-| services/drums/    | Drums Instrument Service     |
-| services/cello/    | Cello Instrument Service     |
-| mixer/             | Mixer Service                |
-| dashboard/         | Dashboard web app            |
-| iot-device/        | Firmware cho ESP32           |
-| scores/            | File nhạc MIDI (.mid) mẫu    |
-| docs/              | Tài liệu kỹ thuật chi tiết   |
+**8. Yeu cau phi chuc nang**
 
-**8. Yêu cầu phi chức năng**
+**8.1 Hieu nang**
 
-**8.1 Hiệu năng**
+- Do tre tu Conductor publish den dashboard playback: < 200ms trong dieu kien LAN binh thuong.
+- RabbitMQ phai xu ly duoc toi thieu 100 message/giay.
+- Dashboard cap nhat metrics moi 1 giay.
 
-- Độ trễ từ Conductor publish đến IoT phát âm: \< 200ms trong điều kiện LAN bình thường
+**8.2 Do tin cay**
 
-- RabbitMQ phải xử lý được tối thiểu 100 message/giây
+- Tat ca queue phai duoc khai bao durable.
+- Moi service phai co co che tu reconnect khi mat ket noi den RabbitMQ.
 
-- Dashboard cập nhật metrics mỗi 1 giây
+**8.3 Quan sat duoc (Observability)**
 
-**8.2 Độ tin cậy**
+- Dashboard hien thi real-time: queue depth, consumer count, message rate cua tung queue.
+- Moi service log trang thai ket noi va so message da xu ly.
+- RabbitMQ Management UI phai truy cap duoc tai cong 15672.
 
-- Tất cả queue phải được khai báo durable --- message không mất khi RabbitMQ restart
+**9. Goi y lo trinh thuc hien**
 
-- Mỗi service phải có cơ chế tự reconnect khi mất kết nối đến RabbitMQ
+|               |               |                                                                                               |
+|---------------|---------------|-----------------------------------------------------------------------------------------------|
+| **Giai doan** | **Thoi gian** | **Noi dung**                                                                                  |
+| **Phase 1**   | Tuan 1--2     | Setup RabbitMQ, viet Conductor Service, dinh nghia message schema, test publish/consume co ban |
+| **Phase 2**   | Tuan 3--4     | Viet 4 Instrument Services, Mixer Service, chay thu ban nhac don gian                        |
+| **Phase 3**   | Tuan 5        | Xay dung Dashboard, tich hop monitoring, test cac kich ban loi                               |
+| **Phase 4**   | Tuan 6        | Toi uu local playback, hoan thien demo                                                       |
+| **Phase 5**   | Tuan 7        | Viet tai lieu, quay video demo, chuan bi bao cao                                             |
 
-- IoT device phải có cơ chế tự reconnect WiFi và AMQP
+**10. Tieu chi danh gia**
 
-**8.3 Quan sát được (Observability)**
+|                                                |                 |              |
+|------------------------------------------------|-----------------|--------------|
+| **Tieu chi**                                   | **Diem toi da** | **Ghi chu**  |
+| RabbitMQ hoat dong, cac queue duoc cau hinh dung | 20              | Bat buoc     |
+| Conductor publish dung note event theo BPM     | 15              | Bat buoc     |
+| It nhat 2 Instrument Services hoat dong doc lap| 15              | Bat buoc     |
+| Local playback phat dung am thanh theo message | 20              | Quan trong   |
+| Dashboard hien thi metrics real-time           | 10              | Khuyen khich |
+| Demo duoc it nhat 3 kich ban loi co chu dich   | 15              | Quan trong   |
+| Code sach, co tai lieu va huong dan chay       | 5               | Bat buoc     |
 
-- Dashboard hiển thị real-time: queue depth, consumer count, message rate của từng queue
-
-- Mỗi service phải log trạng thái kết nối và số message đã xử lý
-
-- RabbitMQ Management UI phải truy cập được tại cổng 15672
-
-**9. Gợi ý lộ trình thực hiện**
-
-|               |               |                                                                                                |
-|---------------|---------------|------------------------------------------------------------------------------------------------|
-| **Giai đoạn** | **Thời gian** | **Nội dung**                                                                                   |
-| **Phase 1**   | Tuần 1--2     | Setup RabbitMQ, viết Conductor Service, định nghĩa message schema, test publish/consume cơ bản |
-| **Phase 2**   | Tuần 3--4     | Viết 4 Instrument Services, Mixer Service, chạy thử bản nhạc đơn giản                          |
-| **Phase 3**   | Tuần 5        | Xây dựng Dashboard, tích hợp monitoring, test các kịch bản lỗi                                 |
-| **Phase 4**   | Tuần 6        | Setup IoT device, kết nối và test phát âm thanh thật, hoàn thiện demo                          |
-| **Phase 5**   | Tuần 7        | Viết tài liệu, quay video demo, chuẩn bị báo cáo                                               |
-
-**10. Tiêu chí đánh giá**
-
-|                                                  |                 |              |
-|--------------------------------------------------|-----------------|--------------|
-| **Tiêu chí**                                     | **Điểm tối đa** | **Ghi chú**  |
-| RabbitMQ hoạt động, các queue được cấu hình đúng | 20              | Bắt buộc     |
-| Conductor publish đúng note event theo BPM       | 15              | Bắt buộc     |
-| Ít nhất 2 Instrument Services hoạt động độc lập  | 15              | Bắt buộc     |
-| IoT device nhận message và phát âm thanh thật    | 20              | Quan trọng   |
-| Dashboard hiển thị metrics real-time             | 10              | Khuyến khích |
-| Demo được ít nhất 3 kịch bản lỗi có chủ đích     | 15              | Quan trọng   |
-| Code sạch, có tài liệu và hướng dẫn chạy         | 5               | Bắt buộc     |
-
---- Hết tài liệu yêu cầu dự án ---
+--- Het tai lieu yeu cau du an ---

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import logging
 import os
@@ -8,7 +8,7 @@ from pathlib import Path
 from mido import MetaMessage, MidiFile, MidiTrack, bpm2tempo
 
 LOGGER = logging.getLogger(__name__)
-TRACK_INSTRUMENTS = ("violin", "piano", "drums", "cello")
+TRACK_INSTRUMENTS = ("guitar", "oboe", "drums", "bass")
 
 
 class PlaybackAudioRenderer:
@@ -29,10 +29,10 @@ class PlaybackAudioRenderer:
         self._working_midi = self._output_dir / "latest_render.mid"
 
         self._enabled = {
-            "violin": True,
-            "piano": True,
+            "guitar": True,
+            "oboe": True,
             "drums": True,
-            "cello": True,
+            "bass": True,
         }
         self._source_midi: Path | None = None
         self._current_bpm = 120
@@ -177,12 +177,18 @@ class PlaybackAudioRenderer:
                 track_name = (event.name or "").lower()
                 break
 
-        if "violin" in track_name:
-            return "violin"
-        if "piano" in track_name or "keys" in track_name or "right hand" in track_name or "left hand" in track_name:
-            return "piano"
-        if "cello" in track_name or "bass" in track_name:
-            return "cello"
+        if "guitar" in track_name or "violin" in track_name:
+            return "guitar"
+        if (
+            "oboe" in track_name
+            or "piano" in track_name
+            or "keys" in track_name
+            or "right hand" in track_name
+            or "left hand" in track_name
+        ):
+            return "oboe"
+        if "bass" in track_name or "cello" in track_name:
+            return "bass"
         if "drum" in track_name or "perc" in track_name:
             return "drums"
 
@@ -190,11 +196,11 @@ class PlaybackAudioRenderer:
             if event.type == "program_change":
                 program = int(event.program)
                 if 0 <= program <= 7:
-                    return "piano"
+                    return "oboe"
                 if 40 <= program <= 41:
-                    return "violin"
+                    return "guitar"
                 if 42 <= program <= 43:
-                    return "cello"
+                    return "bass"
 
         for event in track:
             if hasattr(event, "channel") and event.channel == 9:
@@ -205,3 +211,4 @@ class PlaybackAudioRenderer:
         if hasattr(msg, "channel") and msg.channel == 9:
             return "drums"
         return track_instrument
+

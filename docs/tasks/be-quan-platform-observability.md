@@ -52,7 +52,7 @@ Xây dựng lớp platform dùng chung cho toàn hệ thống: hạ tầng Docke
   - service crash/recovery
   - competing consumers
   - đổi BPM runtime
-  - IoT disconnect/reconnect
+  - network reconnect simulation (service-side)
 - Mỗi script có cleanup để trả môi trường về trạng thái sạch.
 
 ### Task 6 - CI quality gate cơ bản
