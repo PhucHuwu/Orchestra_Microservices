@@ -220,12 +220,12 @@ async def audio_stream(websocket: WebSocket) -> None:
         chunk_seconds = 0.04
         loop = asyncio.get_running_loop()
         next_tick = loop.time()
+        stream_started = loop.time()
         sample_rate = 22050
         chunk_samples = int(sample_rate * chunk_seconds)
         stem_names = ["guitar", "oboe", "drums", "bass"]
         stem_pcm: dict[str, bytes] = {name: b"" for name in stem_names}
         stem_hash: dict[str, str] = {name: "" for name in stem_names}
-        stem_cursor: dict[str, int] = {name: 0 for name in stem_names}
         last_fetch = 0.0
         fetch_task: asyncio.Task | None = None
         while True:
@@ -263,12 +263,13 @@ async def audio_stream(websocket: WebSocket) -> None:
                     fetch_task = None
 
             enabled = runtime.stream_state().get("enabled", {})
+            elapsed = max(0.0, loop.time() - stream_started)
+            playhead_sample = int(elapsed * sample_rate)
             chunks: list[bytes] = []
             for stem in stem_names:
                 if not bool(enabled.get(stem, True)):
                     continue
-                chunk = _pcm_chunk(stem_pcm.get(stem, b""), stem_cursor[stem], chunk_samples)
-                stem_cursor[stem] += chunk_samples
+                chunk = _pcm_chunk(stem_pcm.get(stem, b""), playhead_sample, chunk_samples)
                 chunks.append(chunk)
 
             payload = _mix_pcm_chunks(chunks, chunk_samples)
