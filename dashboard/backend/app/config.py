@@ -48,7 +48,6 @@ class Settings(BaseSettings):
     guitar_service_url: str = Field(default="http://guitar-service:8000", alias="GUITAR_SERVICE_URL")
     oboe_service_url: str = Field(default="http://oboe-service:8000", alias="OBOE_SERVICE_URL")
     drums_service_url: str = Field(default="http://drums-service:8000", alias="DRUMS_SERVICE_URL")
-    bass_service_url: str = Field(default="http://bass-service:8000", alias="BASS_SERVICE_URL")
     mixer_service_url: str = Field(default="http://mixer:8000", alias="MIXER_SERVICE_URL")
     conductor_service_url: str = Field(default="http://conductor:8000", alias="CONDUCTOR_SERVICE_URL")
     fault_toolkit_session_id: str = Field(default="fault-demo-session", alias="FAULT_TOOLKIT_SESSION_ID")

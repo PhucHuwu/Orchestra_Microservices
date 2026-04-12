@@ -6,6 +6,7 @@ from threading import Lock
 from threading import Thread
 
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 
 from services.instruments_shared import (
     InstrumentSettings,
@@ -116,3 +117,36 @@ def worker_control_stop() -> dict:
             "enabled": worker_enabled,
             "running": _worker_running(),
         }
+
+
+@app.get("/ui", response_class=HTMLResponse)
+def ui() -> str:
+    return """
+<!doctype html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <title>Guitar Service Control</title>
+  </head>
+  <body style='font-family: Arial, sans-serif; margin: 20px;'>
+    <h3>Guitar Service</h3>
+    <button onclick='toggle(true)'>Start</button>
+    <button onclick='toggle(false)'>Stop</button>
+    <pre id='out'></pre>
+    <script>
+      async function refresh(){
+        const data = await fetch('/control/worker').then(r=>r.json());
+        document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+      }
+      async function toggle(enabled){
+        const path = enabled ? '/control/worker/start' : '/control/worker/stop';
+        await fetch(path, {method:'POST'});
+        await refresh();
+      }
+      refresh();
+      setInterval(refresh, 3000);
+    </script>
+  </body>
+</html>
+"""

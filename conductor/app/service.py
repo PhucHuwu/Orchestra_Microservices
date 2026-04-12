@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
+import httpx
 import pika
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.exceptions import AMQPError
@@ -24,6 +25,12 @@ from app.models import (
 )
 
 LOGGER = logging.getLogger(__name__)
+
+SERVICE_ENDPOINTS = {
+    "guitar-service": "guitar_service_url",
+    "oboe-service": "oboe_service_url",
+    "drums-service": "drums_service_url",
+}
 
 
 class ConductorRuntime:
@@ -134,6 +141,62 @@ class ConductorRuntime:
             },
         )
         return self.status()
+
+    def service_control_status(self) -> list[dict[str, Any]]:
+        items: list[dict[str, Any]] = []
+        with httpx.Client(timeout=3.0) as client:
+            for service_name, url_attr in SERVICE_ENDPOINTS.items():
+                base_url = str(getattr(self._settings, url_attr)).rstrip("/")
+                enabled = False
+                running = False
+                reachable = False
+                message: str | None = None
+                try:
+                    response = client.get(f"{base_url}/control/worker")
+                    if response.status_code < 400:
+                        payload = response.json()
+                        if isinstance(payload, dict):
+                            enabled = bool(payload.get("enabled", False))
+                            running = bool(payload.get("running", False))
+                        reachable = True
+                except Exception as exc:  # noqa: BLE001
+                    message = str(exc)
+                items.append(
+                    {
+                        "service_name": service_name,
+                        "enabled": enabled,
+                        "running": running,
+                        "reachable": reachable,
+                        "message": message,
+                    }
+                )
+        return items
+
+    def set_service_enabled(self, service_name: str, enabled: bool) -> dict[str, Any]:
+        if service_name not in SERVICE_ENDPOINTS:
+            raise ValueError(f"Unsupported service: {service_name}")
+
+        base_url = str(getattr(self._settings, SERVICE_ENDPOINTS[service_name])).rstrip("/")
+        action = "start" if enabled else "stop"
+        with httpx.Client(timeout=6.0) as client:
+            response = client.post(f"{base_url}/control/worker/{action}")
+            response.raise_for_status()
+            payload = response.json()
+
+        result = {
+            "service_name": service_name,
+            "enabled": bool(payload.get("enabled", enabled)) if isinstance(payload, dict) else enabled,
+            "running": bool(payload.get("running", enabled)) if isinstance(payload, dict) else enabled,
+        }
+        LOGGER.info(
+            "instrument_service_toggled",
+            extra={
+                "service_name": service_name,
+                "enabled": result["enabled"],
+                "running": result["running"],
+            },
+        )
+        return result
 
     def _run_scheduler(self) -> None:
         with self._lock:

@@ -60,6 +60,17 @@ class ConductorEnabledStatus(BaseModel):
     enabled: bool
 
 
+class ServiceToggleRequest(BaseModel):
+    service_name: Literal["guitar-service", "oboe-service", "drums-service"]
+    enabled: bool
+
+
+class ServiceToggleStatus(BaseModel):
+    service_name: str
+    enabled: bool
+    running: bool
+
+
 class ConductorStatus(BaseModel):
     status: Literal["running", "stopped", "failed"] = "stopped"
     session_id: UUID | None = None

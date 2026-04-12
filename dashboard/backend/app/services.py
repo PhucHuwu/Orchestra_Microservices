@@ -26,7 +26,6 @@ SERVICE_ENDPOINTS = {
     "guitar-service": {"url_attr": "guitar_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
     "oboe-service": {"url_attr": "oboe_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
     "drums-service": {"url_attr": "drums_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
-    "bass-service": {"url_attr": "bass_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
     "mixer": {"url_attr": "mixer_service_url", "toggle_path": "/control/worker", "health_path": "/health"},
     "conductor": {"url_attr": "conductor_service_url", "toggle_path": "/v1/conductor/enabled", "health_path": "/health"},
 }
@@ -35,7 +34,10 @@ SERVICE_TO_INSTRUMENT = {
     "guitar-service": "guitar",
     "oboe-service": "oboe",
     "drums-service": "drums",
-    "bass-service": "bass",
+}
+
+AUXILIARY_SERVICE_EXTRA_INSTRUMENTS = {
+    "drums-service": ("bass",),
 }
 
 INSTRUMENT_INPUT_QUEUE = {
@@ -50,7 +52,6 @@ SERVICE_CONTROL_ORDER = (
     "guitar-service",
     "oboe-service",
     "drums-service",
-    "bass-service",
     "mixer",
 )
 
@@ -58,11 +59,10 @@ QUEUE_FLOW_EDGES = [
     ("conductor", "guitar-service", "instrument.guitar.note"),
     ("conductor", "oboe-service", "instrument.oboe.note"),
     ("conductor", "drums-service", "instrument.drums.beat"),
-    ("conductor", "bass-service", "instrument.bass.note"),
+    ("conductor", "drums-service", "instrument.bass.note"),
     ("guitar-service", "mixer", "instrument.output"),
     ("oboe-service", "mixer", "instrument.output"),
     ("drums-service", "mixer", "instrument.output"),
-    ("bass-service", "mixer", "instrument.output"),
     ("mixer", "dashboard-api", "playback.output"),
 ]
 
@@ -445,6 +445,14 @@ class DashboardService:
         if instrument is not None:
             self._audio_renderer.set_instrument_enabled(instrument=instrument, enabled=enabled)
             self._purge_instrument_queue(instrument)
+            for extra_instrument in AUXILIARY_SERVICE_EXTRA_INSTRUMENTS.get(service_key, ()):
+                self._audio_renderer.set_instrument_enabled(
+                    instrument=extra_instrument,
+                    enabled=enabled,
+                )
+                self._purge_instrument_queue(extra_instrument)
+            if enabled:
+                self._resync_running_playback(db)
 
         latest = await self.service_control_status()
         for item in latest:
@@ -616,8 +624,6 @@ class DashboardService:
             return
 
         score_file_name = self._score_file_name(score.source_path)
-        self._audio_renderer.reset_session()
-
         try:
             self._call_conductor_stop(active.id)
         except ApiError:

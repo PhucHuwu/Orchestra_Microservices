@@ -19,6 +19,8 @@
   postgres:
     image: postgres:15
     hostname: postgres
+    profiles:
+      - local-db
     env_file:
       - .env
     environment:
@@ -97,30 +99,14 @@
       INSTRUMENT_NAME: drums
       INPUT_QUEUE: instrument.drums.beat
       OUTPUT_ROUTING_KEY: instrument.drums.output
+      SECONDARY_INSTRUMENT_NAME: bass
+      SECONDARY_INPUT_QUEUE: instrument.bass.note
+      SECONDARY_OUTPUT_ROUTING_KEY: instrument.bass.output
       INSTRUMENT_WORKER_ENABLED: "true"
     depends_on:
       - rabbitmq
     ports:
       - "${ORCHESTRA_BIND_HOST:-0.0.0.0}:8203:8000"
-    networks:
-      - orchestra_net
-
-  bass-service:
-    build:
-      context: .
-      dockerfile: ./services/bass/Dockerfile
-    env_file:
-      - .env
-    environment:
-      SERVICE_NAME: bass-service
-      INSTRUMENT_NAME: bass
-      INPUT_QUEUE: instrument.bass.note
-      OUTPUT_ROUTING_KEY: instrument.bass.output
-      INSTRUMENT_WORKER_ENABLED: "true"
-    depends_on:
-      - rabbitmq
-    ports:
-      - "${ORCHESTRA_BIND_HOST:-0.0.0.0}:8204:8000"
     networks:
       - orchestra_net
 
@@ -152,7 +138,6 @@
       FAULT_TOOLKIT_SESSION_ID: ${FAULT_TOOLKIT_SESSION_ID:-fault-demo-session}
     depends_on:
       - rabbitmq
-      - postgres
     ports:
       - "${ORCHESTRA_BIND_HOST:-0.0.0.0}:${DASHBOARD_API_PORT:-8000}:8000"
     volumes:

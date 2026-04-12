@@ -201,7 +201,6 @@ class PlaybackAudioRenderer:
                     return "guitar"
                 if 42 <= program <= 43:
                     return "bass"
-
         for event in track:
             if hasattr(event, "channel") and event.channel == 9:
                 return "drums"
