@@ -1,6 +1,6 @@
 COMPOSE = docker compose
 
-.PHONY: up down logs ps lint fmt test bootstrap-topology fault-demo fault-cleanup
+.PHONY: up down logs ps lint lint-pylint fmt test bootstrap-topology fault-demo fault-cleanup
 
 up:
 	$(COMPOSE) up --build
@@ -16,6 +16,9 @@ ps:
 
 lint:
 	ruff check .
+
+lint-pylint:
+	pylint conductor mixer dashboard/backend/app services scripts
 
 fmt:
 	black .

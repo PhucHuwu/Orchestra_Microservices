@@ -91,6 +91,7 @@ Chạy các lệnh sau trước khi merge:
 
 ```bash
 make lint
+make lint-pylint
 make test
 ```
 
@@ -98,6 +99,13 @@ Nếu chạy trực tiếp không qua Makefile:
 
 ```bash
 ruff check .
+pylint conductor mixer dashboard/backend/app services scripts
 black --check .
 pytest
+```
+
+Windows PowerShell (không có `make`):
+
+```powershell
+.\scripts\lint-pylint.ps1
 ```
