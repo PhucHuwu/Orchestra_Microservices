@@ -193,12 +193,27 @@ class ConductorRuntime:
         if service_name not in SERVICE_ENDPOINTS:
             raise ValueError(f"Unsupported service: {service_name}")
 
-        base_url = str(getattr(self._settings, SERVICE_ENDPOINTS[service_name])).rstrip("/")
-        action = "start" if enabled else "stop"
-        with httpx.Client(timeout=6.0) as client:
-            response = client.post(f"{base_url}/control/worker/{action}")
-            response.raise_for_status()
-            payload = response.json()
+        with httpx.Client(timeout=45.0) as client:
+            payload: dict[str, Any] = {"enabled": enabled, "running": enabled}
+
+            if service_name in {"guitar-service", "oboe-service", "drums-service"}:
+                try:
+                    payload = self._sync_dashboard_service_toggle(
+                        client,
+                        service_name=service_name,
+                        enabled=enabled,
+                    )
+                except Exception:  # noqa: BLE001
+                    LOGGER.exception("dashboard_service_toggle_sync_failed")
+                    raise
+            else:
+                base_url = str(getattr(self._settings, SERVICE_ENDPOINTS[service_name])).rstrip("/")
+                action = "start" if enabled else "stop"
+                response = client.post(f"{base_url}/control/worker/{action}")
+                response.raise_for_status()
+                raw_payload = response.json()
+                if isinstance(raw_payload, dict):
+                    payload = raw_payload
 
             if service_name == "mixer" and enabled:
                 should_start = False
@@ -238,6 +253,7 @@ class ConductorRuntime:
                 self._instrument_enabled["drums"] = enabled
                 self._instrument_enabled["bass"] = enabled
 
+
         result = {
             "service_name": service_name,
             "enabled": bool(payload.get("enabled", enabled)) if isinstance(payload, dict) else enabled,
@@ -252,6 +268,30 @@ class ConductorRuntime:
             },
         )
         return result
+
+    def _sync_dashboard_service_toggle(
+        self,
+        client: httpx.Client,
+        service_name: str,
+        enabled: bool,
+    ) -> dict[str, Any]:
+        dashboard_api = str(self._settings.dashboard_api_url).rstrip("/")
+        resp = client.post(
+            f"{dashboard_api}/api/v1/services/control",
+            json={"service_name": service_name, "enabled": bool(enabled)},
+        )
+        if resp.status_code >= 400:
+            raise RuntimeError(f"dashboard toggle failed: {resp.status_code} {resp.text[:200]}")
+        payload = resp.json()
+        if not isinstance(payload, dict):
+            return {"enabled": enabled, "running": enabled}
+        data = payload.get("data") if isinstance(payload.get("data"), dict) else payload
+        if not isinstance(data, dict):
+            return {"enabled": enabled, "running": enabled}
+        return {
+            "enabled": bool(data.get("enabled", enabled)),
+            "running": bool(data.get("enabled", enabled)),
+        }
 
     def is_instrument_enabled(self, instrument: str) -> bool:
         with self._lock:
@@ -304,8 +344,16 @@ class ConductorRuntime:
 
     def fetch_latest_audio(self) -> tuple[bytes, str]:
         dashboard_api = str(self._settings.dashboard_api_url).rstrip("/")
-        with httpx.Client(timeout=8.0) as client:
+        with httpx.Client(timeout=1.2) as client:
             response = client.get(f"{dashboard_api}/api/v1/playback/audio/latest")
+            response.raise_for_status()
+            content_type = response.headers.get("content-type", "audio/wav")
+            return response.content, content_type
+
+    def fetch_stem_audio(self, instrument: str) -> tuple[bytes, str]:
+        dashboard_api = str(self._settings.dashboard_api_url).rstrip("/")
+        with httpx.Client(timeout=1.2) as client:
+            response = client.get(f"{dashboard_api}/api/v1/playback/audio/stem/{instrument}")
             response.raise_for_status()
             content_type = response.headers.get("content-type", "audio/wav")
             return response.content, content_type
@@ -378,6 +426,9 @@ class ConductorRuntime:
                 self._stop_event.wait(timeout=sleep_seconds)
                 if self._stop_event.is_set():
                     break
+
+                if not self.is_instrument_enabled(note.instrument):
+                    continue
 
                 event = NoteEvent(
                     session_id=status.session_id,

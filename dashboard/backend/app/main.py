@@ -156,6 +156,30 @@ def latest_audio() -> Response:
     )
 
 
+@app.get("/api/v1/playback/audio/stem/{instrument}")
+def latest_audio_stem(instrument: str) -> Response:
+    _track("/api/v1/playback/audio/stem", "GET")
+    try:
+        stem_file = audio_renderer.stem_file_path(instrument)
+    except KeyError as exc:
+        raise ApiError(
+            error_code="INSTRUMENT_NOT_SUPPORTED",
+            message=str(exc),
+            status_code=400,
+        ) from exc
+    if not stem_file.exists():
+        raise ApiError(
+            error_code="AUDIO_NOT_READY",
+            message=f"Stem audio not generated yet for {instrument}",
+            status_code=404,
+        )
+    return Response(
+        content=stem_file.read_bytes(),
+        media_type="audio/wav",
+        headers={"Accept-Ranges": "bytes"},
+    )
+
+
 @app.post("/api/v1/playback/stop")
 def stop_playback(request: PlaybackStopRequest, db: Session = Depends(get_db_session)) -> dict:
     _track("/api/v1/playback/stop", "POST")

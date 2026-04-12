@@ -16,6 +16,105 @@ from app.models import (
 from app.service import ConductorRuntime
 from app.system_logs import recent_logs
 
+
+def _decode_wav_to_pcm_mono(wav_data: bytes) -> tuple[int, bytes]:
+    import io
+    import wave
+
+    if len(wav_data) <= 44:
+        return 22050, b""
+
+    with wave.open(io.BytesIO(wav_data), "rb") as wf:
+        sample_rate = wf.getframerate()
+        sample_width = wf.getsampwidth()
+        channels = wf.getnchannels()
+        raw = wf.readframes(wf.getnframes())
+
+    if sample_width != 2:
+        return sample_rate, b""
+    if channels == 1:
+        return sample_rate, raw
+
+    out = bytearray(len(raw) // 2)
+    dst = 0
+    for i in range(0, len(raw), 4):
+        l = int.from_bytes(raw[i : i + 2], "little", signed=True)
+        r = int.from_bytes(raw[i + 2 : i + 4], "little", signed=True)
+        m = (l + r) // 2
+        out[dst : dst + 2] = int(m).to_bytes(2, "little", signed=True)
+        dst += 2
+    return sample_rate, bytes(out)
+
+
+def _pcm_chunk(pcm: bytes, start_sample: int, chunk_samples: int) -> bytes:
+    if len(pcm) == 0:
+        return b"\x00" * (chunk_samples * 2)
+    total = len(pcm) // 2
+    if total <= 0:
+        return b"\x00" * (chunk_samples * 2)
+
+    start = start_sample % total
+    need = chunk_samples
+    out = bytearray(chunk_samples * 2)
+    dst = 0
+    pos = start
+    while need > 0:
+        take = min(need, total - pos)
+        s = pos * 2
+        e = s + (take * 2)
+        out[dst : dst + (take * 2)] = pcm[s:e]
+        dst += take * 2
+        need -= take
+        pos = 0
+    return bytes(out)
+
+
+def _mix_pcm_chunks(chunks: list[bytes], chunk_samples: int) -> bytes:
+    if not chunks:
+        return b"\x00" * (chunk_samples * 2)
+    out = bytearray(chunk_samples * 2)
+    for i in range(chunk_samples):
+        mixed = 0
+        byte_idx = i * 2
+        for chunk in chunks:
+            if byte_idx + 2 <= len(chunk):
+                mixed += int.from_bytes(chunk[byte_idx : byte_idx + 2], "little", signed=True)
+        if len(chunks) > 1:
+            mixed = int(mixed / (len(chunks) ** 0.5))
+        mixed = max(-32767, min(32767, mixed))
+        out[byte_idx : byte_idx + 2] = int(mixed).to_bytes(2, "little", signed=True)
+    return bytes(out)
+
+
+def _crossfade_merge(old_pcm: bytes, new_pcm: bytes, fade_samples: int) -> bytes:
+    if len(old_pcm) == 0:
+        return new_pcm
+    if len(new_pcm) == 0:
+        return old_pcm
+
+    old_total = len(old_pcm) // 2
+    new_total = len(new_pcm) // 2
+    if old_total <= 0 or new_total <= 0:
+        return new_pcm
+
+    fade = min(fade_samples, old_total, new_total)
+    if fade <= 0:
+        return new_pcm
+
+    old_tail = old_pcm[(old_total - fade) * 2 :]
+    suffix = new_pcm[fade * 2 :]
+    blended = bytearray(fade * 2)
+    for i in range(fade):
+        old_idx = i * 2
+        new_idx = i * 2
+        a = int.from_bytes(old_tail[old_idx : old_idx + 2], "little", signed=True)
+        b = int.from_bytes(new_pcm[new_idx : new_idx + 2], "little", signed=True)
+        t = i / max(1, fade - 1)
+        v = int((1.0 - t) * a + t * b)
+        blended[i * 2 : i * 2 + 2] = int(v).to_bytes(2, "little", signed=True)
+
+    return bytes(blended) + suffix
+
 router = APIRouter()
 runtime: ConductorRuntime | None = None
 
@@ -112,61 +211,75 @@ def latest_audio() -> Response:
 @router.websocket("/v1/conductor/audio/stream")
 async def audio_stream(websocket: WebSocket) -> None:
     await websocket.accept()
-    runtime = _runtime()
-    settings = runtime.settings
-    connection = None
-    channel = None
     try:
         import asyncio
-        import json
-        import pika
+        import hashlib
+        import time
 
-        params = pika.URLParameters(settings.rabbitmq_url)
-        connection = pika.BlockingConnection(params)
-        channel = connection.channel()
-        channel.exchange_declare(exchange=settings.exchange_name, exchange_type="topic", durable=True)
-        queue = channel.queue_declare(queue="", exclusive=True, auto_delete=True).method.queue
-        channel.queue_bind(exchange=settings.exchange_name, queue=queue, routing_key="playback.output")
-        channel.basic_qos(prefetch_count=300)
-
+        runtime = _runtime()
+        chunk_seconds = 0.04
+        loop = asyncio.get_running_loop()
+        next_tick = loop.time()
+        sample_rate = 22050
+        chunk_samples = int(sample_rate * chunk_seconds)
+        stem_names = ["guitar", "oboe", "drums", "bass"]
+        stem_pcm: dict[str, bytes] = {name: b"" for name in stem_names}
+        stem_hash: dict[str, str] = {name: "" for name in stem_names}
+        stem_cursor: dict[str, int] = {name: 0 for name in stem_names}
+        last_fetch = 0.0
+        fetch_task: asyncio.Task | None = None
         while True:
-            method, properties, body = channel.basic_get(queue=queue, auto_ack=False)
-            if method is None:
-                await asyncio.sleep(0.01)
-                continue
+            now = time.time()
+            if now - last_fetch >= 0.15 and (fetch_task is None or fetch_task.done()):
+                def _fetch_all_stems():
+                    result: dict[str, bytes] = {}
+                    for stem in stem_names:
+                        try:
+                            result[stem] = runtime.fetch_stem_audio(stem)[0]
+                        except Exception:
+                            result[stem] = b""
+                    return result
 
-            try:
-                payload = json.loads(body)
-                event = payload if isinstance(payload, dict) else {}
-                instrument = str(event.get("instrument", "guitar"))
-                if not runtime.is_instrument_enabled(instrument):
-                    channel.basic_ack(delivery_tag=method.delivery_tag)
+                fetch_task = asyncio.create_task(asyncio.to_thread(_fetch_all_stems))
+                last_fetch = now
+
+            if fetch_task is not None and fetch_task.done():
+                try:
+                    result = fetch_task.result()
+                    if isinstance(result, dict):
+                        for stem in stem_names:
+                            wav_data = result.get(stem, b"")
+                            digest = hashlib.sha1(wav_data).hexdigest()
+                            if digest != stem_hash[stem]:
+                                sr, decoded = _decode_wav_to_pcm_mono(wav_data)
+                                if len(decoded) > 0:
+                                    sample_rate = sr
+                                    chunk_samples = max(256, int(sample_rate * chunk_seconds))
+                                    stem_pcm[stem] = decoded
+                                    stem_hash[stem] = digest
+                except Exception:
+                    pass
+                finally:
+                    fetch_task = None
+
+            enabled = runtime.stream_state().get("enabled", {})
+            chunks: list[bytes] = []
+            for stem in stem_names:
+                if not bool(enabled.get(stem, True)):
                     continue
+                chunk = _pcm_chunk(stem_pcm.get(stem, b""), stem_cursor[stem], chunk_samples)
+                stem_cursor[stem] += chunk_samples
+                chunks.append(chunk)
 
-                await websocket.send_json(
-                    {
-                        "instrument": instrument,
-                        "pitch": int(event.get("pitch", 69)),
-                        "duration": float(event.get("duration", 0.18)),
-                        "volume": int(event.get("volume", 90)),
-                    }
-                )
-                channel.basic_ack(delivery_tag=method.delivery_tag)
-            except Exception:
-                channel.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+            payload = _mix_pcm_chunks(chunks, chunk_samples)
+            await websocket.send_bytes(payload)
+            next_tick += chunk_seconds
+            await asyncio.sleep(max(0.0, next_tick - loop.time()))
+
     except WebSocketDisconnect:
         return
-    finally:
-        try:
-            if channel is not None and channel.is_open:
-                channel.close()
-        except Exception:
-            pass
-        try:
-            if connection is not None and connection.is_open:
-                connection.close()
-        except Exception:
-            pass
+    except Exception:
+        return
 
 
 @router.get("/ui", response_class=HTMLResponse)
@@ -231,89 +344,63 @@ def ui_index() -> str:
       }
       let ws = null;
       let audioCtx = null;
-      let masterGain = null;
+      let nextTime = 0;
+      let pendingFrames = [];
 
-      function midiToFreq(pitch) {
-        return 440 * Math.pow(2, (pitch - 69) / 12);
-      }
-
-      function instrumentWave(instrument) {
-        if (instrument === 'oboe') return 'triangle';
-        if (instrument === 'bass') return 'sawtooth';
-        return 'sine';
-      }
-
-      function playDrum(duration, volume) {
-        const bufferSize = Math.max(256, Math.floor(audioCtx.sampleRate * Math.min(0.25, duration)));
-        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const data = buffer.getChannelData(0);
-        const amp = Math.min(1, Math.max(0.08, volume / 127));
-        for (let i = 0; i < bufferSize; i++) {
-          const env = 1 - i / bufferSize;
-          data[i] = (Math.random() * 2 - 1) * env * amp;
+      function schedulePendingFrames() {
+        if (!audioCtx) return;
+        if (pendingFrames.length > 14) {
+          pendingFrames = pendingFrames.slice(-8);
+          nextTime = audioCtx.currentTime + 0.12;
         }
-        const src = audioCtx.createBufferSource();
-        const gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(amp, audioCtx.currentTime + 0.005);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + Math.min(0.2, duration + 0.03));
-        src.buffer = buffer;
-        src.connect(gain).connect(masterGain);
-        src.start();
-        src.stop(audioCtx.currentTime + Math.min(0.25, duration + 0.04));
+        while (pendingFrames.length > 0 && (nextTime - audioCtx.currentTime) < 0.4) {
+          const samples = pendingFrames.shift();
+          const audioBuffer = audioCtx.createBuffer(1, samples.length, 22050);
+          audioBuffer.getChannelData(0).set(samples);
+          const src = audioCtx.createBufferSource();
+          src.buffer = audioBuffer;
+          src.connect(audioCtx.destination);
+          if (nextTime < audioCtx.currentTime + 0.1) {
+            nextTime = audioCtx.currentTime + 0.1;
+          }
+          src.start(nextTime);
+          nextTime += audioBuffer.duration;
+        }
       }
 
-      function playTone(ev) {
-        const instrument = ev.instrument || 'guitar';
-        const pitch = Number(ev.pitch || 69);
-        const duration = Math.max(0.03, Math.min(0.7, Number(ev.duration || 0.2)));
-        const volume = Math.max(1, Math.min(127, Number(ev.volume || 90)));
-        if (instrument === 'drums') {
-          playDrum(duration, volume);
-          return;
+      function pcm16ToFloat32(buffer) {
+        const input = new Int16Array(buffer);
+        const out = new Float32Array(input.length);
+        for (let i = 0; i < input.length; i++) {
+          out[i] = input[i] / 32768;
         }
-
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = instrumentWave(instrument);
-        osc.frequency.setValueAtTime(midiToFreq(pitch), audioCtx.currentTime);
-
-        const amp = Math.min(0.9, Math.max(0.05, volume / 127));
-        const attack = 0.008;
-        const release = Math.min(0.3, duration * 0.75 + 0.04);
-        gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(amp, audioCtx.currentTime + attack);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration + release);
-
-        osc.connect(gain).connect(masterGain);
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration + release + 0.02);
+        return out;
       }
 
       async function startStream() {
         const status = document.getElementById('audio-status');
         if (!audioCtx) {
           audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 22050 });
-          masterGain = audioCtx.createGain();
-          masterGain.gain.value = 0.9;
-          masterGain.connect(audioCtx.destination);
         }
         if (audioCtx.state !== 'running') {
           await audioCtx.resume();
         }
-        if (ws && ws.readyState === WebSocket.OPEN) {
+        if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
           status.textContent = 'Stream already running';
           return;
         }
         const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
         ws = new WebSocket(`${protocol}://${location.host}/v1/conductor/audio/stream`);
+        ws.binaryType = 'arraybuffer';
+        pendingFrames = [];
+        nextTime = audioCtx.currentTime + 0.25;
         ws.onopen = () => { status.textContent = 'Live stream connected'; };
         ws.onmessage = (event) => {
-          try {
-            const ev = JSON.parse(event.data);
-            playTone(ev);
-          } catch (e) {
-          }
+          const buf = event.data;
+          if (!buf || buf.byteLength === 0) return;
+          const samples = pcm16ToFloat32(buf);
+          pendingFrames.push(samples);
+          schedulePendingFrames();
         };
         ws.onclose = () => { status.textContent = 'Stream stopped'; };
         ws.onerror = () => { status.textContent = 'Stream error'; };
@@ -324,6 +411,10 @@ def ui_index() -> str:
         if (ws) {
           ws.close();
           ws = null;
+        }
+        pendingFrames = [];
+        if (audioCtx) {
+          nextTime = audioCtx.currentTime;
         }
         status.textContent = 'Stream stopped by user';
       }

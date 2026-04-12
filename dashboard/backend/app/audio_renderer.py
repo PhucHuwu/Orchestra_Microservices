@@ -27,6 +27,10 @@ class PlaybackAudioRenderer:
         self._output_dir.mkdir(parents=True, exist_ok=True)
         self._latest_file = self._output_dir / "latest.wav"
         self._working_midi = self._output_dir / "latest_render.mid"
+        self._stem_files = {
+            instrument: self._output_dir / f"latest_{instrument}.wav"
+            for instrument in TRACK_INSTRUMENTS
+        }
 
         self._enabled = {
             "guitar": True,
@@ -45,6 +49,13 @@ class PlaybackAudioRenderer:
     def latest_file_path(self) -> Path:
         return self._latest_file
 
+    def stem_file_path(self, instrument: str) -> Path:
+        key = instrument.strip().lower()
+        stem = self._stem_files.get(key)
+        if stem is None:
+            raise KeyError(f"Unsupported instrument stem: {instrument}")
+        return stem
+
     def start(self) -> None:
         return
 
@@ -59,7 +70,6 @@ class PlaybackAudioRenderer:
         key = instrument.strip().lower()
         if key in self._enabled:
             self._enabled[key] = enabled
-            self.rerender_current()
 
     def render_midi_file(self, midi_path: str, bpm: int | None = None) -> Path:
         self._source_midi = Path(midi_path).resolve()
@@ -85,7 +95,7 @@ class PlaybackAudioRenderer:
 
     def _render_current_state(self) -> None:
         assert self._source_midi is not None
-        filtered = self._build_filtered_midi(self._source_midi)
+        filtered = self._build_filtered_midi(self._source_midi, enabled_map=self._enabled)
         filtered.save(str(self._working_midi))
 
         temp_wav = self._output_dir / "latest.tmp.wav"
@@ -106,17 +116,43 @@ class PlaybackAudioRenderer:
             raise RuntimeError("Rendered WAV is empty")
         os.replace(temp_wav, self._latest_file)
 
-    def _build_filtered_midi(self, source: Path) -> MidiFile:
+        for instrument in TRACK_INSTRUMENTS:
+            instrument_enabled = {name: False for name in TRACK_INSTRUMENTS}
+            instrument_enabled[instrument] = True
+            stem_midi = self._build_filtered_midi(self._source_midi, enabled_map=instrument_enabled)
+            stem_midi_path = self._output_dir / f"latest_render_{instrument}.mid"
+            stem_midi.save(str(stem_midi_path))
+
+            stem_tmp = self._output_dir / f"latest_{instrument}.tmp.wav"
+            stem_cmd = [
+                "fluidsynth",
+                "-ni",
+                str(self._soundfont_path),
+                str(stem_midi_path),
+                "-F",
+                str(stem_tmp),
+                "-r",
+                str(self._sample_rate),
+            ]
+            stem_result = subprocess.run(stem_cmd, capture_output=True, text=True, check=False)
+            if stem_result.returncode != 0:
+                raise RuntimeError(f"fluidsynth stem failed ({instrument}): {stem_result.stderr[-300:]}")
+            target = self._stem_files[instrument]
+            if stem_tmp.exists() and stem_tmp.stat().st_size > 0:
+                os.replace(stem_tmp, target)
+
+    def _build_filtered_midi(self, source: Path, enabled_map: dict[str, bool]) -> MidiFile:
         source_midi = MidiFile(str(source))
         output = MidiFile(ticks_per_beat=source_midi.ticks_per_beat)
 
-        if not any(self._enabled.values()):
+        if not any(enabled_map.values()):
             return MidiFile(ticks_per_beat=source_midi.ticks_per_beat)
 
         instrument_track_index = 0
         for track in source_midi.tracks:
             out_track = MidiTrack()
             muted_accumulated_ticks = 0
+            channel_program: dict[int, int] = {}
             track_instrument = self._infer_track_instrument(track)
             if track_instrument is None and any(msg.type in {"note_on", "note_off"} for msg in track):
                 track_instrument = TRACK_INSTRUMENTS[instrument_track_index % len(TRACK_INSTRUMENTS)]
@@ -130,8 +166,11 @@ class PlaybackAudioRenderer:
                     out_track.append(msg_copy)
                     continue
 
-                instrument = self._infer_message_instrument(msg, track_instrument)
-                if instrument is not None and not self._enabled.get(instrument, True):
+                if msg.type == "program_change" and hasattr(msg, "channel"):
+                    channel_program[int(msg.channel)] = int(msg.program)
+
+                instrument = self._infer_message_instrument(msg, track_instrument, channel_program)
+                if instrument is not None and not enabled_map.get(instrument, True):
                     muted_accumulated_ticks += int(msg.time)
                     continue
 
@@ -197,17 +236,39 @@ class PlaybackAudioRenderer:
                 program = int(event.program)
                 if 0 <= program <= 7:
                     return "oboe"
+                if 24 <= program <= 31:
+                    return "guitar"
+                if 32 <= program <= 39:
+                    return "bass"
                 if 40 <= program <= 41:
                     return "guitar"
                 if 42 <= program <= 43:
                     return "bass"
+                if 48 <= program <= 55:
+                    return "oboe"
+                if 68 <= program <= 71:
+                    return "oboe"
         for event in track:
             if hasattr(event, "channel") and event.channel == 9:
                 return "drums"
         return None
 
-    def _infer_message_instrument(self, msg, track_instrument: str | None) -> str | None:
+    def _infer_message_instrument(
+        self,
+        msg,
+        track_instrument: str | None,
+        channel_program: dict[int, int],
+    ) -> str | None:
         if hasattr(msg, "channel") and msg.channel == 9:
             return "drums"
+        if hasattr(msg, "channel"):
+            program = channel_program.get(int(msg.channel))
+            if program is not None:
+                if 24 <= program <= 31 or 40 <= program <= 41:
+                    return "guitar"
+                if 32 <= program <= 39 or 42 <= program <= 43:
+                    return "bass"
+                if 0 <= program <= 7 or 48 <= program <= 55 or 68 <= program <= 71:
+                    return "oboe"
         return track_instrument
 

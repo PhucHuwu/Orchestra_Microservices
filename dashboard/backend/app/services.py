@@ -444,15 +444,21 @@ class DashboardService:
         instrument = SERVICE_TO_INSTRUMENT.get(service_key)
         if instrument is not None:
             self._audio_renderer.set_instrument_enabled(instrument=instrument, enabled=enabled)
-            self._purge_instrument_queue(instrument)
+            if not enabled:
+                await asyncio.to_thread(self._purge_instrument_queue, instrument)
             for extra_instrument in AUXILIARY_SERVICE_EXTRA_INSTRUMENTS.get(service_key, ()):
-                self._audio_renderer.set_instrument_enabled(
-                    instrument=extra_instrument,
-                    enabled=enabled,
+                self._audio_renderer.set_instrument_enabled(instrument=extra_instrument, enabled=enabled)
+                if not enabled:
+                    await asyncio.to_thread(self._purge_instrument_queue, extra_instrument)
+
+            rerendered = await asyncio.to_thread(self._audio_renderer.rerender_current)
+
+            if rerendered is None:
+                LOGGER.warning(
+                    "audio_renderer_missing_source_resync",
+                    extra={"service": service_key, "enabled": enabled},
                 )
-                self._purge_instrument_queue(extra_instrument)
-            if enabled:
-                self._resync_running_playback(db)
+                await asyncio.to_thread(self._resync_running_playback, db)
 
         latest = await self.service_control_status()
         for item in latest:
