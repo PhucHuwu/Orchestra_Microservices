@@ -17,6 +17,23 @@ Simple deployment guide for a 5-node setup.
 - All machines in the same LAN
 - Shared database (recommended: Prisma Postgres cloud)
 
+Windows host notes:
+
+- Docker Desktop must be running (Linux containers mode).
+- For topology bootstrap, scripts auto-create `.venv` and install `pika`.
+- If no Python runtime exists, install Python (or Python Launcher on Windows).
+
+Quick checks before running scripts:
+
+```bash
+docker version
+```
+
+```powershell
+docker version
+py -3 --version
+```
+
 ## .env Setup (per machine)
 
 You have two options:
@@ -59,6 +76,14 @@ Windows PowerShell:
 ```
 
 Use `local` instead of `cloud` if Node A also runs local Postgres.
+
+What the host script does:
+
+- Creates `.env` from `.env.example`
+- Fills host/remote service URLs
+- Starts required containers
+- Creates `.venv` (if missing), installs `pika`, bootstraps RabbitMQ topology
+- Tails logs
 
 ### Node B (Mixer)
 
@@ -127,3 +152,11 @@ Windows PowerShell:
 ## Full Separate Guide
 
 See `docs/setup-5-nodes.md` for detailed setup and troubleshooting.
+
+## Common Errors
+
+- `open //./pipe/dockerDesktopLinuxEngine... The system cannot find the file specified`
+  - Docker daemon is not running. Start Docker Desktop and retry.
+
+- `Python was not found`
+  - Install Python (or `py` launcher) and rerun the host script.

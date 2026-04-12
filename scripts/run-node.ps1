@@ -17,6 +17,64 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function Require-Command {
+  param([Parameter(Mandatory = $true)][string]$Name)
+  if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
+    throw "Required command not found: $Name"
+  }
+}
+
+function Ensure-DockerReady {
+  Require-Command -Name "docker"
+  docker version *> $null
+  if ($LASTEXITCODE -ne 0) {
+    throw "Docker daemon is not available. Start Docker Desktop (Linux containers mode) and retry."
+  }
+}
+
+function Get-PythonBootstrapCommand {
+  if (Get-Command python -ErrorAction SilentlyContinue) {
+    return @("python")
+  }
+  if (Get-Command py -ErrorAction SilentlyContinue) {
+    return @("py", "-3")
+  }
+  return $null
+}
+
+function Ensure-BootstrapVenv {
+  $pythonCmd = Get-PythonBootstrapCommand
+  if ($null -eq $pythonCmd) {
+    Write-Warning "Python is not installed on this machine. Skip topology bootstrap."
+    Write-Warning "Install Python, then run: py -3 scripts/bootstrap_rabbitmq_topology.py"
+    return $null
+  }
+
+  if (-not (Test-Path ".venv\Scripts\python.exe")) {
+    if ($pythonCmd.Length -eq 1) {
+      & $pythonCmd[0] -m venv .venv *> $null
+    }
+    else {
+      & $pythonCmd[0] $pythonCmd[1] -m venv .venv *> $null
+    }
+  }
+
+  $venvPython = ".venv\Scripts\python.exe"
+  & $venvPython -m pip install --upgrade pip *> $null
+  & $venvPython -m pip install pika *> $null
+  return [string]$venvPython
+}
+
+function Invoke-BootstrapTopology {
+  $venvPython = Ensure-BootstrapVenv
+  if ($null -ne $venvPython) {
+    & $venvPython scripts/bootstrap_rabbitmq_topology.py
+    return
+  }
+}
+
+Ensure-DockerReady
+
 if ([string]::IsNullOrWhiteSpace($MixerIp)) { $MixerIp = $HostIp }
 if ([string]::IsNullOrWhiteSpace($GuitarIp)) { $GuitarIp = $HostIp }
 if ([string]::IsNullOrWhiteSpace($OboeIp)) { $OboeIp = $HostIp }
@@ -51,6 +109,9 @@ Set-EnvValue -Key "RABBITMQ_MGMT_API_URL" -Value "http://$HostIp`:15672/api"
 
 switch ($Role) {
   "host" {
+    Set-EnvValue -Key "RABBITMQ_HOST" -Value "rabbitmq"
+    Set-EnvValue -Key "RABBITMQ_URL" -Value "amqp://orchestra:orchestra@rabbitmq:5672/%2F"
+    Set-EnvValue -Key "RABBITMQ_MGMT_API_URL" -Value "http://rabbitmq:15672/api"
     Set-EnvValue -Key "CONDUCTOR_BASE_URL" -Value "http://$HostIp`:8101"
     Set-EnvValue -Key "CONDUCTOR_SERVICE_URL" -Value "http://$HostIp`:8101"
     Set-EnvValue -Key "MIXER_SERVICE_URL" -Value "http://$MixerIp`:8301"
@@ -69,7 +130,7 @@ switch ($Role) {
       docker compose up -d --build rabbitmq conductor dashboard-api dashboard-web
     }
 
-    python scripts/bootstrap_rabbitmq_topology.py
+    Invoke-BootstrapTopology
     docker compose logs -f rabbitmq conductor dashboard-api dashboard-web
   }
   "mixer" {

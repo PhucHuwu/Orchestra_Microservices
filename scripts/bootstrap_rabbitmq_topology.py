@@ -24,13 +24,7 @@ STANDARD_BINDINGS = {
     "system.heartbeat": "system.heartbeat",
 }
 
-DLQ_ENABLED_QUEUES = {
-    "instrument.guitar.note",
-    "instrument.oboe.note",
-    "instrument.drums.beat",
-    "instrument.bass.note",
-    "playback.output",
-}
+DLQ_ENABLED_QUEUES = set(STANDARD_BINDINGS.keys())
 
 
 def dead_letter_queue_name(queue_name: str) -> str:

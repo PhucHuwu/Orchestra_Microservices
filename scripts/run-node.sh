@@ -1,6 +1,50 @@
 #!/usr/bin/env sh
 set -eu
 
+require_command() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "Required command not found: $1" >&2
+    exit 1
+  fi
+}
+
+ensure_docker_ready() {
+  require_command docker
+  if ! docker version >/dev/null 2>&1; then
+    echo "Docker daemon is not available. Start Docker Desktop/Engine and retry." >&2
+    exit 1
+  fi
+}
+
+bootstrap_topology() {
+  PYTHON_CMD=""
+  if command -v python >/dev/null 2>&1; then
+    PYTHON_CMD="python"
+  elif command -v python3 >/dev/null 2>&1; then
+    PYTHON_CMD="python3"
+  fi
+
+  if [ -z "$PYTHON_CMD" ]; then
+    echo "WARNING: Python not found. Skip topology bootstrap." >&2
+    echo "Run manually later: python scripts/bootstrap_rabbitmq_topology.py" >&2
+    return
+  fi
+
+  if [ ! -x ".venv/bin/python" ]; then
+    "$PYTHON_CMD" -m venv .venv
+  fi
+
+  .venv/bin/python -m pip install --upgrade pip >/dev/null
+  .venv/bin/python -m pip install pika >/dev/null
+  .venv/bin/python scripts/bootstrap_rabbitmq_topology.py
+}
+
+cleanup_venv_markers() {
+  rm -f .env.bak
+}
+
+trap cleanup_venv_markers EXIT
+
 if [ "${1:-}" = "" ] || [ "${2:-}" = "" ]; then
   echo "Usage: ./scripts/run-node.sh <role> <host-ip> [db-mode] [mixer-ip] [guitar-ip] [oboe-ip] [aux-ip]"
   echo "Roles: host | mixer | guitar | oboe | aux"
@@ -15,6 +59,8 @@ MIXER_IP="${4:-$HOST_IP}"
 GUITAR_IP="${5:-$HOST_IP}"
 OBOE_IP="${6:-$HOST_IP}"
 AUX_IP="${7:-$HOST_IP}"
+
+ensure_docker_ready
 
 cp .env.example .env
 
@@ -34,6 +80,9 @@ replace RABBITMQ_MGMT_API_URL "http://${HOST_IP}:15672/api"
 
 case "$ROLE" in
   host)
+    replace RABBITMQ_HOST "rabbitmq"
+    replace RABBITMQ_URL "amqp://orchestra:orchestra@rabbitmq:5672/%2F"
+    replace RABBITMQ_MGMT_API_URL "http://rabbitmq:15672/api"
     replace CONDUCTOR_BASE_URL "http://${HOST_IP}:8101"
     replace CONDUCTOR_SERVICE_URL "http://${HOST_IP}:8101"
     replace MIXER_SERVICE_URL "http://${MIXER_IP}:8301"
@@ -50,7 +99,7 @@ case "$ROLE" in
     else
       docker compose up -d --build rabbitmq conductor dashboard-api dashboard-web
     fi
-    python scripts/bootstrap_rabbitmq_topology.py
+    bootstrap_topology
     docker compose logs -f rabbitmq conductor dashboard-api dashboard-web
     ;;
   mixer)
