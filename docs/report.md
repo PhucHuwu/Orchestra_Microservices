@@ -76,11 +76,14 @@ Mặc dù đã nỗ lực trong nghiên cứu, triển khai và trình bày, bá
 - Hình 2.1. Kiến trúc logic tổng thể hệ thống Orchestra Microservices.
 - Hình 2.2. Luồng sự kiện từ Conductor tới Dashboard playback.
 - Hình 2.3. Topology RabbitMQ (exchange, queue, routing key).
+- Hình 2.4. Trình tự xử lý khi xảy ra lỗi và phục hồi dịch vụ.
 - Hình 3.1. Giao diện Dashboard theo dõi metrics thời gian thực.
 - Hình 3.2. Biểu đồ độ trễ đầu-cuối theo các kịch bản tải.
 - Hình 3.3. Biểu đồ queue depth khi xảy ra consumer lag.
 - Bảng 2.1. Ánh xạ bài toán âm nhạc và khái niệm hệ thống phân tán.
 - Bảng 2.2. Đặc tả message `NoteEvent`.
+- Bảng 2.3. Ma trận yêu cầu - quyết định thiết kế.
+- Bảng 2.4. Đặc tả API điều khiển và quan sát hệ thống.
 - Bảng 3.1. Cấu hình môi trường thực nghiệm.
 - Bảng 3.2. Kết quả đo kiểm theo yêu cầu NFR.
 
@@ -126,7 +129,21 @@ Quan sát hệ thống bao gồm khả năng thu thập và diễn giải tín h
 
 Đề tài áp dụng cách tiếp cận quan sát tối giản nhưng hiệu quả: sử dụng RabbitMQ Management API để lấy queue depth, consumer count, message rate; kết hợp endpoint health của từng service; hiển thị tập trung trên Dashboard theo thời gian thực để phục vụ vận hành và trình diễn.
 
-## **1.5. Kết luận (cuối)**
+## **1.5. Kiến thức âm nhạc nền tảng cho bài toán mô phỏng**
+
+Để mô hình hóa chính xác luồng xử lý trong hệ thống, một số khái niệm âm nhạc cơ bản cần được xác định rõ. Thứ nhất, nốt nhạc trong chuẩn MIDI được biểu diễn bằng `pitch` (cao độ), `velocity` (cường độ) và `duration` (thời lượng). Ba thuộc tính này tương ứng trực tiếp với dữ liệu mà Conductor phát tới các service nhạc cụ.
+
+Thứ hai, nhịp độ (tempo) được đo bằng BPM và quyết định tốc độ phát toàn bản nhạc. Trong hệ thống phân tán của đề tài, BPM đóng vai trò tham số thời gian toàn cục, chi phối lịch phát `NoteEvent`. Khi BPM thay đổi, toàn bộ chuỗi sự kiện phải được điều chỉnh tương ứng để tránh lệch nhịp giữa các service.
+
+Thứ ba, tính hòa tấu được hình thành từ sự phối hợp của nhiều bè nhạc: bè giai điệu chính, bè đối đáp, bè tiết tấu và bè trầm. Việc tách mỗi bè thành một microservice độc lập (guitar, oboe, drums, bass) giúp ánh xạ rõ ràng giữa cấu trúc âm nhạc và kiến trúc phân tán theo hướng module hóa.
+
+## **1.6. Tổng quan tác phẩm Concierto de Aranjuez trong thực nghiệm**
+
+`Concierto de Aranjuez` là một concerto guitar nổi tiếng của nhà soạn nhạc Joaquín Rodrigo, được công diễn lần đầu năm 1940. Tác phẩm có cấu trúc hòa tấu phong phú, trong đó guitar độc tấu tương tác với dàn nhạc theo các lớp tiết tấu và hòa âm rõ rệt. Đặc điểm này phù hợp để kiểm thử hệ thống đa service vì có thể quan sát được tương quan giữa các bè khi một thành phần gặp sự cố.
+
+Trong phạm vi đề tài, tệp MIDI của `Concierto de Aranjuez` được dùng làm dữ liệu đầu vào mặc định. Việc lựa chọn tác phẩm này mang lại ba lợi ích chính. Một là, tiết tấu đủ đa dạng để đánh giá khả năng lập lịch và đồng bộ theo BPM. Hai là, sự hiện diện của nhiều lớp nhạc giúp kiểm chứng rõ hiện tượng mất một phần dịch vụ (ví dụ một nhạc cụ bị dừng thì tổng thể vẫn tiếp tục phát). Ba là, chất liệu âm nhạc quen thuộc giúp người nghe dễ nhận biết sai lệch nhịp và độ trễ, qua đó tăng giá trị trực quan cho mục tiêu học thuật.
+
+## **1.7. Kết luận (cuối)**
 
 Chương 1 đã trình bày cơ sở lý thuyết cho đề tài, bao gồm định nghĩa hệ thống phân tán, vai trò của message queue, yêu cầu đồng bộ thời gian trong bài toán phát nhạc và nguyên tắc quan sát hệ thống microservices. Các khái niệm này là nền tảng để triển khai phân tích thiết kế ở Chương 2 và đánh giá thực nghiệm ở Chương 3.
 
@@ -200,6 +217,28 @@ Rủi ro kỹ thuật chính gồm:
 ### **2.2.5. Yêu cầu chức năng và phi chức năng**
 
 Hệ thống phải đáp ứng đầy đủ chuỗi FR (đọc bản nhạc, publish/consume/mix/playback, monitoring, reconnect) và các NFR trọng tâm (độ trễ thấp, quan sát thời gian thực, tính tin cậy của queue). Các yêu cầu này được truy vết trực tiếp tới kịch bản thực nghiệm ở Chương 3.
+
+### **2.2.6. Phân tích use case vận hành và điều kiện biên**
+
+Để bảo đảm thiết kế bám sát mục tiêu sử dụng thực tế trong phòng thí nghiệm, nhóm phân tích các use case theo chuỗi thao tác của người vận hành. Use case nền tảng là khởi tạo hệ thống, nạp bản nhạc và bắt đầu playback. Từ use case này phát sinh các nhánh điều kiện biên như: broker khởi động chậm, service nhạc cụ chưa sẵn sàng, hoặc bản nhạc chưa tồn tại trong kho dữ liệu.
+
+Với use case thay đổi BPM khi đang phát, điều kiện biên quan trọng là tránh giật nhịp do cập nhật đột ngột. Hệ thống cần bảo đảm lệnh tempo được xử lý theo thứ tự thời gian, đồng thời chỉ tác động tới các sự kiện chưa phát. Nếu áp dụng trực tiếp cho toàn bộ hàng đợi đã phát sinh, hệ thống có thể tạo ra sai lệch cảm nhận và khó truy vết nguyên nhân.
+
+Ở use case dừng service giữa phiên chạy, phân tích cho thấy hệ thống không cần bảo toàn âm thanh hoàn toàn liên tục, nhưng phải bảo toàn tính đúng đắn của luồng sự kiện. Điều này dẫn tới quyết định giữ message trong queue durable và cho phép service phục hồi rồi tiêu thụ backlog, thay vì loại bỏ message để giữ độ trễ thấp tức thời.
+
+### **2.2.7. Phân tích dữ liệu và tính nhất quán thời gian**
+
+Trong bài toán mô phỏng âm nhạc, dữ liệu không chỉ mang ý nghĩa nội dung nốt nhạc mà còn mang ý nghĩa thời gian. Vì vậy, nhóm tách rõ hai lớp thời gian: thời gian logic (beat time theo BPM) và thời gian vật lý (timestamp hệ thống). Thời gian logic bảo đảm cấu trúc âm nhạc, còn thời gian vật lý phục vụ đo kiểm độ trễ và phân tích hiện tượng lag.
+
+Từ góc độ nhất quán, hệ thống ưu tiên nhất quán sự kiện theo từng queue nhạc cụ, thay vì nhất quán tuyệt đối toàn cục giữa mọi queue tại mọi thời điểm. Cách tiếp cận này thực tế hơn trong môi trường phân tán, đồng thời phù hợp bản chất hòa tấu: sai lệch nhỏ giữa các bè có thể chấp nhận trong ngưỡng nhất định nhưng sai lệch lớn kéo dài sẽ làm giảm chất lượng cảm nhận.
+
+Nhóm cũng phân tích ràng buộc định danh và truy vết: mỗi `NoteEvent` phải có `note_id` duy nhất để liên kết từ Conductor qua Instrument tới Mixer. Đây là nền tảng để đối soát khi đánh giá tỷ lệ mất message hoặc trễ xử lý theo từng công đoạn.
+
+### **2.2.8. So sánh phương án kiến trúc và lý do lựa chọn**
+
+Trước khi chốt phương án hiện tại, nhóm xem xét ba hướng triển khai: (i) kiến trúc nguyên khối xử lý tuần tự; (ii) microservices giao tiếp đồng bộ qua HTTP; (iii) microservices hướng sự kiện qua RabbitMQ. Phương án (i) đơn giản nhưng không mô phỏng được bản chất phân tán. Phương án (ii) cải thiện tính module nhưng phụ thuộc thời gian giữa các service, khó thể hiện back-pressure tự nhiên.
+
+Phương án (iii) được lựa chọn vì đáp ứng đồng thời bốn tiêu chí: tách rời thành phần, hỗ trợ hàng đợi để mô phỏng lag, thuận lợi cho fault injection và dễ mở rộng số lượng nhạc cụ. Đổi lại, phương án này đòi hỏi kiểm soát hợp đồng message chặt chẽ hơn và tăng yêu cầu quan sát hệ thống, nhưng đây cũng chính là nội dung cốt lõi mà đề tài hướng tới.
 
 ## **2.3. Giải pháp**
 
@@ -360,9 +399,80 @@ sequenceDiagram
 
 Hệ thống hỗ trợ hai chế độ: chạy tập trung trên một máy (baseline) và phân tán trên nhiều máy trong LAN (mỗi máy một vai trò). Mô hình triển khai này phù hợp mục tiêu môn học vì vừa dễ khởi động, vừa thể hiện rõ bản chất phân tán khi tách dịch vụ theo nút mạng.
 
+### **2.3.7. Thiết kế API điều khiển và kênh quan sát**
+
+Ngoài luồng message nội bộ qua RabbitMQ, hệ thống cần một lớp giao tiếp cho người vận hành. Nhóm thiết kế các API theo hướng tối giản, tập trung vào ba nhóm chức năng: điều khiển phiên phát, điều chỉnh BPM và truy vấn trạng thái. Cấu trúc API được xây dựng sao cho thao tác tại Dashboard có thể ánh xạ một-một tới hành vi trong hệ thống.
+
+**Bảng 2.4. Đặc tả API điều khiển và quan sát hệ thống**
+
+| Nhóm API | Endpoint mẫu | Phương thức | Mục đích |
+| --- | --- | --- | --- |
+| Playback control | `/v1/conductor/playback/start` | `POST` | Khởi động phiên phát và phát luồng sự kiện |
+| Playback control | `/v1/conductor/playback/stop` | `POST` | Dừng phiên phát có kiểm soát |
+| Tempo control | `/v1/conductor/tempo` | `POST` | Gửi lệnh thay đổi BPM vào `tempo.control` |
+| Health & metrics | `/health` | `GET` | Kiểm tra trạng thái sống của service |
+| Health & metrics | `/v1/metrics/queues` | `GET` | Trả về queue depth, consumer count, message rate |
+| Realtime stream | `/v1/conductor/audio/stream` | `WS` | Truyền luồng audio/metrics thời gian thực |
+
+Thiết kế API này bảo đảm khả năng kiểm thử tự động theo từng chức năng, đồng thời giúp tách rõ điều khiển nghiệp vụ và truyền tải dữ liệu âm thanh thời gian thực.
+
+### **2.3.8. Thiết kế xử lý lỗi, phục hồi và độ tin cậy**
+
+Độ tin cậy của hệ thống được xây dựng trên ba lớp bảo vệ. Lớp thứ nhất là durable queue để tránh mất message khi service tạm thời gián đoạn. Lớp thứ hai là cơ chế reconnect tự động của từng service với chiến lược thử lại tăng dần thời gian chờ. Lớp thứ ba là quan sát liên tục để phát hiện sớm queue backlog và bất thường độ trễ.
+
+Về chính sách xử lý lỗi, nhóm chọn nguyên tắc “ưu tiên đúng dữ liệu hơn đúng thời điểm tức thì” trong bối cảnh học thuật. Nghĩa là khi service gặp sự cố ngắn hạn, hệ thống chấp nhận độ trễ tăng tạm thời để bảo toàn chuỗi sự kiện, sau đó giảm backlog khi service phục hồi.
+
+Đối với lỗi hợp đồng message, hệ thống áp dụng kiểm tra schema ở biên xử lý nhằm ngăn lan truyền lỗi sang các service khác. Các bản ghi lỗi phải chứa định danh `note_id`, queue liên quan và thời điểm xảy ra để phục vụ truy vết nguyên nhân gốc.
+
+**Hình 2.4. Trình tự xử lý khi xảy ra lỗi và phục hồi dịch vụ**
+
+```mermaid
+sequenceDiagram
+    participant C as Conductor
+    participant R as RabbitMQ
+    participant S as Instrument Service
+    participant D as Dashboard
+
+    C->>R: Publish NoteEvent
+    R--xS: Deliver message (service down)
+    Note over R: Message giữ trong durable queue
+    D->>D: Hiển thị health đỏ, queue depth tăng
+    S->>R: Reconnect và consume lại
+    R->>S: Replay backlog theo thứ tự queue
+    S->>R: Ack + publish InstrumentOutput
+    D->>D: Metrics ổn định trở lại
+```
+
+### **2.3.9. Thiết kế khả năng mở rộng, bảo trì và chuyển giao**
+
+Để hỗ trợ mở rộng, hệ thống chuẩn hóa cấu trúc service theo cùng một khung triển khai: health endpoint, logging, kết nối broker, vòng lặp consume và cơ chế cấu hình qua biến môi trường. Khi bổ sung nhạc cụ mới, nhóm chỉ cần khai báo queue/routing key mới và tái sử dụng khung xử lý hiện có.
+
+Về bảo trì, thiết kế phân lớp giúp khoanh vùng tác động thay đổi. Ví dụ, cập nhật giao diện Dashboard không làm thay đổi contract message; thay đổi logic trộn ở Mixer không yêu cầu chỉnh sửa Conductor nếu contract đầu vào giữ nguyên. Đây là cơ sở để giảm rủi ro hồi quy khi phát triển tiếp.
+
+Về chuyển giao, hệ thống có thể được bàn giao theo hai mức: mức sử dụng (chạy script theo vai trò node) và mức phát triển (chỉnh sửa service độc lập). Cách tổ chức này phù hợp bối cảnh lớp học, nơi nhóm tiếp nhận có thể nhanh chóng tái lập demo rồi mới đi sâu vào mã nguồn.
+
+### **2.3.10. Ma trận truy vết yêu cầu - quyết định thiết kế**
+
+Để bảo đảm mọi quyết định kỹ thuật đều có cơ sở từ yêu cầu ban đầu, nhóm xây dựng ma trận truy vết rút gọn giữa FR/NFR và thành phần thiết kế.
+
+**Bảng 2.3. Ma trận yêu cầu - quyết định thiết kế**
+
+| Yêu cầu | Quyết định thiết kế chính | Thành phần hiện thực |
+| --- | --- | --- |
+| FR-01, FR-02 | Parse MIDI thành `NoteEvent` và publish theo routing key | Conductor + RabbitMQ topic exchange |
+| FR-03 | Kênh điều khiển BPM riêng biệt, xử lý runtime | Queue `tempo.control` + API tempo |
+| FR-05, FR-06 | Tách xử lý theo từng nhạc cụ, trộn tập trung | Instrument services + Mixer |
+| FR-07 | Phát lại cục bộ từ luồng tổng hợp | Dashboard backend audio renderer |
+| FR-08 | Thu thập metrics định kỳ và hiển thị realtime | Dashboard + RabbitMQ Management API + WS |
+| NFR-Hiệu năng | Giảm phụ thuộc đồng bộ, dùng MQ làm vùng đệm | Event-driven pipeline |
+| NFR-Tin cậy | Queue durable, reconnect, giám sát health | RabbitMQ + logic reconnect service |
+| NFR-Quan sát | Chuẩn hóa logs/metrics và dashboard tập trung | Dashboard observability layer |
+
 ## **2.4. Kết luận**
 
-Chương 2 đã xác định bài toán, làm rõ yêu cầu, phân tích rủi ro và đề xuất giải pháp kiến trúc nhất quán với mục tiêu học thuật của đề tài. Điểm mạnh của thiết kế là tính mô-đun, khả năng triển khai linh hoạt và khả năng quan sát toàn cục. Trên nền tảng đó, Chương 3 triển khai thực nghiệm để kiểm chứng hiệu quả hệ thống theo các tiêu chí đã đặt ra.
+Chương 2 đã mở rộng phân tích từ mức phát biểu bài toán sang mức thiết kế có thể triển khai và kiểm thử, bao gồm: phân tích use case và điều kiện biên, mô hình dữ liệu-thời gian, lựa chọn kiến trúc, thiết kế giao tiếp API, cơ chế xử lý lỗi-phục hồi, và ma trận truy vết yêu cầu-thiết kế. Cách trình bày này giúp chứng minh rằng hệ thống không chỉ đáp ứng mục tiêu trình diễn, mà còn có cơ sở kỹ thuật rõ ràng cho việc vận hành ổn định, mở rộng và chuyển giao.
+
+Trên nền tảng thiết kế đã chuẩn hóa ở chương này, Chương 3 tập trung vào thực nghiệm định lượng để kiểm chứng mức độ đáp ứng các yêu cầu FR/NFR trong môi trường cục bộ đa máy.
 
 # **CHƯƠNG 3**
 
@@ -544,16 +654,12 @@ Nhìn chung, đề tài đạt được mục tiêu chính về kỹ thuật và
 
 # **TÀI LIỆU THAM KHẢO**
 
-[1] G. Coulouris, J. Dollimore, T. Kindberg, and G. Blair, *Distributed Systems: Concepts and Design*, 5th ed., Pearson, 2011.
+[1] L. Lamport, “Time, Clocks, and the Ordering of Events in a Distributed System,” *Communications of the ACM*, vol. 21, no. 7, pp. 558-565, 1978.
 
-[2] M. Kleppmann, *Designing Data-Intensive Applications*, O'Reilly Media, 2017.
+[2] S. Gilbert and N. Lynch, “Brewer’s Conjecture and the Feasibility of Consistent, Available, Partition-Tolerant Web Services,” *SIGACT News*, vol. 33, no. 2, pp. 51-59, 2002.
 
-[3] RabbitMQ Team, “RabbitMQ Documentation,” [Online]. Available: https://www.rabbitmq.com/docs. [Accessed: Apr. 2026].
+[3] G. DeCandia et al., “Dynamo: Amazon’s Highly Available Key-Value Store,” in *Proceedings of the 21st ACM Symposium on Operating Systems Principles (SOSP)*, 2007, pp. 205-220.
 
-[4] FastAPI Team, “FastAPI Documentation,” [Online]. Available: https://fastapi.tiangolo.com/. [Accessed: Apr. 2026].
+[4] J. Kreps, N. Narkhede, and J. Rao, “Kafka: A Distributed Messaging System for Log Processing,” in *Proceedings of the NetDB Workshop (co-located with VLDB)*, 2011, pp. 1-7.
 
-[5] Docker Inc., “Docker Compose Documentation,” [Online]. Available: https://docs.docker.com/compose/. [Accessed: Apr. 2026].
-
-[6] MIDI Manufacturers Association, “MIDI 1.0 Detailed Specification,” [Online]. Available: https://midi.org/specifications. [Accessed: Apr. 2026].
-
-[7] Tài liệu nội bộ dự án, `README.md`, `docs/project.md`, `docs/ba-system-analysis.md`, truy cập trong kho mã Orchestra Microservices, 2026.
+[5] A. Balalaie, A. Heydarnoori, and P. Jamshidi, “Microservices Architecture Enables DevOps: Migration to a Cloud-Native Architecture,” *IEEE Software*, vol. 33, no. 3, pp. 42-52, 2016.
