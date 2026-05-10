@@ -1,665 +1,891 @@
-**HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG**
+# HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG
 
-**KHOA CÔNG NGHỆ THÔNG TIN I**
+# KHOA CÔNG NGHỆ THÔNG TIN I
 
-**BÁO CÁO BÀI TẬP LỚN**
+# BÁO CÁO BÀI TẬP LỚN
 
-**MÔN CÁC HỆ THỐNG PHÂN TÁN**
+# MÔN CÁC HỆ THỐNG PHÂN TÁN
 
-**ĐỀ TÀI: THIẾT KẾ HỆ THỐNG MICROSERVICES CHO GIÀN NHẠC GIAO HƯỞNG SỬ DỤNG RABBITMQ**
+## ĐỀ TÀI
 
-|Nhóm lớp:|05|
-| :- | :- |
-|Nhóm bài tập lớn:|04|
-|Giáo viên hướng dẫn:|PGS.TS. Đỗ Trung Tuấn|
-|Sinh viên thực hiện:||
-|Trần Hữu Phúc|B22DCCN634|
-|Bùi Ngọc Vũ|B22DCCN910|
-|Lương Tuấn Anh|B22DCCN021|
-|Lương Tiến Đạt|B22DCCN190|
-|Hoàng Minh Tuấn|B22DCCN753|
+**MÔ PHỎNG DÀN NHẠC CÔNG-XÉC-TÔ BẰNG HỆ THỐNG PHÂN TÁN VÀ BẢN ĐIỆN TỬ HÓA ESP - BUZZER - CÔNG TẮC**
 
-**HÀ NỘI, 2026**
+| Nội dung | Thông tin |
+|---|---|
+| Nhóm lớp | 05 |
+| Nhóm bài tập lớn | 04 |
+| Giảng viên hướng dẫn | PGS.TS. Đỗ Trung Tuấn |
+| Sinh viên thực hiện | Trần Hữu Phúc - B22DCCN634; Bùi Ngọc Vũ - B22DCCN910; Lương Tuấn Anh - B22DCCN021; Lương Tiến Đạt - B22DCCN190; Hoàng Minh Tuấn - B22DCCN753 |
+| Địa điểm - thời gian | Hà Nội, 2026 |
 
-# **LỜI CẢM ƠN**
+---
 
-Nhóm tác giả xin trân trọng cảm ơn Ban Giám hiệu Học viện Công nghệ Bưu chính Viễn thông, Khoa Công nghệ Thông tin I và toàn thể quý thầy cô đã tạo điều kiện về môi trường học thuật, cơ sở vật chất và định hướng chuyên môn trong suốt quá trình học tập.
+## LỜI CẢM ƠN
 
-Nhóm xin bày tỏ lòng biết ơn sâu sắc tới PGS.TS. Đỗ Trung Tuấn, giảng viên hướng dẫn môn Các hệ thống phân tán, đã tận tình góp ý về phương pháp nghiên cứu, cách tiếp cận bài toán và tiêu chí đánh giá thực nghiệm. Những nhận xét có tính học thuật và thực tiễn của thầy là cơ sở quan trọng để nhóm hoàn thiện báo cáo này.
+Nhóm tác giả xin trân trọng gửi lời cảm ơn sâu sắc đến PGS.TS. Đỗ Trung Tuấn, người đã trực tiếp định hướng chuyên môn, góp ý phương pháp nghiên cứu và hỗ trợ nhóm trong suốt quá trình triển khai đề tài. Các góp ý của thầy không chỉ tập trung vào khía cạnh kỹ thuật của học phần Hệ thống phân tán, mà còn nhấn mạnh yêu cầu khoa học trong cách đặt vấn đề, tổ chức thí nghiệm, diễn giải kết quả và chuẩn hóa văn phong báo cáo.
 
-Nhóm cũng chân thành cảm ơn gia đình, bạn bè và các thành viên trong lớp đã hỗ trợ về tinh thần, thảo luận kỹ thuật và phản biện trong quá trình xây dựng hệ thống. Sự đồng hành đó giúp nhóm duy trì tiến độ, nâng cao chất lượng sản phẩm và hoàn thiện kỹ năng làm việc nhóm.
+Nhóm cũng xin gửi lời cảm ơn đến Khoa Công nghệ Thông tin I, Học viện Công nghệ Bưu chính Viễn thông đã tạo điều kiện thuận lợi về môi trường học thuật, trang thiết bị, nguồn tài liệu và cơ hội trao đổi chuyên môn để nhóm hoàn thiện đề tài. Sự hỗ trợ về học liệu và khuôn khổ đánh giá của khoa đã giúp nhóm triển khai đề tài theo hướng liên ngành, kết hợp tư duy hệ thống phân tán với tư duy mô phỏng âm nhạc.
 
-Mặc dù đã nỗ lực trong nghiên cứu, triển khai và trình bày, báo cáo khó tránh khỏi thiếu sót. Nhóm kính mong tiếp tục nhận được ý kiến đóng góp của quý thầy cô để hoàn thiện hơn trong các nghiên cứu tiếp theo.
+Cuối cùng, nhóm xin cảm ơn các bạn học cùng lớp đã đóng góp nhận xét trong các buổi trình bày thử nghiệm, giúp nhóm điều chỉnh nội dung báo cáo theo hướng rõ ràng, mạch lạc và sát mục tiêu đào tạo.
 
-# **THÀNH VIÊN NHÓM**
+---
 
-| STT | Họ và tên | MSSV | Vai trò chính | Nhiệm vụ đã thực hiện |
-| --- | --- | --- | --- | --- |
-| 1 | Trần Hữu Phúc | B22DCCN634 | Trưởng nhóm, Conductor | Thiết kế luồng điều phối, xử lý MIDI, phát sự kiện theo BPM, tổng hợp báo cáo |
-| 2 | Bùi Ngọc Vũ | B22DCCN910 | Instrument services | Phát triển các service nhạc cụ (guitar, oboe, drums, bass), kiểm thử hợp đồng message |
-| 3 | Lương Tuấn Anh | B22DCCN021 | Mixer service | Thiết kế logic trộn luồng sự kiện, chuẩn hóa output playback, đo kiểm độ trễ |
-| 4 | Lương Tiến Đạt | B22DCCN190 | Dashboard backend | Xây dựng API/metrics/WebSocket, render audio cục bộ, tích hợp cơ sở dữ liệu |
-| 5 | Hoàng Minh Tuấn | B22DCCN753 | Triển khai và quan sát hệ thống | Thiết lập Docker Compose đa nút, kịch bản fault injection, tài liệu vận hành |
+## BẢNG PHÂN CÔNG CÔNG VIỆC
 
-# **MỤC LỤC**
+| STT | Thành viên | Nội dung phụ trách | Sản phẩm chính | Mức độ hoàn thành |
+|---|---|---|---|---|
+| 1 | Trần Hữu Phúc | Điều phối tổng thể đề tài, tích hợp nội dung, kiểm soát tiến độ | Khung kiến trúc, kế hoạch thực nghiệm, rà soát bản thảo | Hoàn thành |
+| 2 | Bùi Ngọc Vũ | Thiết kế bản điện tử hóa, kiểm thử kết nối ESP - buzzer - công tắc | Sơ đồ kết nối, tiêu chí kiểm thử phần cứng mô phỏng | Hoàn thành |
+| 3 | Lương Tuấn Anh | Xây dựng cơ sở lý luận nhạc lý và mô hình công-xéc-tô | Chương kiến thức nền âm nhạc, bảng đối sánh khái niệm | Hoàn thành |
+| 4 | Lương Tiến Đạt | Xây dựng chỉ số quan sát, tổng hợp kết quả thực nghiệm | Bảng đo, ma trận đánh giá, phân tích kết quả | Hoàn thành |
+| 5 | Hoàng Minh Tuấn | Chuẩn hóa hình thức báo cáo khoa học, hiệu đính văn phong | Bố cục hoàn chỉnh, danh mục hình bảng, tài liệu tham khảo | Hoàn thành |
 
-- LỜI CẢM ƠN
-- THÀNH VIÊN NHÓM
-- DANH SÁCH TỪ VIẾT TẮT
-- DANH SÁCH HÌNH ẢNH, BẢNG, BIỂU
-- LỜI MỞ ĐẦU
-- CHƯƠNG 1. KIẾN THỨC NỀN (CÁC KHÁI NIỆM)
-- CHƯƠNG 2. PHÂN TÍCH THIẾT KẾ HỆ THỐNG
-- CHƯƠNG 3. THỰC NGHIỆM
-- CHƯƠNG 4. KẾT LUẬN
-- TÀI LIỆU THAM KHẢO
+---
 
-# **DANH SÁCH TỪ VIẾT TẮT**
+## NHẬN XÉT TÓM TẮT VỀ ĐÓNG GÓP CỦA NHÓM
 
-| Từ viết tắt | Nghĩa tiếng Anh | Nghĩa tiếng Việt |
-| :-: | :-: | :-: |
-| AMQP | Advanced Message Queuing Protocol | Giao thức hàng đợi thông điệp nâng cao |
-| API | Application Programming Interface | Giao diện lập trình ứng dụng |
-| BPM | Beats Per Minute | Số nhịp trên phút |
-| DLQ | Dead Letter Queue | Hàng đợi thư chết |
-| FR | Functional Requirement | Yêu cầu chức năng |
-| HTTP | HyperText Transfer Protocol | Giao thức truyền tải siêu văn bản |
-| ISO | International Organization for Standardization | Tổ chức Tiêu chuẩn hóa Quốc tế |
-| LAN | Local Area Network | Mạng cục bộ |
-| MIDI | Musical Instrument Digital Interface | Chuẩn dữ liệu nhạc số |
-| NFR | Non-functional Requirement | Yêu cầu phi chức năng |
-| UI | User Interface | Giao diện người dùng |
-| UUID | Universally Unique Identifier | Định danh duy nhất toàn cục |
+Nhóm thực hiện đề tài theo hướng cộng tác phân vai rõ ràng, trong đó phần bản điện tử hóa được xem là hạt nhân của toàn bộ nghiên cứu. Cấu trúc làm việc được tổ chức thành ba lớp: lớp cơ sở lý luận, lớp thiết kế mô phỏng, lớp thực nghiệm đánh giá. Cách tiếp cận này giúp tránh tình trạng báo cáo chỉ thiên về mô tả ý tưởng chung, đồng thời bảo đảm mỗi phần đều có căn cứ kỹ thuật và giá trị minh họa cụ thể.
 
-# **DANH SÁCH HÌNH ẢNH, BẢNG, BIỂU**
+---
 
-- Hình 2.1. Kiến trúc logic tổng thể hệ thống Orchestra Microservices.
-- Hình 2.2. Luồng sự kiện từ Conductor tới Dashboard playback.
-- Hình 2.3. Topology RabbitMQ (exchange, queue, routing key).
-- Hình 2.4. Trình tự xử lý khi xảy ra lỗi và phục hồi dịch vụ.
-- Hình 3.1. Giao diện Dashboard theo dõi metrics thời gian thực.
-- Hình 3.2. Biểu đồ độ trễ đầu-cuối theo các kịch bản tải.
-- Hình 3.3. Biểu đồ queue depth khi xảy ra consumer lag.
-- Bảng 2.1. Ánh xạ bài toán âm nhạc và khái niệm hệ thống phân tán.
-- Bảng 2.2. Đặc tả message `NoteEvent`.
-- Bảng 2.3. Ma trận yêu cầu - quyết định thiết kế.
-- Bảng 2.4. Đặc tả API điều khiển và quan sát hệ thống.
-- Bảng 3.1. Cấu hình môi trường thực nghiệm.
-- Bảng 3.2. Kết quả đo kiểm theo yêu cầu NFR.
+## DANH SÁCH TỪ VIẾT TẮT
 
-# **LỜI MỞ ĐẦU**
+| Từ viết tắt | Cụm từ | Ý nghĩa trong báo cáo |
+|---|---|---|
+| ESP | Bộ điều khiển vi mạch ESP | Bộ điều phối trung tâm của bản điện tử hóa |
+| BPM | Nhịp trên phút | Chỉ số tốc độ của bản nhạc mô phỏng |
+| MQ | Hàng đợi thông điệp | Cơ chế truyền sự kiện giữa các thành phần |
+| API | Giao diện lập trình ứng dụng | Kênh điều khiển trạng thái và truy vấn số liệu |
+| LAN | Mạng cục bộ | Môi trường triển khai phân tán nhiều nút máy |
+| DLQ | Hàng đợi lỗi | Hàng đợi tiếp nhận thông điệp không xử lý được |
+| NFR | Yêu cầu phi chức năng | Nhóm yêu cầu về hiệu năng, tin cậy, quan sát |
+| KPI | Chỉ số hiệu quả chính | Chỉ số đánh giá mức hoàn thành mục tiêu mô phỏng |
 
-Trong bối cảnh các hệ thống phần mềm hiện đại ngày càng chuyển dịch từ kiến trúc nguyên khối sang kiến trúc phân tán, việc giảng dạy và học tập môn Các hệ thống phân tán đòi hỏi các mô hình minh họa trực quan, dễ quan sát và dễ tái hiện. Tuy nhiên, nhiều khái niệm cốt lõi như trễ tiêu thụ (consumer lag), mất đồng bộ, quá tải hàng đợi hay phục hồi sau lỗi thường khó cảm nhận nếu chỉ dừng ở mức lý thuyết hoặc bảng số liệu.
+---
 
-Xuất phát từ nhu cầu đó, đề tài “Thiết kế hệ thống microservices cho giàn nhạc giao hưởng sử dụng RabbitMQ” được xây dựng theo hướng liên ngành giữa kỹ thuật phần mềm phân tán và mô phỏng âm nhạc. Trong mô hình này, mỗi nhạc cụ được ánh xạ thành một microservice độc lập; bản nhạc MIDI được xem như dữ liệu đầu vào chuẩn; Conductor đóng vai trò điều phối trung tâm; RabbitMQ chịu trách nhiệm truyền phát sự kiện theo cơ chế bất đồng bộ; và Dashboard thể hiện trạng thái hệ thống đồng thời phát âm thanh đầu ra theo thời gian thực.
+## DANH SÁCH HÌNH ẢNH, BẢNG BIỂU
 
-Đóng góp chính của báo cáo gồm ba điểm. Thứ nhất, đề xuất một mô hình mô phỏng có tính sư phạm, nơi các hiện tượng phân tán có thể “nghe thấy” qua biến đổi âm thanh. Thứ hai, xây dựng kiến trúc microservices có khả năng triển khai linh hoạt trên một máy hoặc nhiều máy trong LAN bằng Docker Compose, phù hợp điều kiện học tập của sinh viên. Thứ ba, thiết kế tập kịch bản thực nghiệm có chủ đích để đánh giá hệ thống trên cả khía cạnh chức năng và phi chức năng.
+### Danh sách hình ảnh
 
-Về phạm vi, báo cáo tập trung vào kiến trúc logic, đặc tả trao đổi message, phương án triển khai cục bộ, quan sát hệ thống thời gian thực và đánh giá hiệu năng ở quy mô phòng thí nghiệm. Các nội dung ngoài phạm vi gồm triển khai cloud production đa vùng, bảo mật mức doanh nghiệp và tối ưu chất lượng âm thanh ở cấp chuyên nghiệp.
+- Hình 1: Bức tranh tổng thể đề tài mô phỏng dàn nhạc phân tán
+- Hình 2: Mô hình phân vai 5 nút máy trong mạng cục bộ
+- Hình 3: Sơ đồ khối bản điện tử hóa trọng tâm
+- Hình 4: Sơ đồ kết nối 4 buzzer vào các cổng D2, D16, D19, D23
+- Hình 5: Sơ đồ ánh xạ 4 công tắc với 4 nhạc cụ mô phỏng
+- Hình 6: Luồng điều phối từ nhạc trưởng tới các nhạc cụ
+- Hình 7: Trạng thái hệ khi tất cả công tắc ở chế độ hoạt động
+- Hình 8: Trạng thái hệ khi một công tắc bị ngắt
+- Hình 9: Trạng thái hệ khi hai công tắc bị ngắt đồng thời
+- Hình 10: Trạng thái hệ khi phục hồi lại toàn bộ công tắc
+- Hình 11: Biểu đồ biến thiên độ trễ theo mức tải
+- Hình 12: Biểu đồ thay đổi độ đầy hòa tấu theo số nhạc cụ bị ngắt
+- Hình 13: Giao diện quan sát trạng thái dịch vụ theo thời gian thực
+- Hình 14: Quy trình thực nghiệm và thu thập dữ liệu
+- Hình 15: Lộ trình phát triển mở rộng bản điện tử hóa
 
-Cấu trúc báo cáo gồm bốn chương. Chương 1 trình bày kiến thức nền và các khái niệm liên quan đến hệ thống phân tán. Chương 2 phân tích bài toán và thiết kế hệ thống ở mức kiến trúc, dữ liệu, giao tiếp. Chương 3 mô tả môi trường thực nghiệm, các kịch bản kiểm thử và kết quả thu được. Chương 4 tổng kết kết quả đạt được, chỉ ra hạn chế và đề xuất hướng phát triển tiếp theo.
+### Danh sách bảng biểu
 
-# **CHƯƠNG 1**
+- Bảng 1: Đối sánh khái niệm âm nhạc và hệ thống phân tán
+- Bảng 2: Phân loại hiện tượng phân tán và biểu hiện âm học
+- Bảng 3: Thành phần chức năng trong mô hình tổng thể
+- Bảng 4: Thông số kỹ thuật bản điện tử hóa
+- Bảng 5: Ma trận ánh xạ buzzer - nhạc cụ - công tắc
+- Bảng 6: Kịch bản thực nghiệm trọng tâm
+- Bảng 7: Bộ chỉ số quan sát định tính và định lượng
+- Bảng 8: Kết quả thực nghiệm theo từng kịch bản
+- Bảng 9: Đối chiếu mục tiêu và kết quả đạt được
+- Bảng 10: Kết quả chưa đạt và phương án cải tiến
 
-# **KIẾN THỨC NỀN (CÁC KHÁI NIỆM)**
+---
 
-## **1.1. Hệ thống phân tán là gì?**
+## LỜI MỞ ĐẦU
 
-Hệ thống phân tán là tập hợp nhiều thành phần xử lý độc lập, chạy trên các nút tính toán khác nhau, phối hợp với nhau thông qua mạng để cung cấp một chức năng thống nhất cho người dùng. Về mặt trải nghiệm, người dùng tương tác với hệ thống như một thực thể duy nhất; tuy nhiên về mặt kỹ thuật, hệ thống bao gồm nhiều tiến trình, nhiều miền lỗi và nhiều trạng thái cục bộ.
+### 1. Bối cảnh và lý do chọn đề tài
 
-Các đặc trưng cốt lõi của hệ thống phân tán gồm: (i) tính đồng thời cao do nhiều tiến trình xử lý song song; (ii) không có bộ nhớ chung toàn cục; (iii) phụ thuộc vào truyền thông mạng với độ trễ biến thiên; (iv) lỗi một phần là trạng thái bình thường, nghĩa là một số thành phần có thể hỏng trong khi phần còn lại vẫn tiếp tục hoạt động.
+Hệ thống phân tán là một trong những lĩnh vực cốt lõi của khoa học máy tính hiện đại, nhưng cũng là lĩnh vực gây nhiều khó khăn trong giảng dạy và tiếp thu do mức độ trừu tượng cao. Các khái niệm như đồng bộ, trễ thông điệp, tắc nghẽn hàng đợi, suy giảm dịch vụ cục bộ hay phục hồi sau lỗi thường được trình bày thông qua sơ đồ và chỉ số, trong khi người học thiếu một cơ chế cảm nhận trực quan về tác động thực tế của các hiện tượng này.
 
-Trong thực tiễn, kiến trúc microservices là một mô hình hiện thực hóa phổ biến của hệ thống phân tán. Mỗi service chịu trách nhiệm cho một miền nghiệp vụ nhỏ, giao tiếp qua API hoặc message broker, có thể phát triển, triển khai và mở rộng độc lập. Ưu điểm chính là linh hoạt và khả năng mở rộng; thách thức chính là nhất quán dữ liệu, quan sát hệ thống và điều phối lỗi.
+Từ thực tế đó, đề tài lựa chọn hướng tiếp cận liên ngành: dùng mô hình dàn nhạc công-xéc-tô để ánh xạ hệ thống phân tán. Điểm nhấn của đề tài không chỉ nằm ở mô hình lý thuyết, mà ở **bản điện tử hóa** có thể thao tác trực tiếp: 1 ESP, 4 buzzer, 4 công tắc, trong đó 4 buzzer kết nối qua cổng D2, D16, D19, D23. Mỗi thao tác bật/tắt công tắc tương ứng với trạng thái hoạt động hoặc ngắt kết nối của một thành phần dịch vụ, từ đó giúp người học “nghe thấy” sự thay đổi của hệ thống.
 
-## **1.2. Mô hình truyền thông bất đồng bộ và Message Queue**
+### 2. Mục tiêu nghiên cứu
 
-Trong hệ thống phân tán, truyền thông bất đồng bộ giúp giảm phụ thuộc thời gian giữa bên gửi và bên nhận. Message Queue đóng vai trò vùng đệm, hấp thụ dao động tải và hỗ trợ tách rời (decoupling) giữa producer-consumer. RabbitMQ là một message broker thông dụng, hỗ trợ nhiều kiểu exchange (direct, topic, fanout), cơ chế xác nhận (ack), hàng đợi bền vững (durable) và định tuyến theo routing key.
+Đề tài hướng đến ba mục tiêu chính:
 
-Đối với bài toán của đề tài, mô hình topic exchange phù hợp vì cho phép định tuyến linh hoạt tới từng service nhạc cụ theo khóa `instrument.<name>.note` hoặc `instrument.<name>.beat`. Cách tiếp cận này đảm bảo hệ thống mở rộng tốt khi bổ sung nhạc cụ mới mà không cần thay đổi mạnh ở Conductor.
+1. Xây dựng mô hình mô phỏng hệ thống phân tán theo phép ẩn dụ dàn nhạc công-xéc-tô, bảo đảm tính học thuật và tính trực quan.
+2. Thiết kế bản điện tử hóa làm trọng tâm trình diễn, có thể tái hiện trạng thái bình thường, trạng thái lỗi cục bộ và trạng thái phục hồi.
+3. Thiết lập quy trình thực nghiệm có chỉ số quan sát rõ ràng, đối chiếu giữa số liệu kỹ thuật và cảm nhận âm học.
 
-## **1.3. Tính đồng bộ thời gian trong hệ phân tán thời gian thực mềm**
+### 3. Đối tượng và phạm vi nghiên cứu
 
-Bài toán phát nhạc thuộc lớp thời gian thực mềm (soft real-time), trong đó việc trễ nhỏ có thể chấp nhận nhưng trễ lớn gây suy giảm chất lượng cảm nhận rõ rệt. Do đó, hệ thống cần cơ chế duy trì nhịp phát ổn định theo BPM, đồng thời theo dõi độ lệch giữa thời điểm lên lịch (`beat_time`) và thời điểm thực thi.
+Đối tượng nghiên cứu là mô hình mô phỏng phân tán phục vụ học tập, không phải hệ thống sản xuất thương mại. Phạm vi đề tài tập trung vào:
 
-Việc thay đổi BPM thời gian chạy là một tình huống điều khiển động. Conductor phải cập nhật tốc độ phát sự kiện mà không làm gián đoạn luồng hiện tại, còn các service còn lại phải thích nghi nhanh để tránh mất đồng bộ toàn cục.
+- Kiến thức nền hệ thống phân tán và nhạc lý;
+- Thiết kế kiến trúc mô phỏng;
+- Thiết kế và đánh giá bản điện tử hóa trọng tâm;
+- Kịch bản thực nghiệm trong môi trường mạng cục bộ.
 
-## **1.4. Quan sát hệ thống (Observability) trong microservices**
+Đề tài không đi sâu vào triển khai thương mại, không đặt trọng tâm vào tối ưu hạ tầng quy mô lớn, và không thay thế các hệ âm thanh chuyên nghiệp trong trình diễn nghệ thuật.
 
-Quan sát hệ thống bao gồm khả năng thu thập và diễn giải tín hiệu vận hành như logs, metrics, trạng thái queue và health check. Trong kiến trúc nhiều service, observability không chỉ giúp giám sát mà còn là công cụ phân tích nguyên nhân gốc khi xảy ra lỗi dây chuyền.
+### 4. Phương pháp nghiên cứu
 
-Đề tài áp dụng cách tiếp cận quan sát tối giản nhưng hiệu quả: sử dụng RabbitMQ Management API để lấy queue depth, consumer count, message rate; kết hợp endpoint health của từng service; hiển thị tập trung trên Dashboard theo thời gian thực để phục vụ vận hành và trình diễn.
+Đề tài áp dụng phương pháp kết hợp:
 
-## **1.5. Kiến thức âm nhạc nền tảng cho bài toán mô phỏng**
+- Phân tích tài liệu hệ thống và tài liệu yêu cầu;
+- Mô hình hóa khái niệm liên ngành âm nhạc - phân tán;
+- Thiết kế thực nghiệm có kiểm soát kịch bản;
+- Đánh giá theo bộ chỉ số định tính và định lượng.
 
-Để mô hình hóa chính xác luồng xử lý trong hệ thống, một số khái niệm âm nhạc cơ bản cần được xác định rõ. Thứ nhất, nốt nhạc trong chuẩn MIDI được biểu diễn bằng `pitch` (cao độ), `velocity` (cường độ) và `duration` (thời lượng). Ba thuộc tính này tương ứng trực tiếp với dữ liệu mà Conductor phát tới các service nhạc cụ.
+### 5. Đóng góp chính của đề tài
 
-Thứ hai, nhịp độ (tempo) được đo bằng BPM và quyết định tốc độ phát toàn bản nhạc. Trong hệ thống phân tán của đề tài, BPM đóng vai trò tham số thời gian toàn cục, chi phối lịch phát `NoteEvent`. Khi BPM thay đổi, toàn bộ chuỗi sự kiện phải được điều chỉnh tương ứng để tránh lệch nhịp giữa các service.
+Đóng góp quan trọng nhất của đề tài là đề xuất và hiện thực hóa một **học cụ mô phỏng** có khả năng chuyển tải các hiện tượng phân tán bằng tín hiệu âm học trên bản điện tử hóa. Cách tiếp cận này giúp rút ngắn khoảng cách giữa mô hình lý thuyết và cảm nhận thực hành, phù hợp với định hướng đào tạo dựa trên thực nghiệm.
 
-Thứ ba, tính hòa tấu được hình thành từ sự phối hợp của nhiều bè nhạc: bè giai điệu chính, bè đối đáp, bè tiết tấu và bè trầm. Việc tách mỗi bè thành một microservice độc lập (guitar, oboe, drums, bass) giúp ánh xạ rõ ràng giữa cấu trúc âm nhạc và kiến trúc phân tán theo hướng module hóa.
+### 6. Cấu trúc báo cáo
 
-## **1.6. Tổng quan tác phẩm Concierto de Aranjuez trong thực nghiệm**
+Báo cáo gồm bốn chương chính:
 
-`Concierto de Aranjuez` là một concerto guitar nổi tiếng của nhà soạn nhạc Joaquín Rodrigo, được công diễn lần đầu năm 1940. Tác phẩm có cấu trúc hòa tấu phong phú, trong đó guitar độc tấu tương tác với dàn nhạc theo các lớp tiết tấu và hòa âm rõ rệt. Đặc điểm này phù hợp để kiểm thử hệ thống đa service vì có thể quan sát được tương quan giữa các bè khi một thành phần gặp sự cố.
+- Chương 1: Kiến thức nền về hệ thống phân tán, nhạc lý và công-xéc-tô;
+- Chương 2: Phân tích thiết kế hệ thống, nhấn mạnh thiết kế bản điện tử hóa;
+- Chương 3: Thực nghiệm, kịch bản đánh giá và kết quả;
+- Chương 4: Kết luận, kết quả đạt được, hạn chế và định hướng phát triển.
 
-Trong phạm vi đề tài, tệp MIDI của `Concierto de Aranjuez` được dùng làm dữ liệu đầu vào mặc định. Việc lựa chọn tác phẩm này mang lại ba lợi ích chính. Một là, tiết tấu đủ đa dạng để đánh giá khả năng lập lịch và đồng bộ theo BPM. Hai là, sự hiện diện của nhiều lớp nhạc giúp kiểm chứng rõ hiện tượng mất một phần dịch vụ (ví dụ một nhạc cụ bị dừng thì tổng thể vẫn tiếp tục phát). Ba là, chất liệu âm nhạc quen thuộc giúp người nghe dễ nhận biết sai lệch nhịp và độ trễ, qua đó tăng giá trị trực quan cho mục tiêu học thuật.
+---
 
-## **1.7. Kết luận (cuối)**
+## CHƯƠNG 1. KIẾN THỨC NỀN
 
-Chương 1 đã trình bày cơ sở lý thuyết cho đề tài, bao gồm định nghĩa hệ thống phân tán, vai trò của message queue, yêu cầu đồng bộ thời gian trong bài toán phát nhạc và nguyên tắc quan sát hệ thống microservices. Các khái niệm này là nền tảng để triển khai phân tích thiết kế ở Chương 2 và đánh giá thực nghiệm ở Chương 3.
+### 1.1. Khái niệm và bản chất của hệ thống phân tán
 
-# **CHƯƠNG 2**
+Hệ thống phân tán được hiểu là một cấu trúc gồm nhiều thành phần tính toán độc lập, triển khai trên các nút khác nhau, liên lạc qua mạng để cùng cung cấp một dịch vụ có ý nghĩa thống nhất. Điểm mấu chốt của hệ phân tán không nằm ở số lượng thành phần, mà nằm ở yêu cầu phối hợp giữa các thành phần trong điều kiện truyền thông không tuyệt đối ổn định.
 
-# **PHÂN TÍCH THIẾT KẾ HỆ THỐNG (10 TRANG)**
+Về bản chất, một hệ phân tán luôn đối mặt với bài toán cân bằng giữa ba yêu cầu: tính đúng đắn chức năng, tính kịp thời phản hồi và khả năng duy trì dịch vụ khi xảy ra lỗi cục bộ. Chính vì vậy, người thiết kế hệ phân tán phải tư duy theo hướng toàn hệ, thay vì tối ưu đơn lẻ từng thành phần.
 
-## **2.1. Đặt bài toán**
+Các đặc trưng nền tảng có thể khái quát như sau:
 
-### **2.1.1. Bối cảnh và động lực**
+- **Tính đồng thời:** nhiều luồng xử lý diễn ra song song, tạo hiệu quả cao nhưng làm tăng độ phức tạp điều phối;
+- **Không có đồng hồ toàn cục tuyệt đối:** thứ tự thời gian quan sát ở mỗi nút có thể khác nhau;
+- **Lỗi là trạng thái bình thường:** thành phần có thể ngắt kết nối, quá tải hoặc tạm dừng bất kỳ thời điểm nào;
+- **Mạng là kênh phối hợp bắt buộc:** mọi trao đổi chịu ảnh hưởng của trễ, dao động trễ và mất gói;
+- **Tính mở rộng:** hệ cần hỗ trợ tăng thành phần mà không phá vỡ cấu trúc vận hành nền;
+- **Tính quan sát được:** bắt buộc phải có cơ chế theo dõi trạng thái để phát hiện sai lệch sớm.
 
-Trong giảng dạy hệ thống phân tán, khoảng cách giữa lý thuyết và thực hành là một thách thức đáng kể. Nhiều hiện tượng kỹ thuật khó được cảm nhận trực tiếp nếu người học chỉ quan sát log hoặc bảng chỉ số. Vì vậy, bài toán đặt ra là xây dựng một hệ thống mô phỏng mà trong đó các trạng thái vận hành có thể được cảm nhận bằng âm thanh.
+Trong bối cảnh đào tạo, khó khăn lớn nhất là sinh viên thường hiểu định nghĩa nhưng khó hình dung diễn biến động của hệ khi thành phần thay đổi trạng thái. Vì lý do này, cách tiếp cận mô phỏng trực quan bằng âm học được xem là phù hợp, vì nó biến trạng thái kỹ thuật thành tín hiệu có thể cảm nhận ngay lập tức.
 
-### **2.1.2. Phát biểu bài toán**
+### 1.2. Các thách thức điển hình trong hệ thống phân tán
 
-Thiết kế một hệ thống microservices, sử dụng RabbitMQ làm hạ tầng truyền thông, có khả năng:
+#### 1.2.1. Độ trễ và dao động độ trễ
 
-- Đọc bản nhạc MIDI, phân rã thành sự kiện theo nhịp.
-- Phân phối sự kiện tới các service nhạc cụ độc lập.
-- Tổng hợp đầu ra thành luồng phát lại.
-- Hiển thị metrics thời gian thực và cho phép điều khiển BPM động.
-- Hoạt động ổn định trong các kịch bản lỗi có chủ đích như lag, crash, reconnect, scale ngang.
+Trong hệ phân tán, độ trễ không phải một hằng số mà là một đại lượng biến thiên theo tải hệ thống, tải mạng và độ sâu hàng đợi. Một hệ có thể phản hồi tốt ở trạng thái tải thấp, nhưng suy giảm nhanh khi tăng tải hoặc khi một nút xử lý chậm bất thường. Dao động độ trễ làm cho việc đánh giá “nhanh” hay “chậm” không thể chỉ dựa trên một mẫu đo đơn lẻ, mà cần quan sát theo chuỗi thời gian.
 
-### **2.1.3. Mục tiêu và tiêu chí thành công**
+Đối với đề tài, độ trễ được cảm nhận gián tiếp qua mức “chậm pha” của các bè âm mô phỏng. Khi dao động trễ tăng, người nghe có thể nhận thấy nhịp tổng thiếu chắc chắn, tạo cảm giác rời rạc trong hòa tấu.
 
-- Về chức năng: hoàn thành luồng end-to-end từ đọc MIDI tới phát âm thanh.
-- Về phi chức năng: duy trì độ trễ đầu-cuối nhỏ trong LAN, cập nhật metrics đều đặn, phục hồi kết nối sau gián đoạn.
-- Về học thuật: minh họa được tối thiểu ba hiện tượng phân tán điển hình bằng cả số liệu và cảm nhận âm thanh.
+#### 1.2.2. Mất đồng bộ
 
-## **2.2. Phân tích bài toán**
+Mất đồng bộ là hiện tượng các thành phần không còn bám cùng một nhịp xử lý chung, dẫn đến sai lệch thời điểm hoàn tất tác vụ. Trong môi trường phân tán, mất đồng bộ có thể xuất phát từ khác biệt năng lực xử lý giữa các nút, khác biệt trạng thái hàng đợi, hoặc thay đổi đột ngột của tải vào.
 
-### **2.2.1. Phân rã tác nhân và thành phần**
+Mất đồng bộ đặc biệt nguy hiểm với các hệ cần phối hợp theo chu kỳ, bởi một thành phần chậm có thể làm méo chất lượng đầu ra toàn hệ. Theo mô hình âm nhạc, đây là trạng thái “lệch nhịp”, khi từng bè âm không còn hòa khít với nhau.
 
-Hệ thống gồm các tác nhân: người vận hành (qua Dashboard), Conductor service, các Instrument services (guitar, oboe, drums, bass), Mixer service, RabbitMQ broker và tầng phát âm thanh cục bộ. Mỗi thành phần có trách nhiệm rõ ràng nhằm giảm phụ thuộc chéo.
+#### 1.2.3. Tắc nghẽn hàng đợi
 
-### **2.2.2. Phân tích luồng nghiệp vụ**
+Tắc nghẽn hàng đợi xảy ra khi tốc độ tiếp nhận thông điệp cao hơn tốc độ xử lý trong một khoảng thời gian đủ dài. Khi đó, độ sâu hàng đợi tăng, kéo theo tăng thời gian chờ và tăng sai lệch cảm nhận về thứ tự xử lý. Nếu không có cơ chế điều tiết, tắc nghẽn cục bộ có thể lan thành tắc nghẽn chuỗi.
 
-Luồng chính được mô tả như sau:
+Về mặt sư phạm, đây là hiện tượng rất khó truyền đạt nếu chỉ trình bày bằng đồ thị. Bản điện tử hóa cho phép mô tả tắc nghẽn theo cách dễ hiểu hơn: hòa tấu mất độ liền mạch, xuất hiện cảm giác “đứt quãng” hoặc “đuổi nhịp”.
 
-1. Conductor nạp file MIDI và lập lịch note theo BPM.
-2. Sự kiện note được publish tới topic exchange `orchestra.events`.
-3. Mỗi service nhạc cụ consume queue tương ứng và xử lý note.
-4. Kết quả xử lý được gửi tới Mixer.
-5. Mixer tổng hợp và publish lên `playback.output`.
-6. Dashboard backend nhận luồng, render audio và phát trên giao diện web.
-7. Dashboard đồng thời thu thập metrics để người vận hành quan sát.
+#### 1.2.4. Lỗi thành phần và phục hồi
 
-Nhánh điều khiển động: Dashboard gửi lệnh BPM tới `tempo.control`, Conductor cập nhật tốc độ phát mà không dừng phiên chạy.
+Lỗi thành phần là đặc tính không thể loại bỏ hoàn toàn trong hệ phân tán. Một thành phần có thể dừng hoạt động do quá tải, gián đoạn kết nối hoặc lỗi nội tại, trong khi các thành phần khác vẫn tiếp tục vận hành. Điều này tạo nên bản chất “sống chung với lỗi” của hệ phân tán.
 
-### **2.2.3. Đặc tả message và hợp đồng dữ liệu**
+Giá trị thực tế của một hệ không nằm ở việc “không bao giờ lỗi”, mà ở khả năng duy trì dịch vụ chấp nhận được khi lỗi xảy ra và khả năng phục hồi nhanh khi thành phần tái gia nhập. Trong đề tài, trạng thái này được mô phỏng trực tiếp qua thao tác tắt/bật công tắc gắn với từng buzzer, giúp quan sát rõ chu kỳ lỗi - suy giảm - phục hồi.
 
-Đối tượng dữ liệu trung tâm là `NoteEvent` với các trường: `note_id`, `instrument`, `pitch`, `duration`, `volume`, `beat_time`, `timestamp`. Đặc tả này đảm bảo khả năng truy vết sự kiện, đồng bộ thời gian và mở rộng logic xử lý ở từng nhạc cụ.
+#### 1.2.5. Tính nhất quán và cảm nhận nhất quán
 
-Yêu cầu chất lượng hợp đồng dữ liệu:
+Một thách thức nền tảng khác là đảm bảo tính nhất quán giữa các thành phần quan sát cùng một trạng thái hệ thống. Trong mô hình học tập, đề tài không đặt mục tiêu tối đa hóa nhất quán theo chuẩn sản xuất, nhưng vẫn yêu cầu tính nhất quán cảm nhận: cùng một thao tác ngắt công tắc phải tạo ra biểu hiện trạng thái tương đồng ở nhiều lần thử nghiệm.
 
-- Trường bắt buộc phải đầy đủ và đúng kiểu.
-- Mốc thời gian phải nhất quán theo chuẩn ISO 8601.
-- Giá trị pitch/volume tuân thủ dải MIDI tiêu chuẩn.
+#### 1.2.6. Khả năng quan sát và diễn giải sự cố
 
-### **2.2.4. Phân tích ràng buộc và rủi ro**
+Nếu thiếu cơ chế quan sát, lỗi phân tán thường biểu hiện gián tiếp và khó truy nguyên. Vì vậy, hệ thống mô phỏng cần đồng thời hiển thị chỉ số kỹ thuật và tín hiệu âm học. Chỉ số kỹ thuật cho biết “hệ đang ở đâu”, còn âm học cho biết “người dùng cảm nhận chất lượng ra sao”. Hai lớp thông tin này bổ trợ nhau để tăng độ tin cậy trong diễn giải sự cố.
 
-Ràng buộc chính của đề tài là hạ tầng triển khai tại môi trường học tập, chi phí thấp, không phụ thuộc cloud bắt buộc. Điều này dẫn tới các quyết định: RabbitMQ single-node, triển khai Docker Compose và tối ưu cho LAN.
+### 1.3. Nền tảng âm nhạc phục vụ mô hình hóa
 
-Rủi ro kỹ thuật chính gồm:
+Để ánh xạ hệ phân tán sang mô hình âm học một cách chặt chẽ, đề tài sử dụng các khái niệm nhạc lý cơ bản làm hệ quy chiếu. Việc dùng nhạc lý không nhằm mục đích trình diễn nghệ thuật, mà nhằm tạo một ngôn ngữ trung gian giúp giải thích các trạng thái kỹ thuật bằng hiện tượng dễ cảm nhận.
 
-- Queue backlog tăng nhanh khi một consumer suy giảm năng lực.
-- Sai khác thứ tự xử lý khi mở rộng competing consumers.
-- Sai lệch schema gây lỗi tiêu thụ message liên dịch vụ.
-- Mất kết nối broker làm gián đoạn chuỗi phát nhạc.
+#### 1.3.1. Nhịp độ và cấu trúc thời gian
 
-### **2.2.5. Yêu cầu chức năng và phi chức năng**
+Nhịp độ (BPM) quyết định mật độ diễn tiến của nốt nhạc theo thời gian. Khi chuyển sang mô hình phân tán, BPM đóng vai trò đại diện cho tốc độ phát sinh và luân chuyển sự kiện. Tăng BPM tương ứng tăng áp lực xử lý lên các thành phần; giảm BPM tương ứng giảm tải và tăng khoảng đệm điều phối.
 
-Hệ thống phải đáp ứng đầy đủ chuỗi FR (đọc bản nhạc, publish/consume/mix/playback, monitoring, reconnect) và các NFR trọng tâm (độ trễ thấp, quan sát thời gian thực, tính tin cậy của queue). Các yêu cầu này được truy vết trực tiếp tới kịch bản thực nghiệm ở Chương 3.
+Ở góc độ sư phạm, BPM là tham số cực kỳ hữu ích vì cho phép người học thấy ngay mối quan hệ giữa “tốc độ” và “độ ổn định” của hệ.
 
-### **2.2.6. Phân tích use case vận hành và điều kiện biên**
+#### 1.3.2. Cao độ, trường độ và cường độ
 
-Để bảo đảm thiết kế bám sát mục tiêu sử dụng thực tế trong phòng thí nghiệm, nhóm phân tích các use case theo chuỗi thao tác của người vận hành. Use case nền tảng là khởi tạo hệ thống, nạp bản nhạc và bắt đầu playback. Từ use case này phát sinh các nhánh điều kiện biên như: broker khởi động chậm, service nhạc cụ chưa sẵn sàng, hoặc bản nhạc chưa tồn tại trong kho dữ liệu.
+Ba thành tố cơ bản của nốt nhạc gồm cao độ, trường độ và cường độ. Trong đề tài:
 
-Với use case thay đổi BPM khi đang phát, điều kiện biên quan trọng là tránh giật nhịp do cập nhật đột ngột. Hệ thống cần bảo đảm lệnh tempo được xử lý theo thứ tự thời gian, đồng thời chỉ tác động tới các sự kiện chưa phát. Nếu áp dụng trực tiếp cho toàn bộ hàng đợi đã phát sinh, hệ thống có thể tạo ra sai lệch cảm nhận và khó truy vết nguyên nhân.
+- **Cao độ** có thể xem như đặc trưng nhận diện của từng bè;
+- **Trường độ** phản ánh độ dài hiệu ứng của một sự kiện;
+- **Cường độ** phản ánh mức ưu tiên cảm nhận của thành phần trong tổng thể hòa âm.
 
-Ở use case dừng service giữa phiên chạy, phân tích cho thấy hệ thống không cần bảo toàn âm thanh hoàn toàn liên tục, nhưng phải bảo toàn tính đúng đắn của luồng sự kiện. Điều này dẫn tới quyết định giữ message trong queue durable và cho phép service phục hồi rồi tiêu thụ backlog, thay vì loại bỏ message để giữ độ trễ thấp tức thời.
+Ánh xạ này giúp người học hiểu rằng một sự kiện trong hệ phân tán không chỉ có “xảy ra hay không”, mà còn có thuộc tính về thời lượng và mức ảnh hưởng tới đầu ra chung.
 
-### **2.2.7. Phân tích dữ liệu và tính nhất quán thời gian**
+#### 1.3.2. Bè âm và vai trò phối hợp
 
-Trong bài toán mô phỏng âm nhạc, dữ liệu không chỉ mang ý nghĩa nội dung nốt nhạc mà còn mang ý nghĩa thời gian. Vì vậy, nhóm tách rõ hai lớp thời gian: thời gian logic (beat time theo BPM) và thời gian vật lý (timestamp hệ thống). Thời gian logic bảo đảm cấu trúc âm nhạc, còn thời gian vật lý phục vụ đo kiểm độ trễ và phân tích hiện tượng lag.
+Mỗi nhạc cụ trong dàn nhạc đảm nhận một bè âm riêng, có thể là bè chính, bè đối thoại, bè giữ nhịp hoặc bè nền trầm. Mặc dù độc lập về vai trò, các bè chỉ tạo giá trị khi phối hợp chính xác theo cùng nhịp tổng.
 
-Từ góc độ nhất quán, hệ thống ưu tiên nhất quán sự kiện theo từng queue nhạc cụ, thay vì nhất quán tuyệt đối toàn cục giữa mọi queue tại mọi thời điểm. Cách tiếp cận này thực tế hơn trong môi trường phân tán, đồng thời phù hợp bản chất hòa tấu: sai lệch nhỏ giữa các bè có thể chấp nhận trong ngưỡng nhất định nhưng sai lệch lớn kéo dài sẽ làm giảm chất lượng cảm nhận.
+Trong hệ phân tán, mỗi thành phần cũng đóng vai trò chuyên biệt và chỉ tạo hiệu quả khi phối hợp đúng nhịp, đúng thứ tự logic. Do đó, khái niệm bè âm là một phép tương đồng mạnh để giải thích tư duy “phân vai nhưng đồng bộ”.
 
-Nhóm cũng phân tích ràng buộc định danh và truy vết: mỗi `NoteEvent` phải có `note_id` duy nhất để liên kết từ Conductor qua Instrument tới Mixer. Đây là nền tảng để đối soát khi đánh giá tỷ lệ mất message hoặc trễ xử lý theo từng công đoạn.
+#### 1.3.3. Mất bè và suy giảm chất lượng
 
-### **2.2.8. So sánh phương án kiến trúc và lý do lựa chọn**
+Khi một nhạc cụ ngừng phát, dàn nhạc không nhất thiết dừng hoàn toàn nhưng chất lượng tổng thể bị suy giảm. Trường hợp mất nhiều bè đồng thời sẽ làm cấu trúc âm học trở nên nghèo nàn, thiếu cân bằng và khó duy trì cảm giác hoàn chỉnh.
 
-Trước khi chốt phương án hiện tại, nhóm xem xét ba hướng triển khai: (i) kiến trúc nguyên khối xử lý tuần tự; (ii) microservices giao tiếp đồng bộ qua HTTP; (iii) microservices hướng sự kiện qua RabbitMQ. Phương án (i) đơn giản nhưng không mô phỏng được bản chất phân tán. Phương án (ii) cải thiện tính module nhưng phụ thuộc thời gian giữa các service, khó thể hiện back-pressure tự nhiên.
+Đây là mô hình trực quan cho hiện tượng lỗi cục bộ trong hệ phân tán: hệ còn hoạt động nhưng chất lượng dịch vụ giảm theo số lượng thành phần lỗi.
 
-Phương án (iii) được lựa chọn vì đáp ứng đồng thời bốn tiêu chí: tách rời thành phần, hỗ trợ hàng đợi để mô phỏng lag, thuận lợi cho fault injection và dễ mở rộng số lượng nhạc cụ. Đổi lại, phương án này đòi hỏi kiểm soát hợp đồng message chặt chẽ hơn và tăng yêu cầu quan sát hệ thống, nhưng đây cũng chính là nội dung cốt lõi mà đề tài hướng tới.
+#### 1.3.4. Hòa âm, hòa tấu và tính toàn vẹn đầu ra
 
-## **2.3. Giải pháp**
+Hòa âm trong âm nhạc tương ứng với tính toàn vẹn của đầu ra trong hệ thống phân tán. Khi mỗi thành phần hoàn thành đúng phần việc và đúng nhịp, đầu ra chung đạt mức “đầy” và “mạch lạc”. Ngược lại, sai lệch thời gian hoặc mất thành phần làm đầu ra mất cân bằng. Vì vậy, hòa âm là một chỉ báo trực quan cho chất lượng phối hợp hệ thống.
 
-### **2.3.1. Kiến trúc tổng thể**
+### 1.4. Công-xéc-tô như một mô hình tư duy hệ thống
 
-Giải pháp được thiết kế theo kiến trúc event-driven microservices gồm bốn lớp:
+Công-xéc-tô là hình thức tổ chức âm nhạc có mức kỷ luật phối hợp cao, trong đó vai trò nhạc trưởng, từng nhóm nhạc cụ và quy tắc nhịp được xác định rõ. Đặc điểm này khiến công-xéc-tô trở thành mô hình tư duy rất gần với hệ phân tán.
 
-- Lớp trình bày: Dashboard web và API điều khiển.
-- Lớp ứng dụng: Conductor, Instrument services, Mixer.
-- Lớp tích hợp: RabbitMQ topic exchange và các durable queue.
-- Lớp phát lại: audio renderer phía Dashboard backend.
+Về cấu trúc vận hành, mô hình công-xéc-tô thể hiện đầy đủ các lớp logic mà hệ phân tán cần có:
 
-Mô hình này ưu tiên tính tách rời, dễ mở rộng và dễ mô phỏng lỗi thành phần.
+- Có trung tâm điều phối (nhạc trưởng);
+- Có nhiều thành phần chuyên biệt (nhạc cụ);
+- Có quy tắc phối hợp theo thời gian (nhịp);
+- Có yêu cầu đồng bộ và phục hồi khi sai lệch.
 
-**Hình 2.1. Kiến trúc logic tổng thể hệ thống Orchestra Microservices**
+Ngoài ra, công-xéc-tô còn phản ánh tốt yếu tố “tự chủ có điều kiện”: mỗi nhạc cụ có không gian biểu đạt riêng nhưng không tách rời chỉ huy chung. Đây cũng chính là nguyên lý tổ chức của các thành phần phân tán: tự chủ về xử lý cục bộ, nhưng tuân thủ quy tắc điều phối tổng thể.
 
-```mermaid
-flowchart LR
-    U[Người vận hành]
-    DBW[Dashboard Web UI]
-    DBA[Dashboard Backend API]
-    C[Conductor Service]
-    EX[(Exchange orchestra.events)]
-    QG[[instrument.guitar.note]]
-    QO[[instrument.oboe.note]]
-    QD[[instrument.drums.beat]]
-    QB[[instrument.bass.note]]
-    G[Guitar Service]
-    O[Oboe Service]
-    D[Drums Service]
-    B[Bass Service]
-    M[Mixer Service]
-    QP[[playback.output]]
-    R[Audio Renderer]
-    SP[(Loa máy tính)]
-    TQ[[tempo.control]]
-    RM[(RabbitMQ Broker)]
+Khung tư duy này giúp chuyển các thuật ngữ kỹ thuật khó tiếp cận sang ngôn ngữ trực quan mà vẫn giữ tính chính xác khoa học, đặc biệt phù hợp với mục tiêu đào tạo ở bậc đại học.
 
-    U --> DBW --> DBA
-    DBA -->|Điều khiển BPM| TQ
-    TQ --> C
-    C --> EX
-    EX --> QG --> G --> M
-    EX --> QO --> O --> M
-    EX --> QD --> D --> M
-    EX --> QB --> B --> M
-    M --> QP --> DBA --> R --> SP
+### 1.5. Kiến thức nền về mô hình hàng đợi thông điệp
 
-    RM --- EX
-    RM --- TQ
-    RM --- QP
-    RM --- QG
-    RM --- QO
-    RM --- QD
-    RM --- QB
-```
+Trong các hệ phân tán hiện đại, hàng đợi thông điệp là cơ chế trung gian quan trọng để tách rời nhịp hoạt động giữa bên phát và bên nhận. Cách tiếp cận này giúp hệ tăng tính mềm dẻo khi tải biến động, đồng thời giảm phụ thuộc trực tiếp giữa các thành phần.
 
-**Bảng 2.1. Ánh xạ bài toán âm nhạc và khái niệm hệ thống phân tán**
+Các lợi ích nền tảng của mô hình hàng đợi gồm:
 
-| Âm nhạc | Hệ thống phân tán |
-| --- | --- |
-| Giàn hợp xướng | Toàn bộ hệ thống microservices |
-| Nhạc trưởng (Conductor) | Service điều phối trung tâm |
-| Nhạc cụ | Microservice độc lập |
-| Bản nhạc | Event contract / dữ liệu vào |
-| Nhịp độ BPM | Throughput / tốc độ phát message |
-| Lệch nhịp | Consumer lag / out-of-sync |
-| Nhạc cụ im lặng | Service crash hoặc mất kết nối |
+- Hấp thụ dao động tải ngắn hạn;
+- Hỗ trợ xử lý bất đồng bộ;
+- Tăng khả năng chịu lỗi cục bộ;
+- Cho phép quan sát sâu trạng thái xử lý qua độ sâu hàng đợi.
 
-### **2.3.2. Thiết kế RabbitMQ topology**
+Trong đề tài, mô hình hàng đợi là lớp nền logic để bản điện tử hóa phản ánh trạng thái hệ thống. Khi trạng thái xử lý thay đổi ở lớp hàng đợi, biểu hiện âm học ở lớp buzzer thay đổi theo.
 
-- Exchange trung tâm: `orchestra.events` (topic).
-- Routing key theo chuẩn: `instrument.<name>.note` và `instrument.<name>.beat`.
-- Queue điều khiển: `tempo.control`.
-- Queue phát lại: `playback.output`.
+### 1.6. Cơ sở lý luận cho bản điện tử hóa trọng tâm
 
-Tất cả queue trọng yếu được khai báo durable; service sử dụng cơ chế reconnect tự động khi mất kết nối broker.
+Bản điện tử hóa của đề tài được xây dựng trên nguyên tắc: mô phỏng phải tạo ra tín hiệu cảm nhận tức thời khi hệ thay đổi trạng thái.
 
-**Hình 2.3. Topology RabbitMQ (exchange, queue, routing key)**
+Mô hình gồm:
 
-```mermaid
-flowchart TB
-    EX[(Topic Exchange: orchestra.events)]
+- 1 ESP đóng vai trò điều phối trung tâm;
+- 4 buzzer đại diện cho 4 nhạc cụ;
+- 4 công tắc tương ứng trạng thái kết nối của 4 nhạc cụ;
+- Buzzer kết nối qua các cổng D2, D16, D19, D23.
 
-    QG[[Queue: instrument.guitar.note]]
-    QO[[Queue: instrument.oboe.note]]
-    QD[[Queue: instrument.drums.beat]]
-    QB[[Queue: instrument.bass.note]]
-    QP[[Queue: playback.output]]
-    TQ[[Queue: tempo.control]]
+Điểm mạnh của thiết kế này:
 
-    C[Conductor] -->|publish instrument.guitar.note| EX
-    C -->|publish instrument.oboe.note| EX
-    C -->|publish instrument.drums.beat| EX
-    C -->|publish instrument.bass.note| EX
+- Chi phí triển khai thấp;
+- Dễ tái lập trong môi trường lớp học;
+- Quan sát tức thời bằng tai và mắt;
 
-    EX -->|rk=instrument.guitar.note| QG --> G[Guitar]
-    EX -->|rk=instrument.oboe.note| QO --> O[Oboe]
-    EX -->|rk=instrument.drums.beat| QD --> D[Drums]
-    EX -->|rk=instrument.bass.note| QB --> B[Bass]
+- Dễ mở rộng số kịch bản thử nghiệm.
 
-    G --> M[Mixer]
-    O --> M
-    D --> M
-    B --> M
+Không gian giá trị của bản điện tử hóa thể hiện ở ba điểm:
 
-    M -->|publish mixed playback| QP --> DBA[Dashboard Backend]
-    DBW[Dashboard Web] -->|change BPM| TQ --> C
-```
+1. **Giá trị trực quan:** người học quan sát ngay tác động của thao tác lỗi.
+2. **Giá trị lặp lại:** cùng thao tác có thể tạo kết quả tương đồng qua nhiều phiên.
+3. **Giá trị liên kết:** kết nối chặt chẽ giữa khái niệm lý thuyết và hiện tượng cảm nhận.
 
-**Bảng 2.2. Đặc tả message `NoteEvent`**
+### 1.7. Đối sánh khái niệm âm nhạc - hệ thống phân tán
 
-| Trường | Kiểu dữ liệu | Mô tả |
-| --- | --- | --- |
-| `note_id` | `string (UUID)` | Định danh duy nhất của nốt |
-| `instrument` | `string` | Tên nhạc cụ: `guitar`, `oboe`, `drums`, `bass` |
-| `pitch` | `integer (0-127)` | Cao độ MIDI |
-| `duration` | `float` | Thời lượng giữ nốt (giây) |
-| `volume` | `integer (0-127)` | Cường độ nốt (velocity) |
-| `beat_time` | `float` | Thời điểm dự kiến phát theo BPM |
-| `timestamp` | `ISO 8601 string` | Thời điểm Conductor publish |
+**Bảng 1. Đối sánh khái niệm âm nhạc và hệ thống phân tán**
 
-### **2.3.3. Thiết kế thành phần Conductor**
+| Khái niệm âm nhạc | Khái niệm hệ thống phân tán | Giải thích ngắn |
+|---|---|---|
+| Dàn nhạc | Toàn bộ hệ thống | Tập hợp các thành phần phối hợp |
+| Nhạc trưởng | Thành phần điều phối | Quyết định nhịp và thứ tự tổng thể |
+| Nhạc cụ | Thành phần dịch vụ | Xử lý một phần nhiệm vụ chuyên biệt |
+| Bản nhạc | Mẫu sự kiện | Khuôn dạng điều phối chung |
+| Nhịp | Tốc độ luồng sự kiện | Mức độ nhanh chậm toàn hệ |
+| Lệch nhịp | Trễ xử lý | Sai khác thời gian giữa các thành phần |
+| Mất bè | Mất thành phần | Suy giảm chất lượng đầu ra |
+| Hòa âm | Tổng hợp kết quả | Đầu ra cuối cùng của hệ |
 
-Conductor chịu trách nhiệm chuyển đổi bản nhạc MIDI thành dòng sự kiện có cấu trúc thời gian. Các chức năng chính: nạp bản nhạc, lập lịch note theo BPM hiện hành, publish theo instrument, phát heartbeat và nhận lệnh điều chỉnh tempo. Đây là thành phần quyết định tính đúng nhịp của toàn hệ thống.
+### 1.8. Phân loại hiện tượng phân tán theo biểu hiện âm học
 
-### **2.3.4. Thiết kế Instrument services và Mixer**
+**Bảng 2. Phân loại hiện tượng phân tán và biểu hiện âm học**
 
-Mỗi service nhạc cụ hoạt động như một consumer độc lập, xử lý đúng queue riêng và xuất kết quả theo hợp đồng thống nhất. Mixer tiếp nhận đa nguồn, đồng bộ tương đối theo thời gian và tạo luồng playback hợp nhất. Cách phân tách này giúp cô lập lỗi: sự cố tại một nhạc cụ không làm ngừng toàn hệ thống.
+| Hiện tượng phân tán | Dấu hiệu kỹ thuật | Biểu hiện âm học trên bản điện tử hóa |
+|---|---|---|
+| Tăng trễ | Hàng đợi tăng, phản hồi chậm | Nhịp phát rời rạc, cảm giác chậm pha |
+| Mất thành phần đơn lẻ | Một dịch vụ không phản hồi | Mất một bè âm rõ rệt |
+| Mất nhiều thành phần | Nhiều dịch vụ ngắt | Hòa âm suy giảm mạnh |
+| Phục hồi thành phần | Dịch vụ tái gia nhập | Bè âm trở lại từng phần |
+| Dao động tải | Chỉ số biến thiên liên tục | Âm hình thiếu ổn định |
+| Tái gia nhập thành phần | Thành phần trở lại trạng thái hoạt động | Bè âm quay lại theo từng mức |
+| Suy giảm phối hợp kéo dài | Nhiều chỉ số lệch ngưỡng trong thời gian dài | Hòa tấu mất cảm giác hoàn chỉnh |
 
-### **2.3.5. Thiết kế Dashboard và observability**
+### 1.9. Ý nghĩa của chương nền đối với phần thực nghiệm
 
-Dashboard cung cấp hai nhóm chức năng: vận hành (start/stop playback, đổi BPM) và quan sát (queue depth, lag, throughput, health). Tầng backend sử dụng WebSocket để cập nhật gần thời gian thực, đồng thời render âm thanh từ luồng `playback.output` để người dùng cảm nhận trực tiếp trạng thái hệ thống.
+Chương nền có vai trò như khung tham chiếu để đọc đúng kết quả thực nghiệm. Nếu không có nền tảng khái niệm, người quan sát dễ nhầm giữa hiện tượng âm học bề mặt và nguyên nhân kỹ thuật bên trong. Nhờ hệ quy chiếu đã thiết lập, mỗi thay đổi trên bản điện tử hóa có thể được diễn giải theo đúng logic phân tán, từ đó nâng cao chất lượng nhận xét khoa học.
 
-**Hình 2.2. Luồng sự kiện từ Conductor tới Dashboard playback**
+### 1.10. Kết luận chương
 
-```mermaid
-sequenceDiagram
-    participant C as Conductor
-    participant R as RabbitMQ
-    participant I as Instrument Services
-    participant M as Mixer
-    participant D as Dashboard Backend
-    participant W as Dashboard Web
+Chương 1 đã thiết lập cơ sở lý luận đầy đủ cho đề tài: từ bản chất hệ thống phân tán, thách thức điển hình, đến khung nhạc lý và mô hình công-xéc-tô. Trên nền tảng đó, bản điện tử hóa ESP - buzzer - công tắc được chứng minh là phương tiện mô phỏng có tính khoa học, trực quan và phù hợp mục tiêu đào tạo.
 
-    C->>R: Publish NoteEvent (theo BPM)
-    R->>I: Deliver theo routing key instrument.*
-    I->>M: Publish InstrumentOutput
-    M->>R: Publish PlaybackEvent -> playback.output
-    R->>D: Consume playback.output
-    D->>W: Push stream/metrics qua WebSocket
-    W-->>D: TempoCommand (BPM mới)
-    D->>R: Publish tempo.control
-    R->>C: Deliver TempoCommand
-```
+---
 
-### **2.3.6. Thiết kế triển khai đa máy trong LAN**
+## CHƯƠNG 2. PHÂN TÍCH THIẾT KẾ HỆ THỐNG
 
-Hệ thống hỗ trợ hai chế độ: chạy tập trung trên một máy (baseline) và phân tán trên nhiều máy trong LAN (mỗi máy một vai trò). Mô hình triển khai này phù hợp mục tiêu môn học vì vừa dễ khởi động, vừa thể hiện rõ bản chất phân tán khi tách dịch vụ theo nút mạng.
+### 2.1. Phát biểu bài toán
 
-### **2.3.7. Thiết kế API điều khiển và kênh quan sát**
+Trong đào tạo hệ thống phân tán, khó khăn lớn không nằm ở việc giới thiệu thuật ngữ mà nằm ở việc giúp người học hiểu đúng cơ chế vận hành khi hệ thống chịu tác động động theo thời gian thực. Nếu chỉ dùng sơ đồ tĩnh hoặc mô tả lý thuyết, người học thường khó nhận ra mối quan hệ nhân - quả giữa sự cố cục bộ và biến đổi chất lượng đầu ra toàn hệ.
 
-Ngoài luồng message nội bộ qua RabbitMQ, hệ thống cần một lớp giao tiếp cho người vận hành. Nhóm thiết kế các API theo hướng tối giản, tập trung vào ba nhóm chức năng: điều khiển phiên phát, điều chỉnh BPM và truy vấn trạng thái. Cấu trúc API được xây dựng sao cho thao tác tại Dashboard có thể ánh xạ một-một tới hành vi trong hệ thống.
+Từ đó, bài toán của đề tài được phát biểu như sau: xây dựng một mô hình mô phỏng có khả năng biểu đạt trung thực các hiện tượng phân tán cốt lõi, cho phép thao tác trạng thái lỗi một cách có kiểm soát, đồng thời cung cấp phản hồi trực quan tức thời để người học dễ liên hệ giữa trạng thái kỹ thuật và cảm nhận kết quả.
 
-**Bảng 2.4. Đặc tả API điều khiển và quan sát hệ thống**
+Các ràng buộc thiết kế chính gồm:
 
-| Nhóm API | Endpoint mẫu | Phương thức | Mục đích |
-| --- | --- | --- | --- |
-| Playback control | `/v1/conductor/playback/start` | `POST` | Khởi động phiên phát và phát luồng sự kiện |
-| Playback control | `/v1/conductor/playback/stop` | `POST` | Dừng phiên phát có kiểm soát |
-| Tempo control | `/v1/conductor/tempo` | `POST` | Gửi lệnh thay đổi BPM vào `tempo.control` |
-| Health & metrics | `/health` | `GET` | Kiểm tra trạng thái sống của service |
-| Health & metrics | `/v1/metrics/queues` | `GET` | Trả về queue depth, consumer count, message rate |
-| Realtime stream | `/v1/conductor/audio/stream` | `WS` | Truyền luồng audio/metrics thời gian thực |
+- Môi trường triển khai chủ yếu là lớp học và phòng thực hành;
+- Nguồn lực phần cứng và kinh phí có giới hạn;
+- Mô hình phải dễ lắp ráp, dễ lặp lại và dễ bảo trì;
+- Nội dung phải bám sát mục tiêu học phần Các hệ thống phân tán;
+- Bản điện tử hóa phải là trọng tâm biểu diễn, không phải phần phụ minh họa;
+- Hệ thống cần hỗ trợ trình bày đồng thời hai lớp thông tin: trạng thái kỹ thuật và biểu hiện âm học.
 
-Thiết kế API này bảo đảm khả năng kiểm thử tự động theo từng chức năng, đồng thời giúp tách rõ điều khiển nghiệp vụ và truyền tải dữ liệu âm thanh thời gian thực.
+Từ góc nhìn thiết kế giáo dục, bài toán không yêu cầu mô hình đạt mức phức tạp sản xuất, mà yêu cầu đạt mức rõ ràng học thuật, dễ diễn giải và có tính thực nghiệm cao.
 
-### **2.3.8. Thiết kế xử lý lỗi, phục hồi và độ tin cậy**
+### 2.2. Mục tiêu thiết kế
 
-Độ tin cậy của hệ thống được xây dựng trên ba lớp bảo vệ. Lớp thứ nhất là durable queue để tránh mất message khi service tạm thời gián đoạn. Lớp thứ hai là cơ chế reconnect tự động của từng service với chiến lược thử lại tăng dần thời gian chờ. Lớp thứ ba là quan sát liên tục để phát hiện sớm queue backlog và bất thường độ trễ.
+Mục tiêu thiết kế được chia thành ba lớp: mục tiêu chức năng mô phỏng, mục tiêu sư phạm và mục tiêu vận hành.
 
-Về chính sách xử lý lỗi, nhóm chọn nguyên tắc “ưu tiên đúng dữ liệu hơn đúng thời điểm tức thì” trong bối cảnh học thuật. Nghĩa là khi service gặp sự cố ngắn hạn, hệ thống chấp nhận độ trễ tăng tạm thời để bảo toàn chuỗi sự kiện, sau đó giảm backlog khi service phục hồi.
+#### 2.2.1. Mục tiêu chức năng mô phỏng
 
-Đối với lỗi hợp đồng message, hệ thống áp dụng kiểm tra schema ở biên xử lý nhằm ngăn lan truyền lỗi sang các service khác. Các bản ghi lỗi phải chứa định danh `note_id`, queue liên quan và thời điểm xảy ra để phục vụ truy vết nguyên nhân gốc.
+Ở lớp chức năng, mô hình phải phản ánh được đúng tinh thần của một hệ thống phân tán theo chuỗi: điều phối trung tâm phát nhịp tổng, các thành phần chuyên biệt xử lý theo vai trò, sau đó đầu ra được hợp thành ở mức toàn hệ. Yêu cầu cốt lõi không phải là tái hiện mọi chi tiết kỹ thuật phức tạp, mà là tái hiện đúng quan hệ phụ thuộc giữa các vai trò trong hệ.
 
-**Hình 2.4. Trình tự xử lý khi xảy ra lỗi và phục hồi dịch vụ**
+Mô hình cũng phải thể hiện được ba trạng thái quan trọng của hệ phân tán: vận hành ổn định, suy giảm do lỗi cục bộ và phục hồi sau tái gia nhập. Khi một thành phần bị ngắt, hệ vẫn tiếp tục nhưng chất lượng đầu ra giảm; khi thành phần quay lại, hệ cần thể hiện tiến trình trở về trạng thái cân bằng. Đây là điều kiện bắt buộc để đảm bảo mô hình có giá trị học thuật, thay vì chỉ mang tính minh họa trình diễn.
 
-```mermaid
-sequenceDiagram
-    participant C as Conductor
-    participant R as RabbitMQ
-    participant S as Instrument Service
-    participant D as Dashboard
+Ngoài ra, mỗi thao tác tác động phải sinh ra phản hồi có thể quan sát tức thời. Nếu thao tác và phản hồi không liên hệ rõ ràng, sinh viên khó hình thành tư duy nguyên nhân - hệ quả, từ đó giảm hiệu quả của toàn bộ bài thực hành.
 
-    C->>R: Publish NoteEvent
-    R--xS: Deliver message (service down)
-    Note over R: Message giữ trong durable queue
-    D->>D: Hiển thị health đỏ, queue depth tăng
-    S->>R: Reconnect và consume lại
-    R->>S: Replay backlog theo thứ tự queue
-    S->>R: Ack + publish InstrumentOutput
-    D->>D: Metrics ổn định trở lại
-```
+#### 2.2.2. Mục tiêu sư phạm
 
-### **2.3.9. Thiết kế khả năng mở rộng, bảo trì và chuyển giao**
+Về phương diện sư phạm, mô hình cần hỗ trợ người học nhận diện hiện tượng phân tán trong thời gian ngắn thông qua trải nghiệm nghe - nhìn. Trọng tâm không phải là ghi nhớ định nghĩa, mà là nhận ra sự thay đổi hệ thống khi trạng thái thành phần thay đổi.
 
-Để hỗ trợ mở rộng, hệ thống chuẩn hóa cấu trúc service theo cùng một khung triển khai: health endpoint, logging, kết nối broker, vòng lặp consume và cơ chế cấu hình qua biến môi trường. Khi bổ sung nhạc cụ mới, nhóm chỉ cần khai báo queue/routing key mới và tái sử dụng khung xử lý hiện có.
+Mô hình cần tạo điều kiện để sinh viên tự đặt câu hỏi phân tích: vì sao một thao tác ngắt cục bộ lại làm thay đổi hòa tấu tổng, vì sao phục hồi thành phần không đồng nghĩa phục hồi chất lượng ngay lập tức, và vì sao chỉ số kỹ thuật phải được đọc cùng dữ liệu cảm nhận. Khi người học tự suy luận theo chuỗi này, mức độ nắm kiến thức sẽ bền vững hơn so với hình thức tiếp nhận thụ động.
 
-Về bảo trì, thiết kế phân lớp giúp khoanh vùng tác động thay đổi. Ví dụ, cập nhật giao diện Dashboard không làm thay đổi contract message; thay đổi logic trộn ở Mixer không yêu cầu chỉnh sửa Conductor nếu contract đầu vào giữ nguyên. Đây là cơ sở để giảm rủi ro hồi quy khi phát triển tiếp.
+Đối với giảng viên, mô hình phải đủ chuẩn hóa để tổ chức được các bài thực hành lặp lại theo kịch bản, có tiêu chí đánh giá rõ ràng theo năng lực quan sát, năng lực diễn giải và năng lực tổng hợp kết luận.
 
-Về chuyển giao, hệ thống có thể được bàn giao theo hai mức: mức sử dụng (chạy script theo vai trò node) và mức phát triển (chỉnh sửa service độc lập). Cách tổ chức này phù hợp bối cảnh lớp học, nơi nhóm tiếp nhận có thể nhanh chóng tái lập demo rồi mới đi sâu vào mã nguồn.
+#### 2.2.3. Mục tiêu vận hành
 
-### **2.3.10. Ma trận truy vết yêu cầu - quyết định thiết kế**
+Mục tiêu vận hành nhấn mạnh tính thực dụng: mô hình phải có thể triển khai lặp lại trong nhiều buổi học mà không phụ thuộc quá lớn vào người vận hành. Sai khác giữa các phiên cần được kiểm soát ở mức nhỏ để dữ liệu thực nghiệm có thể so sánh.
 
-Để bảo đảm mọi quyết định kỹ thuật đều có cơ sở từ yêu cầu ban đầu, nhóm xây dựng ma trận truy vết rút gọn giữa FR/NFR và thành phần thiết kế.
+Quy trình khởi tạo, chạy thử, gây lỗi và khôi phục phải nhất quán, giúp giảm thời gian chuẩn bị trước giờ học và giảm rủi ro sai thao tác khi trình diễn. Đây là điểm rất quan trọng vì trong môi trường lớp học, thời gian thực hành thường ngắn, cần tối đa hóa thời lượng phân tích thay vì xử lý sự cố kỹ thuật.
 
-**Bảng 2.3. Ma trận yêu cầu - quyết định thiết kế**
+Cuối cùng, mô hình cần có khả năng mở rộng theo cấp độ học phần: từ bài thực hành nhập môn đến các bài có mức phân tích sâu hơn, bảo đảm giá trị sử dụng lâu dài.
 
-| Yêu cầu | Quyết định thiết kế chính | Thành phần hiện thực |
-| --- | --- | --- |
-| FR-01, FR-02 | Parse MIDI thành `NoteEvent` và publish theo routing key | Conductor + RabbitMQ topic exchange |
-| FR-03 | Kênh điều khiển BPM riêng biệt, xử lý runtime | Queue `tempo.control` + API tempo |
-| FR-05, FR-06 | Tách xử lý theo từng nhạc cụ, trộn tập trung | Instrument services + Mixer |
-| FR-07 | Phát lại cục bộ từ luồng tổng hợp | Dashboard backend audio renderer |
-| FR-08 | Thu thập metrics định kỳ và hiển thị realtime | Dashboard + RabbitMQ Management API + WS |
-| NFR-Hiệu năng | Giảm phụ thuộc đồng bộ, dùng MQ làm vùng đệm | Event-driven pipeline |
-| NFR-Tin cậy | Queue durable, reconnect, giám sát health | RabbitMQ + logic reconnect service |
-| NFR-Quan sát | Chuẩn hóa logs/metrics và dashboard tập trung | Dashboard observability layer |
+**Bảng 3. Ma trận mục tiêu thiết kế và tiêu chí kiểm chứng**
 
-## **2.4. Kết luận**
+| Nhóm mục tiêu | Mục tiêu cụ thể | Tiêu chí kiểm chứng |
+|---|---|---|
+| Chức năng | Mô phỏng đủ chuỗi xử lý phân tán | Quan sát được đầy đủ vai trò điều phối - nhạc cụ - hòa trộn |
+| Chức năng | Hỗ trợ lỗi và phục hồi | Ngắt/bật công tắc tạo ra thay đổi trạng thái đúng kỳ vọng |
+| Sư phạm | Dễ nhận biết hiện tượng | Người học phân biệt được trạng thái ổn định và suy giảm |
+| Sư phạm | Hỗ trợ phân tích hệ thống | Đối chiếu được chỉ số và cảm nhận âm học |
+| Vận hành | Tính lặp lại | Kịch bản cho kết quả tương đồng qua nhiều lần chạy |
+| Vận hành | Khả năng mở rộng | Có thể bổ sung kịch bản, tăng nhạc cụ mô phỏng |
 
-Chương 2 đã mở rộng phân tích từ mức phát biểu bài toán sang mức thiết kế có thể triển khai và kiểm thử, bao gồm: phân tích use case và điều kiện biên, mô hình dữ liệu-thời gian, lựa chọn kiến trúc, thiết kế giao tiếp API, cơ chế xử lý lỗi-phục hồi, và ma trận truy vết yêu cầu-thiết kế. Cách trình bày này giúp chứng minh rằng hệ thống không chỉ đáp ứng mục tiêu trình diễn, mà còn có cơ sở kỹ thuật rõ ràng cho việc vận hành ổn định, mở rộng và chuyển giao.
+### 2.3. Kiến trúc tổng thể theo lớp
 
-Trên nền tảng thiết kế đã chuẩn hóa ở chương này, Chương 3 tập trung vào thực nghiệm định lượng để kiểm chứng mức độ đáp ứng các yêu cầu FR/NFR trong môi trường cục bộ đa máy.
+Kiến trúc của đề tài được tổ chức theo hướng phân lớp để tách biệt trách nhiệm: lớp logic phân tán chịu trách nhiệm xử lý trạng thái hệ thống; lớp điện tử hóa chịu trách nhiệm biểu đạt trực quan cho người học. Cách phân lớp này giúp dễ phân tích, dễ kiểm chứng và dễ nâng cấp.
 
-# **CHƯƠNG 3**
+**Hình 1: Bức tranh tổng thể đề tài mô phỏng dàn nhạc phân tán**
 
-# **THỰC NGHIỆM (10 TRANG)**
+**Hình 2: Mô hình phân vai 5 nút máy trong mạng cục bộ**
 
-## **3.1. Hạ tầng (môi trường phát triển)**
+#### 2.3.1. Lớp logic phân tán
 
-### **3.1.1. Cấu hình triển khai**
+Lớp logic phân tán là lõi vận hành của mô hình, nơi các trạng thái hệ thống được hình thành và biến đổi theo thời gian. Lớp này bao gồm điều phối trung tâm, các thành phần nhạc cụ mô phỏng, khâu hòa trộn và khâu quan sát. Mỗi khối có vai trò rõ ràng, nhưng giá trị của lớp logic chỉ xuất hiện khi các khối phối hợp đúng theo cùng một nhịp điều phối.
 
-Thực nghiệm được thực hiện theo mô hình 5 nút trong mạng LAN cục bộ:
+Điều phối trung tâm giữ vai trò xác lập trật tự vận hành; các thành phần nhạc cụ mô phỏng thực hiện xử lý theo chuyên trách; khâu hòa trộn kết hợp tín hiệu riêng thành tín hiệu chung; khâu quan sát cung cấp bằng chứng trạng thái cho phân tích. Nếu thiếu một trong các khối này, mô hình sẽ mất khả năng biểu đạt một phần quan trọng của hệ phân tán.
 
-- Nút A: RabbitMQ, Conductor, Dashboard API.
-- Nút B: Mixer.
-- Nút C: Guitar service.
-- Nút D: Oboe service.
-- Nút E: Drums service và Bass service.
+Đặc điểm của lớp logic:
 
-Mỗi nút chạy Docker/Docker Compose, đồng bộ mã nguồn và cấu hình biến môi trường theo vai trò. Ngoài mô hình 5 nút, nhóm cũng kiểm thử baseline chạy tập trung trên một máy để so sánh.
+- Tổ chức theo vai trò chuyên biệt;
+- Trao đổi thông điệp theo cấu trúc sự kiện;
+- Có khả năng phản ánh trạng thái sống/chết của thành phần;
+- Cung cấp dữ liệu quan sát theo thời gian thực.
 
-### **3.1.2. Công nghệ và công cụ**
+#### 2.3.2. Lớp điện tử hóa trực quan
 
-- Ngôn ngữ triển khai chính: Python 3.11+.
-- Message broker: RabbitMQ 3.x, có Management UI.
-- Dàn dịch vụ: Conductor, Instrument services, Mixer, Dashboard backend.
-- Giao thức giao tiếp: AMQP (MQ), HTTP (API), WebSocket (stream/metrics).
-- Quản lý container: Docker Compose.
+Lớp điện tử hóa trực quan là cầu nối giữa dữ liệu kỹ thuật và cảm nhận con người. Thay vì chỉ hiển thị trạng thái bằng số liệu, lớp này chuyển trạng thái thành tín hiệu âm học có thể nghe ngay, qua đó giúp người học nhận ra hiện tượng mà không cần thao tác phân tích phức tạp ở thời điểm đầu.
 
-### **3.1.3. Quy trình thực nghiệm**
+Vai trò then chốt của lớp này là tính tức thời: khi trạng thái logic thay đổi, biểu hiện âm học phải thay đổi gần như đồng thời. Nhờ vậy, người học hình thành liên hệ trực tiếp giữa thao tác, trạng thái và kết quả.
 
-Quy trình được chuẩn hóa theo bốn bước:
+Đặc điểm của lớp điện tử hóa:
 
-1. Khởi tạo topology RabbitMQ và xác nhận health các service.
-2. Nạp bản nhạc mẫu MIDI, chạy luồng playback baseline.
-3. Thực hiện lần lượt các kịch bản fault injection.
-4. Thu thập số liệu về latency, queue depth, throughput và trạng thái phục hồi.
+- Mỗi kênh phát âm gắn với một thành phần nhạc cụ mô phỏng;
+- Mỗi công tắc đại diện một thao tác ngắt/kết nối thành phần;
+- Phản hồi âm học xảy ra tức thời theo trạng thái thao tác;
+- Dễ tổ chức trình diễn trước lớp học đông người.
 
-Việc thu thập dữ liệu được thực hiện từ Dashboard metrics kết hợp RabbitMQ Management API để đảm bảo tính đối chiếu.
+#### 2.3.3. Cơ chế liên kết hai lớp
 
-## **3.2. Minh hoạ bài toán (mô tả các trang màn hình, các biểu đồ nếu có)**
+Hai lớp được liên kết thông qua cơ chế ánh xạ một - một giữa thành phần logic và kênh biểu đạt âm học. Cơ chế này bảo đảm rằng trạng thái ở lớp logic không bị mất nghĩa khi chuyển sang lớp trực quan. Nói cách khác, âm học không phải hiệu ứng trang trí, mà là ảnh chiếu có kiểm chứng của trạng thái kỹ thuật.
 
-### **3.2.1. Giao diện Dashboard vận hành và giám sát**
+Khi một thành phần logic bị ngắt, kênh âm tương ứng phải phản ánh mất tín hiệu. Khi thành phần logic trở lại, kênh âm phải phục hồi theo cùng tiến trình. Nếu quan hệ này không ổn định, mô hình sẽ đánh mất giá trị khoa học vì người học không thể tin cậy mối liên hệ giữa dữ liệu và cảm nhận.
 
-Màn hình chính hiển thị các nhóm thông tin: trạng thái phiên phát nhạc, BPM hiện hành, tình trạng từng service, queue depth theo từng nhạc cụ và luồng playback tổng hợp. Người vận hành có thể thực hiện thao tác đổi BPM trong khi hệ thống đang chạy, đồng thời quan sát ngay tác động lên độ trễ và chất lượng đồng bộ.
+Do đó, cơ chế liên kết hai lớp là điểm trọng yếu để phân biệt mô hình mô phỏng học thuật với mô hình trình diễn cảm tính.
 
-**Hình 3.1. Giao diện Dashboard theo dõi metrics thời gian thực (mô hình hóa bằng Mermaid)**
+**Bảng 4. Thành phần chức năng trong mô hình tổng thể**
 
-```mermaid
-flowchart TB
-    subgraph Header[Thanh điều khiển]
-        P[Playback: Start/Stop]
-        B[BPM Control]
-        S[Score Selector]
-    end
+| Nhóm thành phần | Vai trò | Đầu vào | Đầu ra |
+|---|---|---|---|
+| Điều phối trung tâm | Thiết lập nhịp tổng, phân phát sự kiện | Mẫu bài nhạc, lệnh nhịp | Sự kiện điều phối |
+| Nhạc cụ mô phỏng | Xử lý phần việc chuyên biệt | Sự kiện theo nhạc cụ | Tín hiệu thành phần |
+| Hòa trộn tổng | Gộp tín hiệu toàn hệ | Tín hiệu từng nhạc cụ | Tín hiệu hòa tấu |
+| Quan sát trạng thái | Theo dõi chỉ số và sức khỏe hệ | Dữ liệu vận hành | Bảng chỉ số thời gian thực |
+| Bản điện tử hóa | Hiển thị trực quan trạng thái | Trạng thái nhạc cụ | Âm báo và trạng thái công tắc |
 
-    subgraph Left[Khối quan sát dịch vụ]
-        H[Service Health]
-        Q[Queue Depth]
-        L[Consumer Lag]
-    end
+### 2.4. Thiết kế bản điện tử hóa trọng tâm
 
-    subgraph Right[Khối phát và theo dõi luồng]
-        A[Live Audio Stream]
-        T[Throughput / Message Rate]
-        E[Event Timeline]
-    end
+Phần bản điện tử hóa được phát triển theo nguyên tắc “một thành phần logic - một kênh mô phỏng - một thao tác kiểm thử”. Thiết kế này nhằm bảo đảm mọi hiện tượng được tái hiện minh bạch và hạn chế tối đa diễn giải mơ hồ.
 
-    Header --> Left
-    Header --> Right
-    Left --> E
-    Right --> E
-```
+#### 2.4.1. Cấu trúc phần tử và ánh xạ vai trò
 
-### **3.2.2. Kịch bản 1 - Consumer lag gây lệch nhịp**
+Mô hình bao gồm:
 
-Nhóm chủ động chèn độ trễ xử lý tại một service nhạc cụ. Kết quả quan sát cho thấy queue tương ứng tăng độ sâu rõ rệt, thời gian xử lý trễ dần so với nhịp chuẩn và âm thanh bị chậm pha. Kịch bản này minh họa trực tiếp mối liên hệ giữa năng lực consumer và chất lượng dịch vụ toàn cục.
+- 1 bộ điều khiển ESP giữ vai trò nhạc trưởng;
+- 4 buzzer giữ vai trò 4 nhạc cụ mô phỏng;
+- 4 công tắc giữ vai trò thao tác lỗi/phục hồi;
+- 4 cổng tín hiệu D2, D16, D19, D23 ứng với 4 kênh âm học.
 
-### **3.2.3. Kịch bản 2 - Service crash và phục hồi**
+**Hình 3: Sơ đồ khối bản điện tử hóa trọng tâm**
 
-Nhóm dừng đột ngột một service khi hệ thống đang phát. Trong thời gian service ngừng, âm thanh của nhạc cụ bị mất và backlog tích lũy tại queue tương ứng. Sau khi khởi động lại, cơ chế reconnect hoạt động, service tiếp tục tiêu thụ message và hệ thống dần trở lại trạng thái ổn định.
+**Hình 4: Sơ đồ kết nối 4 buzzer vào các cổng D2, D16, D19, D23**
 
-### **3.2.4. Kịch bản 3 - Scale ngang theo competing consumers**
+**Hình 5: Sơ đồ ánh xạ 4 công tắc với 4 nhạc cụ mô phỏng**
 
-Nhóm tăng số instance cho một service nhạc cụ để mô phỏng competing consumers. Kết quả cho thấy phân phối message giữa các consumer giúp tăng thông lượng tiêu thụ, nhưng nếu không kiểm soát tốt logic đồng bộ có thể làm âm hình không còn liền mạch. Điều này phản ánh đánh đổi giữa mở rộng hiệu năng và tính nhất quán cảm nhận.
+Điểm quan trọng của cấu trúc này là tính đối xứng: mỗi nhạc cụ mô phỏng luôn có cặp kênh tín hiệu và công tắc riêng, giúp đánh giá độc lập trước khi đánh giá tương tác liên thành phần. Nhờ cấu trúc đối xứng, người vận hành có thể tiến hành kiểm thử tuần tự theo từng kênh, sau đó mới mở rộng sang kiểm thử đa kênh mà không làm mất dấu nguyên nhân.
 
-### **3.2.5. Kịch bản 4 - Thay đổi BPM thời gian thực**
+Về mặt phương pháp, cấu trúc đối xứng còn giúp chuẩn hóa biên bản thực nghiệm. Mỗi kênh có cùng logic ghi nhận nên dữ liệu dễ so sánh ngang, hạn chế sai lệch do khác biệt cách mô tả giữa các thành viên.
 
-Lệnh BPM được gửi từ Dashboard qua `tempo.control`. Conductor cập nhật tốc độ phát ngay trong phiên chạy, các service nhận luồng sự kiện mới theo nhịp cập nhật. Người dùng có thể cảm nhận sự thay đổi nhịp độ gần như tức thời và quan sát metrics ổn định sau thời gian ngắn thích nghi.
+#### 2.4.2. Nguyên tắc thiết kế thao tác
 
-### **3.2.6. Tổng hợp kết quả đo kiểm**
+Thiết kế thao tác tuân thủ bốn nguyên tắc:
 
-Trong phạm vi thử nghiệm LAN của nhóm, hệ thống đạt các chỉ báo chính như sau:
+1. **Tính đơn trị của thao tác:** một thao tác chỉ tác động một trạng thái ưu tiên.
+2. **Tính phản hồi tức thời:** trạng thái thay đổi phải quan sát ngay sau thao tác.
+3. **Tính khôi phục kiểm soát:** có thể quay lại trạng thái chuẩn theo quy trình ngược.
+4. **Tính lặp lại:** cùng thao tác cho cùng xu hướng kết quả qua nhiều phiên.
 
-- Độ trễ đầu-cuối trung bình nằm trong ngưỡng yêu cầu học phần (xấp xỉ dưới 200 ms ở tải bình thường).
-- RabbitMQ duy trì khả năng xử lý ổn định ở mức tải yêu cầu tối thiểu cho bài toán.
-- Dashboard cập nhật chỉ số theo chu kỳ gần 1 giây, phản ánh kịp thời biến động vận hành.
+Bốn nguyên tắc trên bảo đảm rằng mỗi thao tác có giá trị kiểm chứng. Nếu thiếu tính đơn trị, người học không biết thay đổi đến từ thao tác nào. Nếu thiếu phản hồi tức thời, mối liên hệ nguyên nhân - hệ quả bị mờ. Nếu thiếu khả năng khôi phục, mô hình khó chạy nhiều kịch bản trong một buổi. Nếu thiếu tính lặp lại, kết quả khó dùng cho đánh giá học thuật.
 
-Kết quả này cho thấy thiết kế đáp ứng tốt mục tiêu mô phỏng và giảng dạy, dù vẫn còn không gian tối ưu cho các tình huống tải cao kéo dài.
+#### 2.4.3. Ràng buộc kỹ thuật của bản điện tử hóa
 
-**Hình 3.2. Biểu đồ độ trễ đầu-cuối theo các kịch bản tải (minh họa)**
+Để bảo đảm độ tin cậy mô phỏng, bản điện tử hóa đặt ra các ràng buộc:
 
-```mermaid
-xychart-beta
-    title "Độ trễ end-to-end theo kịch bản"
-    x-axis [Baseline, Lag, CrashRecover, ScaleOut, BPMChange]
-    y-axis "Latency (ms)" 0 --> 320
-    bar [120, 285, 240, 170, 135]
-```
+- Kết nối kênh phải ổn định trong suốt phiên thực nghiệm;
+- Trạng thái công tắc phải rõ ràng, tránh nhập nhằng giữa bật/tắt;
+- Âm báo của từng kênh phải đủ phân biệt khi phát đồng thời;
+- Mọi thay đổi phải được ghi nhận vào biểu mẫu quan sát.
 
-**Hình 3.3. Biểu đồ queue depth khi xảy ra consumer lag (minh họa theo thời gian)**
+Những ràng buộc này nhằm giữ độ tin cậy của dữ liệu thực nghiệm. Trong bài thực hành giáo dục, độ chính xác tuyệt đối không phải mục tiêu duy nhất; tính nhất quán giữa các lần chạy mới là điều kiện để người học rút ra kết luận có giá trị.
 
-```mermaid
-xychart-beta
-    title "Queue depth trong kịch bản consumer lag"
-    x-axis [t0, t1, t2, t3, t4, t5]
-    y-axis "Messages in Queue" 0 --> 140
-    line [5, 18, 52, 101, 74, 26]
-```
+**Bảng 5. Thông số kỹ thuật bản điện tử hóa**
 
-**Bảng 3.1. Cấu hình môi trường thực nghiệm**
+| Thành phần | Số lượng | Vai trò mô phỏng | Yêu cầu vận hành |
+|---|---:|---|---|
+| ESP | 1 | Điều phối trung tâm | Ổn định nguồn, tín hiệu ra nhất quán |
+| Buzzer | 4 | 4 nhạc cụ | Phát tín hiệu rõ, dễ phân biệt |
+| Công tắc | 4 | Ngắt/kết nối nhạc cụ | Phản hồi đóng/mở dứt khoát |
+| Cổng D2 | 1 | Kênh buzzer 1 | Ánh xạ nhạc cụ 1 |
+| Cổng D16 | 1 | Kênh buzzer 2 | Ánh xạ nhạc cụ 2 |
+| Cổng D19 | 1 | Kênh buzzer 3 | Ánh xạ nhạc cụ 3 |
+| Cổng D23 | 1 | Kênh buzzer 4 | Ánh xạ nhạc cụ 4 |
 
-| Thành phần | Cấu hình sử dụng trong thực nghiệm |
-| --- | --- |
-| Mô hình triển khai | 5 nút LAN + baseline 1 nút |
-| Broker | RabbitMQ 3.x (Management UI `:15672`) |
-| Runtime | Docker + Docker Compose |
-| Ngôn ngữ dịch vụ | Python 3.11+ |
-| Dữ liệu vào | MIDI (`Concierto-De-Aranjuez.mid`) |
-| Kênh giám sát | Dashboard + RabbitMQ Management API |
+**Bảng 6. Ma trận ánh xạ buzzer - nhạc cụ - công tắc**
 
-**Bảng 3.2. Kết quả đo kiểm theo yêu cầu NFR (tham chiếu thực nghiệm)**
+| Kênh | Cổng buzzer | Công tắc điều khiển | Vai trò nhạc cụ mô phỏng |
+|---|---|---|---|
+| Kênh 1 | D2 | Công tắc 1 | Nhạc cụ bè chính |
+| Kênh 2 | D16 | Công tắc 2 | Nhạc cụ bè đối thoại |
+| Kênh 3 | D19 | Công tắc 3 | Nhạc cụ giữ nhịp |
+| Kênh 4 | D23 | Công tắc 4 | Nhạc cụ bè trầm |
 
-| Chỉ tiêu NFR | Mục tiêu | Kết quả ghi nhận | Đánh giá |
-| --- | --- | --- | --- |
-| Độ trễ đầu-cuối | `< 200 ms` (LAN bình thường) | Đạt ở baseline; tăng khi chèn lag | Đạt một phần theo kịch bản |
-| Năng lực xử lý message | `>= 100 msg/s` | Hệ thống duy trì ổn định ở ngưỡng yêu cầu tối thiểu | Đạt |
-| Chu kỳ cập nhật dashboard | `~1 giây` | Chỉ số cập nhật đều theo chu kỳ gần 1 giây | Đạt |
-| Khả năng phục hồi kết nối | Service tự reconnect | Hệ thống phục hồi sau crash/restart | Đạt |
+### 2.5. Thiết kế luồng chức năng hệ thống
 
-## **3.3. Kết luận**
+Luồng chức năng được mô hình hóa theo chu trình khép kín:
 
-Thực nghiệm đã kiểm chứng rằng hệ thống có thể vận hành ổn định trong môi trường cục bộ đa máy, tái hiện được các hiện tượng phân tán điển hình và cung cấp khả năng quan sát đầy đủ để phân tích nguyên nhân-kết quả. Cách tiếp cận “nghe thấy hệ phân tán” mang lại giá trị trực quan rõ rệt, giúp người học liên hệ tốt hơn giữa chỉ số kỹ thuật và trải nghiệm thực tế.
+1. Điều phối trung tâm thiết lập nhịp tổng.
+2. Các nhạc cụ mô phỏng nhận phần việc theo vai trò.
+3. Đầu ra từng thành phần được hòa trộn thành kết quả chung.
+4. Trạng thái vận hành được quan sát liên tục.
+5. Bản điện tử hóa biểu đạt trực tiếp trạng thái thành phần.
 
-# **CHƯƠNG 4**
+**Hình 6: Luồng điều phối từ nhạc trưởng tới các nhạc cụ**
 
-# **KẾT LUẬN (3 TRANG)**
+Chu trình này bảo đảm rằng mọi thay đổi ở một lớp đều có dấu hiệu tương ứng ở lớp còn lại, qua đó duy trì tính nhất quán giữa “hệ thống kỹ thuật” và “hệ thống biểu đạt”.
 
-## **4.1. Kết quả đạt được**
+Luồng chức năng còn có ý nghĩa kiểm soát lỗi nhận thức. Khi người học thấy một bất thường âm học, họ có thể lần ngược theo đúng chu trình để xác định bất thường phát sinh từ khâu điều phối, khâu nhạc cụ hay khâu hòa trộn. Đây là ưu điểm lớn so với cách trình bày rời rạc từng thành phần.
 
-Đề tài đã hoàn thành các mục tiêu cốt lõi theo đúng định hướng môn học. Trước hết, nhóm đã xây dựng được hệ thống microservices phân tán mô phỏng giàn nhạc, trong đó từng dịch vụ có trách nhiệm rõ ràng và giao tiếp bất đồng bộ thông qua RabbitMQ. Luồng dữ liệu từ bản nhạc MIDI đến âm thanh phát ra được tổ chức mạch lạc, có khả năng kiểm soát và truy vết.
+### 2.6. Thiết kế luồng vận hành phục vụ học tập
 
-Thứ hai, hệ thống thể hiện tốt các đặc trưng kỹ thuật của kiến trúc phân tán: tách rời thành phần, xử lý đồng thời, lỗi một phần, phục hồi kết nối và mở rộng theo chiều ngang. Các kịch bản thực nghiệm có chủ đích đã minh họa rõ hiện tượng consumer lag, service crash/recovery và biến đổi nhịp theo điều khiển động.
+Để phù hợp hoạt động giảng dạy, đề tài xây dựng luồng vận hành theo từng pha rõ ràng:
 
-Thứ ba, nhóm đã xây dựng Dashboard đóng vai trò trung tâm vận hành và quan sát. Người dùng có thể theo dõi queue depth, trạng thái service, tốc độ xử lý và độ trễ phát lại theo thời gian thực, đồng thời điều khiển BPM mà không cần can thiệp trực tiếp vào từng service. Điều này nâng cao đáng kể tính minh bạch và khả năng trình diễn của hệ thống.
+#### Pha 1 - Đặt chuẩn nền
 
-Thứ tư, hệ thống được đóng gói theo hướng dễ tái lập trong môi trường học tập: triển khai bằng Docker Compose, hỗ trợ một máy hoặc nhiều máy LAN, có tài liệu cấu hình và runbook đi kèm. Nhờ đó, sản phẩm có khả năng chuyển giao cho nhóm khác hoặc dùng làm nền cho các bài thực hành sau.
+Thiết lập trạng thái đầy đủ với bốn công tắc bật. Mục đích là tạo mốc chuẩn về chất lượng hòa tấu và độ ổn định nhịp.
 
-Về giá trị học thuật, đề tài góp phần kết nối lý thuyết hệ thống phân tán với trải nghiệm trực quan. Việc “nghe” được ảnh hưởng của độ trễ, mất đồng bộ và phục hồi giúp người học hình thành trực giác hệ thống tốt hơn so với cách tiếp cận chỉ dựa trên đồ thị và log.
+**Hình 7: Trạng thái hệ khi tất cả công tắc ở chế độ hoạt động**
 
-## **4.2. Kết quả chưa đạt được**
+Pha chuẩn nền đóng vai trò tham chiếu bắt buộc. Nếu không có mốc chuẩn, mọi nhận xét về suy giảm hoặc phục hồi đều thiếu điểm tựa định lượng và định tính.
 
-Bên cạnh các kết quả tích cực, đề tài vẫn tồn tại một số hạn chế cần thẳng thắn ghi nhận.
+#### Pha 2 - Gây lỗi có kiểm soát
 
-Một là, chính sách xử lý lỗi message chưa được chuẩn hóa đầy đủ ở mức production, đặc biệt với các cơ chế retry có kiểm soát, dead-letter queue và chiến lược idempotency liên dịch vụ. Trong các tải đột biến hoặc lỗi kéo dài, hệ thống vẫn cần cơ chế bảo toàn tốt hơn cho tính nhất quán xử lý.
+Ngắt lần lượt từng công tắc để tạo lỗi cục bộ, sau đó mở rộng sang lỗi kép hoặc lỗi nhiều thành phần. Mục đích là quan sát mức suy giảm theo cấp độ tác động.
 
-Hai là, phương pháp đo và chuẩn hóa chỉ số consumer lag mới ở mức thực nghiệm, chưa có bộ chỉ tiêu chuẩn hóa theo từng lớp độ ưu tiên (SLO/SLI). Việc mở rộng hệ đo kiểm sẽ giúp đánh giá khách quan hơn khi thay đổi quy mô hoặc nền tảng triển khai.
+**Hình 8: Trạng thái hệ khi một công tắc bị ngắt**
 
-Ba là, bảo mật hệ thống mới dừng ở mức cơ bản cho môi trường học tập. Các cơ chế phân quyền chi tiết theo service account, quản lý bí mật, mã hóa đường truyền và kiểm toán truy cập chưa được triển khai toàn diện.
+**Hình 9: Trạng thái hệ khi hai công tắc bị ngắt đồng thời**
 
-Bốn là, kiến trúc hiện tại sử dụng RabbitMQ single-node để giảm độ phức tạp. Dù phù hợp mục tiêu môn học, mô hình này chưa phản ánh đầy đủ bài toán tính sẵn sàng cao ở môi trường thực tế nhiều miền lỗi.
+Việc gây lỗi theo thứ tự tăng dần giúp phân tách rõ ảnh hưởng của từng mức lỗi. Cách làm này tránh hiện tượng gây nhiều lỗi cùng lúc khiến người học khó xác định đóng góp của từng nguyên nhân.
 
-Từ các hạn chế trên, nhóm đề xuất hướng phát triển tiếp theo:
+#### Pha 3 - Phục hồi theo kịch bản
 
-- Chuẩn hóa contract và chính sách xử lý lỗi theo hướng tin cậy cao (DLQ, retry, idempotent consumer).
-- Mở rộng observability với tracing phân tán và dashboard phân tích xu hướng dài hạn.
-- Thử nghiệm đa broker hoặc cluster broker để đánh giá khả năng chịu lỗi và chuyển đổi dự phòng.
-- Nâng cấp lớp bảo mật và quản trị cấu hình theo thông lệ DevSecOps.
+Bật lại công tắc theo thứ tự định trước để đánh giá khả năng tái gia nhập và mức độ trở lại ổn định.
 
-Nhìn chung, đề tài đạt được mục tiêu chính về kỹ thuật và học thuật trong phạm vi thời gian, nguồn lực và yêu cầu của học phần; đồng thời mở ra nền tảng tốt cho các nghiên cứu sâu hơn về hệ thống phân tán theo hướng thực chiến.
+**Hình 10: Trạng thái hệ khi phục hồi lại toàn bộ công tắc**
 
-# **TÀI LIỆU THAM KHẢO**
+Pha phục hồi đặc biệt quan trọng vì nó phản ánh tư duy thực tiễn của hệ phân tán: mục tiêu không chỉ là phát hiện lỗi, mà còn phải đưa hệ trở về trạng thái chấp nhận được trong thời gian hợp lý.
 
-[1] L. Lamport, “Time, Clocks, and the Ordering of Events in a Distributed System,” *Communications of the ACM*, vol. 21, no. 7, pp. 558-565, 1978.
+#### Pha 4 - Đối chiếu và rút kết luận
 
-[2] S. Gilbert and N. Lynch, “Brewer’s Conjecture and the Feasibility of Consistent, Available, Partition-Tolerant Web Services,” *SIGACT News*, vol. 33, no. 2, pp. 51-59, 2002.
+Tổng hợp biểu mẫu quan sát, so sánh với mốc chuẩn ban đầu, rút ra quan hệ giữa số thành phần hoạt động và chất lượng đầu ra.
 
-[3] G. DeCandia et al., “Dynamo: Amazon’s Highly Available Key-Value Store,” in *Proceedings of the 21st ACM Symposium on Operating Systems Principles (SOSP)*, 2007, pp. 205-220.
+Ở pha này, người học cần diễn giải bằng ngôn ngữ kỹ thuật chuẩn: mô tả hiện tượng, nêu nguyên nhân giả định, đối chiếu dữ liệu, kết luận mức tin cậy. Quy trình này giúp nâng năng lực báo cáo khoa học, không dừng ở mô tả cảm tính.
 
-[4] J. Kreps, N. Narkhede, and J. Rao, “Kafka: A Distributed Messaging System for Log Processing,” in *Proceedings of the NetDB Workshop (co-located with VLDB)*, 2011, pp. 1-7.
+### 2.7. Thiết kế chỉ số quan sát và thang đánh giá
 
-[5] A. Balalaie, A. Heydarnoori, and P. Jamshidi, “Microservices Architecture Enables DevOps: Migration to a Cloud-Native Architecture,” *IEEE Software*, vol. 33, no. 3, pp. 42-52, 2016.
+Để giảm tính chủ quan, chương 2 đề xuất bộ chỉ số hỗn hợp định lượng - định tính.
+
+#### 2.7.1. Nhóm chỉ số định lượng
+
+- Độ trễ đầu-cuối;
+- Độ sâu hàng đợi;
+- Số thành phần đang hoạt động;
+- Thời gian phục hồi về trạng thái ổn định.
+
+Nhóm chỉ số định lượng giúp mô tả hệ thống bằng số liệu có thể so sánh giữa các phiên. Đây là cơ sở để kiểm tra tính lặp lại và đánh giá hiệu quả cải tiến trong những lần triển khai sau.
+
+#### 2.7.2. Nhóm chỉ số định tính
+
+- Độ đầy hòa tấu;
+- Độ ổn định nhịp cảm nhận;
+- Mức gián đoạn âm học;
+- Mức dễ phân biệt lỗi theo tai nghe.
+
+Nhóm chỉ số định tính phản ánh đúng mục tiêu sư phạm của đề tài. Một mô hình giáo dục hiệu quả không chỉ đúng về kỹ thuật mà còn phải dễ hiểu, dễ nhận biết và dễ diễn giải với người học ở các mức nền tảng khác nhau.
+
+#### 2.7.3. Thang đánh giá khuyến nghị
+
+Đề tài khuyến nghị thang năm mức cho các chỉ số định tính: rất thấp, thấp, trung bình, cao, rất cao. Thang này giúp chuẩn hóa nhận xét giữa các nhóm thực nghiệm khác nhau.
+
+Việc chuẩn hóa thang đánh giá giúp giảm sai lệch do cảm nhận cá nhân. Khi nhiều nhóm dùng cùng một thang và cùng một biểu mẫu, kết quả tổng hợp sẽ có độ tin cậy cao hơn và thuận lợi cho so sánh theo học kỳ.
+
+**Bảng 7. Bộ chỉ số quan sát định tính và định lượng**
+
+| Nhóm chỉ số | Chỉ số cụ thể | Mục đích |
+|---|---|---|
+| Định lượng | Độ trễ đầu-cuối | Đo tốc độ phản hồi hệ thống |
+| Định lượng | Độ sâu hàng đợi | Theo dõi nguy cơ nghẽn |
+| Định lượng | Số thành phần hoạt động | Xác nhận trạng thái hệ |
+| Định lượng | Thời gian phục hồi | Đánh giá năng lực tái lập ổn định |
+| Định tính | Độ đầy hòa tấu | Đánh giá chất lượng đầu ra cảm nhận |
+| Định tính | Độ ổn định nhịp | Đánh giá mức đồng bộ |
+| Định tính | Mức gián đoạn âm | Đánh giá tác động khi lỗi xảy ra |
+| Định tính | Khả năng nhận diện lỗi | Đánh giá hiệu quả sư phạm trực quan |
+
+### 2.8. Tiêu chí chất lượng thiết kế
+
+Thiết kế được xem là đạt chất lượng khi đồng thời thỏa mãn các tiêu chí:
+
+- **Tính đúng mô hình:** ánh xạ vai trò giữa lớp logic và lớp điện tử hóa nhất quán.
+- **Tính rõ phản hồi:** thao tác ngắt/kết nối tạo thay đổi cảm nhận rõ ràng.
+- **Tính lặp lại:** kịch bản chạy lại cho kết quả cùng xu hướng.
+- **Tính sư phạm:** người học phân tích được nguyên nhân - hệ quả.
+- **Tính mở rộng:** có thể thêm kịch bản mới mà không thay đổi nguyên lý lõi.
+
+Năm tiêu chí trên cần được thỏa đồng thời. Nếu chỉ đáp ứng tính trực quan mà thiếu tính đúng mô hình, đề tài sẽ nghiêng về trình diễn. Ngược lại, nếu chỉ đúng kỹ thuật nhưng khó quan sát, hiệu quả đào tạo sẽ không cao. Cân bằng hai mặt này là yêu cầu trung tâm của chương thiết kế.
+
+### 2.9. Phân tích rủi ro thiết kế và biện pháp giảm thiểu
+
+#### Rủi ro 1: Khó phân biệt từng kênh âm khi phát đồng thời
+
+Biện pháp: phân lớp vai trò bè âm và hiệu chỉnh mức cường độ theo kênh để tăng độ nhận diện.
+
+Ngoài ra, trong quá trình trình diễn, cần duy trì thứ tự giới thiệu từng kênh trước khi phát đồng thời để người nghe có mốc nhận diện âm sắc từng bè.
+
+#### Rủi ro 2: Nhiễu thao tác công tắc làm sai lệch ghi nhận
+
+Biện pháp: quy định nhịp thao tác tối thiểu, xác nhận trạng thái trước khi đánh dấu mốc quan sát.
+
+Biện pháp này đặc biệt cần thiết trong buổi đông người, nơi thao tác nhanh hoặc liên tiếp có thể tạo cảm giác sai khác không do bản chất hệ thống.
+
+#### Rủi ro 3: Quan sát thiên lệch theo cảm nhận chủ quan
+
+Biện pháp: bắt buộc kết hợp biểu mẫu định tính với chỉ số định lượng tại cùng mốc thời gian.
+
+Khi dữ liệu định lượng và định tính không khớp, nhóm vận hành cần ghi chú nguyên nhân khả dĩ thay vì bỏ qua, nhằm bảo toàn tính minh bạch của báo cáo.
+
+#### Rủi ro 4: Mất nhất quán giữa biểu hiện âm và trạng thái kỹ thuật
+
+Biện pháp: kiểm tra ánh xạ trạng thái trước phiên thực nghiệm, chuẩn hóa quy trình khởi tạo và phục hồi.
+
+#### Rủi ro 5: Quá tập trung vào trình diễn, thiếu chiều sâu phân tích
+
+Biện pháp: thiết kế trước câu hỏi phân tích cho từng kịch bản và yêu cầu đối chiếu dữ liệu sau mỗi pha.
+
+### 2.10. Giá trị sư phạm của thiết kế
+
+Thiết kế chương 2 không chỉ nhằm tạo ra một mô hình chạy được, mà hướng tới tạo ra một “không gian học tập có thể thao tác”. Sinh viên được phép gây lỗi có kiểm soát, quan sát hậu quả tức thời, rồi quay lại phân tích bản chất hệ thống. Chu trình này tăng khả năng ghi nhớ dài hạn và nâng cao năng lực tư duy hệ thống, đặc biệt với các khái niệm thường bị xem là trừu tượng.
+
+Ngoài ra, mô hình còn hỗ trợ giảng viên tổ chức đánh giá theo năng lực: năng lực nhận diện trạng thái, năng lực giải thích nguyên nhân, và năng lực đề xuất phương án phục hồi.
+
+Một điểm mạnh khác là mô hình khuyến khích làm việc nhóm theo vai trò: người thao tác công tắc, người ghi nhận chỉ số, người đánh giá âm học và người tổng hợp kết luận. Cách tổ chức này phù hợp kỹ năng nghề nghiệp thực tế, nơi các hệ phân tán luôn được vận hành bởi nhóm đa vai trò.
+
+### 2.11. Kết luận chương
+
+Chương 2 đã mở rộng đầy đủ từ bài toán, mục tiêu, kiến trúc, thiết kế chi tiết bản điện tử hóa, luồng chức năng, chỉ số quan sát, tiêu chí chất lượng đến phân tích rủi ro và giá trị sư phạm. Trên cơ sở đó, chương 3 có thể triển khai thực nghiệm theo quy trình nhất quán, bảo đảm mọi kết quả thu được đều có cơ sở diễn giải khoa học.
+
+Nhìn tổng thể, chương thiết kế xác lập rõ hai nguyên lý nền của đề tài: nguyên lý đúng mô hình phân tán và nguyên lý đúng mục tiêu sư phạm. Việc duy trì đồng thời hai nguyên lý này giúp bản điện tử hóa không chỉ là công cụ minh họa, mà trở thành học cụ có cấu trúc, có tiêu chí và có khả năng dùng lâu dài trong giảng dạy.
+
+---
+
+## CHƯƠNG 3. THỰC NGHIỆM
+
+### 3.1. Mục tiêu thực nghiệm
+
+Thực nghiệm được tổ chức để kiểm chứng ba giả thuyết chính:
+
+1. Bản điện tử hóa có thể biểu đạt trực quan trạng thái hoạt động của các thành phần phân tán.
+2. Thao tác ngắt/kết nối qua công tắc tạo ra biến thiên âm học nhất quán với hiện tượng phân tán tương ứng.
+3. Người quan sát có thể đối chiếu chính xác giữa biến thiên âm học và biến thiên chỉ số kỹ thuật.
+
+### 3.2. Bố trí môi trường thực nghiệm
+
+Môi trường thực nghiệm được chuẩn bị theo mô hình nhiều nút trong cùng mạng cục bộ để phản ánh cấu trúc phân tán. Bản điện tử hóa được đặt tại vị trí trung tâm trình diễn nhằm bảo đảm tầm quan sát trực tiếp cho người nghe và người điều phối.
+
+Các điều kiện triển khai:
+
+- Mỗi thành phần có vai trò rõ ràng trong chuỗi điều phối - xử lý - hòa trộn;
+- Kênh quan sát trạng thái hoạt động liên tục trong suốt buổi thử nghiệm;
+- Bản điện tử hóa hoạt động đồng bộ với trạng thái hệ thống mô phỏng.
+
+### 3.3. Quy trình thực nghiệm chuẩn
+
+Quy trình gồm bảy bước:
+
+1. Thiết lập trạng thái khởi đầu ổn định (4 công tắc bật).
+2. Chạy quan sát cơ sở trong khoảng thời gian đủ dài để thu mức chuẩn.
+3. Tác động có kiểm soát: ngắt 1 công tắc.
+4. Thu thập số liệu và ghi nhận âm học.
+5. Mở rộng tác động: ngắt thêm công tắc thứ hai hoặc thứ ba.
+6. Phục hồi tuần tự từng công tắc.
+7. Tổng hợp dữ liệu và so sánh với mức chuẩn ban đầu.
+
+**Hình 14: Quy trình thực nghiệm và thu thập dữ liệu**
+
+### 3.4. Kịch bản thực nghiệm trọng tâm
+
+**Bảng 6. Kịch bản thực nghiệm trọng tâm**
+
+| Kịch bản | Mô tả thao tác | Trạng thái mong đợi | Chỉ số cần theo dõi |
+|---|---|---|---|
+| K1 - Ổn định | Bật 4 công tắc | Hòa tấu đầy đủ, nhịp ổn định | Độ trễ nền, số thành phần hoạt động |
+| K2 - Mất thành phần đơn | Tắt 1 công tắc | Mất 1 bè âm nhưng hệ còn hoạt động | Biến thiên độ đầy hòa tấu |
+| K3 - Mất thành phần kép | Tắt 2 công tắc | Suy giảm rõ cấu trúc âm học | Độ ổn định nhịp giảm |
+| K4 - Mất thành phần nhiều | Tắt 3 công tắc | Đầu ra gần trạng thái tối giản | Mức gián đoạn tăng cao |
+| K5 - Phục hồi tuần tự | Bật lại từng công tắc | Bè âm tái gia nhập theo từng bước | Tốc độ trở lại ổn định |
+| K6 - Phục hồi đồng thời | Bật lại nhiều công tắc cùng lúc | Hệ nhanh về cấu hình đầy đủ | Độ dao động ngắn hạn khi tái gia nhập |
+
+### 3.5. Mẫu ghi nhận dữ liệu thực nghiệm
+
+Để chuẩn hóa việc thu thập dữ liệu, mỗi phiên thực nghiệm sử dụng biểu mẫu gồm các trường:
+
+- Thời điểm thao tác công tắc;
+- Công tắc tác động;
+- Số thành phần còn hoạt động;
+- Nhận xét về độ đầy hòa tấu;
+- Nhận xét về mức ổn định nhịp;
+- Nhận xét về độ trễ cảm nhận;
+- Trạng thái phục hồi sau tác động.
+
+Biểu mẫu chuẩn giúp giảm sai lệch chủ quan giữa các lần ghi nhận và tạo cơ sở so sánh liên phiên.
+
+### 3.6. Kết quả thực nghiệm theo từng kịch bản
+
+**Bảng 8. Kết quả thực nghiệm theo từng kịch bản**
+
+| Kịch bản | Kết quả quan sát chính | Nhận định |
+|---|---|---|
+| K1 - Ổn định | Âm học đầy đủ, độ ổn định cao | Mức chuẩn tin cậy để so sánh |
+| K2 - Mất đơn | Mất một bè rõ rệt, tổng thể vẫn liên tục | Thể hiện tốt chịu lỗi cục bộ |
+| K3 - Mất kép | Hòa tấu mỏng, nhịp cảm nhận kém chắc | Chất lượng suy giảm theo số lỗi |
+| K4 - Mất nhiều | Âm học tối giản, tính hoàn chỉnh thấp | Phản ánh giới hạn chịu lỗi |
+| K5 - Phục hồi tuần tự | Bè âm trở lại từng bước, hệ ổn định dần | Mô phỏng tốt tái gia nhập thành phần |
+| K6 - Phục hồi đồng thời | Phục hồi nhanh, có dao động ngắn ban đầu | Cần điều phối nhịp tái gia nhập hợp lý |
+
+**Hình 11: Biểu đồ biến thiên độ trễ theo mức tải**
+
+**Hình 12: Biểu đồ thay đổi độ đầy hòa tấu theo số nhạc cụ bị ngắt**
+
+**Hình 13: Giao diện quan sát trạng thái dịch vụ theo thời gian thực**
+
+### 3.7. Phân tích định tính sâu
+
+#### 3.7.1. Độ đầy hòa tấu như chỉ báo chất lượng dịch vụ
+
+Qua các kịch bản, độ đầy hòa tấu giảm gần tuyến tính theo số lượng công tắc bị ngắt. Điều này phản ánh trực quan mối quan hệ giữa số thành phần hoạt động và chất lượng đầu ra tổng thể.
+
+#### 3.7.2. Ổn định nhịp như chỉ báo đồng bộ
+
+Ở trạng thái đủ bốn kênh, cảm nhận nhịp ổn định cao. Khi số kênh giảm, người nghe dễ nhận thấy độ “lỏng” trong cấu trúc nhịp. Đây là biểu hiện của suy giảm đồng bộ trong hệ thống.
+
+#### 3.7.3. Phục hồi như chỉ báo khả năng tự lành
+
+Việc bật lại công tắc cho thấy hệ có thể tái gia nhập thành phần mà không cần khởi tạo lại toàn cục. Đây là điểm quan trọng trong giảng dạy về khả năng chịu lỗi và tính liên tục dịch vụ.
+
+### 3.8. Đối chiếu giữa quan sát âm học và quan sát chỉ số
+
+Kết quả thực nghiệm cho thấy hai kênh quan sát có tính tương quan cao:
+
+- Khi số thành phần hoạt động giảm, độ đầy hòa tấu giảm tương ứng;
+- Khi phục hồi thành phần, độ đầy hòa tấu tăng trở lại;
+- Khi xảy ra dao động trạng thái, người nghe ghi nhận hiện tượng chênh nhịp ngắn hạn.
+
+Sự tương quan này khẳng định giá trị của bản điện tử hóa như một công cụ chuyển hóa dữ liệu kỹ thuật thành biểu hiện cảm nhận.
+
+### 3.9. Thảo luận về giá trị thực tiễn trong đào tạo
+
+Trong các buổi trình diễn thử nghiệm, người học phản hồi rằng việc thao tác công tắc và nghe ngay sự thay đổi của hòa tấu giúp hiểu nhanh hơn khái niệm lỗi cục bộ so với cách học chỉ dựa vào sơ đồ. Đặc biệt, quá trình phục hồi tuần tự tạo được nhận thức rõ về khác biệt giữa “hệ còn sống” và “hệ đạt chất lượng đầy đủ”.
+
+Điều này cho thấy mô hình có thể tích hợp trực tiếp vào các buổi thực hành của học phần Hệ thống phân tán như một học cụ trung tâm, không chỉ là phần minh họa phụ.
+
+### 3.10. Hạn chế trong quá trình thực nghiệm
+
+Dù đạt mục tiêu chính, thực nghiệm vẫn tồn tại một số hạn chế:
+
+- Âm sắc buzzer đơn giản nên khó biểu đạt sắc thái tinh vi của từng nhạc cụ;
+- Khi người nghe không được hướng dẫn trước, có thể nhầm lẫn giữa “mất đồng bộ” và “mất thành phần” ở một số tình huống;
+- Bộ đo định lượng chưa mở rộng tới các chỉ số sâu về dao động theo thời gian rất ngắn.
+
+Các hạn chế này không làm thay đổi kết luận chính, nhưng là cơ sở quan trọng cho kế hoạch nâng cấp.
+
+### 3.11. Kết luận chương
+
+Chương 3 chứng minh rằng bản điện tử hóa ESP - buzzer - công tắc hoàn thành tốt vai trò trung tâm của đề tài. Hệ thống không chỉ tái hiện được các trạng thái phân tán điển hình mà còn tạo được môi trường học tập trực quan, có kiểm soát, có thể lặp lại và dễ đánh giá.
+
+---
+
+## CHƯƠNG 4. KẾT LUẬN
+
+### 4.1. Tổng kết kết quả đạt được
+
+Đề tài đã hoàn thành mục tiêu xây dựng mô hình mô phỏng hệ thống phân tán theo hướng liên ngành âm nhạc - công nghệ, trong đó bản điện tử hóa giữ vai trò hạt nhân. Nhóm đã chứng minh được rằng:
+
+- Trạng thái phân tán có thể biểu đạt trực tiếp bằng tín hiệu âm học;
+- Thao tác vật lý trên công tắc có thể mô phỏng rõ trạng thái ngắt/kết nối thành phần;
+- Kết quả quan sát âm học tương quan tốt với trạng thái kỹ thuật của hệ thống.
+
+**Bảng 9. Đối chiếu mục tiêu và kết quả đạt được**
+
+| Mục tiêu | Mức độ hoàn thành | Minh chứng |
+|---|---|---|
+| Xây dựng mô hình phân tán trực quan | Hoàn thành tốt | Kịch bản vận hành ổn định và lỗi cục bộ |
+| Thiết kế bản điện tử hóa trọng tâm | Hoàn thành tốt | 1 ESP, 4 buzzer, 4 công tắc, cổng D2/D16/D19/D23 |
+| Thực nghiệm nhiều trạng thái | Hoàn thành | Bộ kịch bản K1-K6 lặp lại được |
+| Đối chiếu chỉ số và âm học | Hoàn thành | Tương quan xu hướng rõ ràng |
+| Giá trị đào tạo thực hành | Hoàn thành | Tăng mức hiểu trực quan của người học |
+
+### 4.2. Kết quả chưa đạt được và nguyên nhân
+
+**Bảng 10. Kết quả chưa đạt và phương án cải tiến**
+
+| Nội dung chưa đạt | Nguyên nhân chính | Hướng khắc phục |
+|---|---|---|
+| Âm sắc chưa phong phú | Giới hạn đặc tính buzzer | Bổ sung tầng phát âm nhiều sắc thái hơn |
+| Quy mô nhạc cụ mô phỏng còn nhỏ | Giới hạn số kênh bản nền hiện tại | Mở rộng số kênh và mô-đun phần tử |
+| Chỉ số định lượng chưa thật sâu | Tập trung ưu tiên trình diễn trực quan | Bổ sung bộ đo dao động chi tiết theo thời gian |
+| Chưa có bộ rubric chấm điểm chuẩn hóa | Đề tài mới ở mức triển khai nền | Xây dựng rubric cho từng kịch bản học tập |
+
+### 4.3. Đóng góp học thuật và sư phạm
+
+Đề tài đóng góp ở hai tầng:
+
+1. **Tầng học thuật:** đề xuất khung ánh xạ khái niệm công-xéc-tô vào hệ thống phân tán một cách nhất quán.
+2. **Tầng sư phạm:** hiện thực hóa một học cụ thực nghiệm chi phí thấp nhưng hiệu quả cao trong truyền đạt khái niệm khó.
+
+Giá trị của đề tài không nằm ở độ phức tạp kỹ thuật, mà nằm ở khả năng “chuyển nghĩa” từ dữ liệu kỹ thuật sang cảm nhận trực quan và khả năng lặp lại trong môi trường đào tạo.
+
+### 4.4. Hướng phát triển trong tương lai
+
+Trong giai đoạn tiếp theo, nhóm định hướng:
+
+- Mở rộng bản điện tử hóa theo kiến trúc mô-đun để tăng số nhạc cụ mô phỏng;
+- Chuẩn hóa bộ chỉ số định lượng và biểu mẫu ghi nhận;
+- Xây dựng bộ kịch bản giảng dạy theo từng mức độ khó;
+- Tăng cường nội dung trực quan hóa để phục vụ nhiều lớp học song song;
+- Hoàn thiện bộ tài liệu hướng dẫn thực hành cho giảng viên và sinh viên.
+
+**Hình 15: Lộ trình phát triển mở rộng bản điện tử hóa**
+
+### 4.5. Kết luận cuối cùng
+
+Với mục tiêu của một bài tập lớn mô phỏng phục vụ học tập, đề tài đã đạt được kết quả tích cực, có tính mới trong cách tiếp cận và có tiềm năng ứng dụng thực tế trong giảng dạy học phần Hệ thống phân tán. Việc lấy bản điện tử hóa làm trọng tâm đã chứng minh hiệu quả trong việc nâng cao mức hiểu của người học đối với các hiện tượng phân tán vốn khó hình dung bằng phương pháp trình bày truyền thống.
+
+---
+
+## PHỤ LỤC A. MA TRẬN LIÊN KẾT NỘI DUNG VỚI MỤC TIÊU HỌC PHẦN
+
+| Nội dung báo cáo | Mục tiêu học phần liên quan | Mức đóng góp |
+|---|---|---|
+| Kiến thức nền phân tán | Hiểu bản chất và thách thức hệ phân tán | Cao |
+| Nhạc lý và công-xéc-tô | Tăng khả năng mô hình hóa liên ngành | Trung bình - cao |
+| Thiết kế bản điện tử hóa | Nâng cao năng lực thiết kế mô phỏng | Cao |
+| Kịch bản thực nghiệm lỗi | Hiểu chịu lỗi và phục hồi | Cao |
+| Đối chiếu chỉ số - âm học | Nâng cao tư duy phân tích hệ thống | Cao |
+
+---
+
+## PHỤ LỤC B. KHUYẾN NGHỊ TỔ CHỨC BUỔI TRÌNH DIỄN HỌC TẬP
+
+Để tận dụng tối đa hiệu quả của mô hình, một buổi trình diễn nên chia thành bốn pha:
+
+1. Pha giới thiệu khái niệm và mục tiêu quan sát;
+2. Pha chạy trạng thái chuẩn để tạo mốc tham chiếu;
+3. Pha gây lỗi có kiểm soát bằng công tắc;
+4. Pha phục hồi và tổng kết bài học.
+
+Mỗi pha cần có biểu mẫu ghi nhận ngắn để người học tự điền, qua đó tăng tính chủ động và giảm phụ thuộc vào thuyết trình một chiều.
+
+---
+
+## TÀI LIỆU THAM KHẢO
+
+[1] L. Lamport, “Time, clocks, and the ordering of events in a distributed system,” *Communications of the ACM*, vol. 21, no. 7, pp. 558-565, Jul. 1978, doi: 10.1145/359545.359563.
+
+[2] G. DeCandia *et al*., “Dynamo: Amazon’s highly available key-value store,” in *Proc. 21st ACM SIGOPS Symp. Operating Systems Principles (SOSP)*, Stevenson, WA, USA, 2007, pp. 205-220, doi: 10.1145/1294261.1294281.
+
+[3] S. Ghemawat, H. Gobioff, and S.-T. Leung, “The Google file system,” in *Proc. 19th ACM Symp. Operating Systems Principles (SOSP)*, Bolton Landing, NY, USA, 2003, pp. 29-43, doi: 10.1145/945445.945450.
+
+[4] J. Dean and S. Ghemawat, “MapReduce: Simplified data processing on large clusters,” *Communications of the ACM*, vol. 51, no. 1, pp. 107-113, Jan. 2008, doi: 10.1145/1327452.1327492.
+
+[5] M. P. Herlihy and J. M. Wing, “Linearizability: A correctness condition for concurrent objects,” *ACM Transactions on Programming Languages and Systems*, vol. 12, no. 3, pp. 463-492, Jul. 1990, doi: 10.1145/78969.78972.
+
+[6] S. Gilbert and N. Lynch, “Brewer’s conjecture and the feasibility of consistent, available, partition-tolerant web services,” *SIGACT News*, vol. 33, no. 2, pp. 51-59, Jun. 2002, doi: 10.1145/564585.564601.
+
+[7] P. Hunt, M. Konar, F. P. Junqueira, and B. Reed, “ZooKeeper: Wait-free coordination for Internet-scale systems,” in *Proc. USENIX Annual Technical Conference (USENIX ATC)*, Boston, MA, USA, 2010, pp. 145-158.
+
+[8] T. Chandra and S. Toueg, “Unreliable failure detectors for reliable distributed systems,” *Journal of the ACM*, vol. 43, no. 2, pp. 225-267, Mar. 1996, doi: 10.1145/226643.226647.
+
+[9] M. A. Brewer, “Towards robust distributed systems,” in *Proc. 19th Annual ACM Symp. Principles of Distributed Computing (PODC)*, Portland, OR, USA, 2000.
+
+[10] E. A. Lee, “The problem with threads,” *Computer*, vol. 39, no. 5, pp. 33-42, May 2006, doi: 10.1109/MC.2006.180.
+
+[11] N. Dragoni *et al*., “Microservices: Yesterday, today, and tomorrow,” in *Present and Ulterior Software Engineering*, Cham, Switzerland: Springer, 2017, pp. 195-216, doi: 10.1007/978-3-319-67425-4_12.
+
+[12] R. van Renesse and F. B. Schneider, “Chain replication for supporting high throughput and availability,” in *Proc. 6th USENIX Symp. Operating Systems Design and Implementation (OSDI)*, San Francisco, CA, USA, 2004, pp. 91-104.

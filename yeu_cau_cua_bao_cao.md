@@ -1,0 +1,8 @@
+- Trình bày báo cáo theo dạng no-code (không nhắc đến code, chỉ trình bày ý tưởng, thiết kế, giải pháp, kết quả đạt được và chưa đạt được).
+- Các thuật ngữ tiếng Anh cần được Việt hoá, hoặc nếu không thể Việt hoá thì dùng phiên âm tiếng Việt, ví dụ như Công-xéc-tô. Các từ viết tắt knông nhất thiết phải là tiếng Anh.
+- Đề tài chỉ là một chương trình mô phỏng hệ thống phân tán để hỗ trợ học tập.
+- Đề tài có bản điện tử hoá cho đề tài với thiết kế: 1 ESP, 4 buzzer, 4 công tắc, 4 buzzer được kết nối qua cồng D2, D16, D19, D23. ESP đóng vai như một conductor, 4 buzzer tượng trưng cho các mixer (mỗi buzzer là một nhạc cụ), bật/tắt 4 công tắc mô phỏng việc các service mixer bị ngắt kết nối.
+- Cần nhắc nhiều về việc mô phỏng trên bản điện tử hoá, không nhắc đến code, chỉ trình bày ý tưởng, thiết kế, giải pháp, kết quả đạt được và chưa đạt được. Coi phần mô phỏng điện tử hoá là phần trọng tâm của đề tài, phần còn lại chỉ là kiến thức nền và phân tích thiết kế hệ thống để hỗ trợ cho phần mô phỏng điện tử hoá.
+- Báo cáo cần có các bảng biểu, hình ảnh minh hoạ phù hợp. Đối với ảnh, bạn chỉ cần đặt tên cho ảnh, không cần tạo ảnh thực tế. Ví dụ: "Hình 1: Sơ đồ kết nối các thành phần trong hệ thống mô phỏng điện tử hoá". Tôi sẽ tự thêm ảnh sau.
+- Ngoài các kiến thức kỹ thuật, báo cáo cần đề cập tới kiến thức nền về âm nhạc, nhạc lý, concerto.
+- Văn phong trình bày phải trạng trọng, nghiêm túc, phù hợp với một báo cáo khoa học, tránh sử dụng ngôn ngữ quá thân mật hoặc không chính thức. Cần sử dụng các thuật ngữ chuyên ngành một cách chính xác và nhất quán trong toàn bộ báo cáo.
