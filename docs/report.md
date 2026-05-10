@@ -151,6 +151,14 @@ Báo cáo gồm bốn chương chính:
 
 ## CHƯƠNG 1. KIẾN THỨC NỀN
 
+Chương này trình bày:
+
+- Bản chất, đặc trưng và các thách thức điển hình của hệ thống phân tán.
+- Cơ sở nhạc lý và mô hình công-xéc-tô phục vụ ánh xạ tư duy hệ thống.
+- Nền tảng của cơ chế hàng đợi thông điệp và vai trò trong mô phỏng.
+- Luận cứ khoa học cho bản điện tử hóa ESP - buzzer - công tắc làm trọng tâm đề tài.
+- Các bảng đối sánh giữa hiện tượng kỹ thuật và biểu hiện âm học.
+
 ### 1.1. Khái niệm và bản chất của hệ thống phân tán
 
 Hệ thống phân tán được hiểu là một cấu trúc gồm nhiều thành phần tính toán độc lập, triển khai trên các nút khác nhau, liên lạc qua mạng để cùng cung cấp một dịch vụ có ý nghĩa thống nhất. Điểm mấu chốt của hệ phân tán không nằm ở số lượng thành phần, mà nằm ở yêu cầu phối hợp giữa các thành phần trong điều kiện truyền thông không tuyệt đối ổn định.
@@ -331,6 +339,15 @@ Chương 1 đã thiết lập cơ sở lý luận đầy đủ cho đề tài: t
 ---
 
 ## CHƯƠNG 2. PHÂN TÍCH THIẾT KẾ HỆ THỐNG
+
+Chương này trình bày:
+
+- Phát biểu bài toán thiết kế theo mục tiêu đào tạo học phần hệ thống phân tán.
+- Hệ mục tiêu thiết kế gồm mục tiêu chức năng, mục tiêu sư phạm và mục tiêu vận hành.
+- Kiến trúc tổng thể theo lớp, cùng cơ chế liên kết giữa lớp logic và lớp điện tử hóa.
+- Thiết kế chi tiết bản điện tử hóa trọng tâm với kết nối D2, D16, D19, D23.
+- Luồng chức năng, luồng vận hành học tập, bộ chỉ số quan sát và thang đánh giá.
+- Tiêu chí chất lượng thiết kế, phân tích rủi ro và giá trị sư phạm của mô hình.
 
 ### 2.1. Phát biểu bài toán
 
@@ -657,6 +674,15 @@ Nhìn tổng thể, chương thiết kế xác lập rõ hai nguyên lý nền c
 
 ## CHƯƠNG 3. THỰC NGHIỆM
 
+Chương này trình bày:
+
+- Mục tiêu thực nghiệm và bố trí môi trường triển khai trong mạng cục bộ.
+- Quy trình thực nghiệm chuẩn và các kịch bản tác động lỗi - phục hồi.
+- Biểu mẫu thu thập dữ liệu và nguyên tắc ghi nhận kết quả.
+- Kết quả thực nghiệm theo từng kịch bản và phân tích định tính chuyên sâu.
+- Đối chiếu giữa chỉ số kỹ thuật và biểu hiện âm học trên bản điện tử hóa.
+- Thảo luận giá trị thực tiễn trong đào tạo và các hạn chế cần cải tiến.
+
 ### 3.1. Mục tiêu thực nghiệm
 
 Thực nghiệm được tổ chức để kiểm chứng ba giả thuyết chính:
@@ -783,59 +809,41 @@ Chương 3 chứng minh rằng bản điện tử hóa ESP - buzzer - công tắ
 
 ## CHƯƠNG 4. KẾT LUẬN
 
+Chương này trình bày:
+
+- Tổng kết các kết quả chính mà đề tài đã đạt được.
+- Phân tích các nội dung chưa đạt, nguyên nhân và hướng khắc phục.
+- Đóng góp học thuật và sư phạm của mô hình mô phỏng điện tử hóa.
+- Định hướng phát triển trong tương lai cho mở rộng quy mô và chuẩn hóa đánh giá.
+- Kết luận cuối cùng về tính khả thi và giá trị ứng dụng trong giảng dạy.
+
 ### 4.1. Tổng kết kết quả đạt được
 
-Đề tài đã hoàn thành mục tiêu xây dựng mô hình mô phỏng hệ thống phân tán theo hướng liên ngành âm nhạc - công nghệ, trong đó bản điện tử hóa giữ vai trò hạt nhân. Nhóm đã chứng minh được rằng:
+Đề tài đã hoàn thành mục tiêu xây dựng một mô hình mô phỏng hệ thống phân tán phục vụ học tập theo hướng trực quan, trong đó bản điện tử hóa là trọng tâm. Kết quả nổi bật trước hết là việc thiết kế thành công mô hình 1 ESP, 4 buzzer và 4 công tắc, với kết nối buzzer qua các cổng D2, D16, D19, D23, bảo đảm phản ánh rõ trạng thái hoạt động của bốn nhạc cụ mô phỏng.
 
-- Trạng thái phân tán có thể biểu đạt trực tiếp bằng tín hiệu âm học;
-- Thao tác vật lý trên công tắc có thể mô phỏng rõ trạng thái ngắt/kết nối thành phần;
-- Kết quả quan sát âm học tương quan tốt với trạng thái kỹ thuật của hệ thống.
+Thông qua các kịch bản vận hành ổn định, gây lỗi cục bộ và phục hồi, nhóm đã chứng minh được mối liên hệ nhất quán giữa trạng thái kỹ thuật của hệ thống và biểu hiện âm học cảm nhận được. Khi một hoặc nhiều thành phần bị ngắt, chất lượng hòa tấu suy giảm theo mức độ tác động; khi thành phần được tái gia nhập, chất lượng đầu ra cải thiện theo hướng trở lại trạng thái cân bằng. Điều này thể hiện đúng bản chất của hệ phân tán: hệ vẫn có thể duy trì hoạt động khi lỗi cục bộ xuất hiện, nhưng chất lượng dịch vụ phụ thuộc trực tiếp vào số lượng và trạng thái các thành phần.
 
-**Bảng 9. Đối chiếu mục tiêu và kết quả đạt được**
-
-| Mục tiêu | Mức độ hoàn thành | Minh chứng |
-|---|---|---|
-| Xây dựng mô hình phân tán trực quan | Hoàn thành tốt | Kịch bản vận hành ổn định và lỗi cục bộ |
-| Thiết kế bản điện tử hóa trọng tâm | Hoàn thành tốt | 1 ESP, 4 buzzer, 4 công tắc, cổng D2/D16/D19/D23 |
-| Thực nghiệm nhiều trạng thái | Hoàn thành | Bộ kịch bản K1-K6 lặp lại được |
-| Đối chiếu chỉ số và âm học | Hoàn thành | Tương quan xu hướng rõ ràng |
-| Giá trị đào tạo thực hành | Hoàn thành | Tăng mức hiểu trực quan của người học |
+Về mặt đào tạo, mô hình cho thấy hiệu quả rõ rệt trong việc hỗ trợ người học tiếp cận các khái niệm trừu tượng như mất đồng bộ, suy giảm dịch vụ và phục hồi trạng thái. Thay vì chỉ quan sát chỉ số hoặc sơ đồ tĩnh, người học có thể thao tác trực tiếp trên công tắc, nghe sự thay đổi của đầu ra và đối chiếu lại với dữ liệu quan sát. Cách tiếp cận này giúp tăng năng lực suy luận nguyên nhân - hệ quả và nâng cao chất lượng tiếp thu trong các buổi thực hành.
 
 ### 4.2. Kết quả chưa đạt được và nguyên nhân
 
-**Bảng 10. Kết quả chưa đạt và phương án cải tiến**
+Mặc dù đạt được các mục tiêu chính, đề tài vẫn còn một số hạn chế cần thẳng thắn nhìn nhận. Trước hết, khả năng biểu đạt âm sắc của buzzer còn đơn giản, nên mức độ phân biệt sắc thái giữa các nhạc cụ mô phỏng chưa cao. Hạn chế này ảnh hưởng đến độ phong phú của trải nghiệm nghe và làm giảm chiều sâu cảm nhận trong các kịch bản phức tạp.
 
-| Nội dung chưa đạt | Nguyên nhân chính | Hướng khắc phục |
-|---|---|---|
-| Âm sắc chưa phong phú | Giới hạn đặc tính buzzer | Bổ sung tầng phát âm nhiều sắc thái hơn |
-| Quy mô nhạc cụ mô phỏng còn nhỏ | Giới hạn số kênh bản nền hiện tại | Mở rộng số kênh và mô-đun phần tử |
-| Chỉ số định lượng chưa thật sâu | Tập trung ưu tiên trình diễn trực quan | Bổ sung bộ đo dao động chi tiết theo thời gian |
-| Chưa có bộ rubric chấm điểm chuẩn hóa | Đề tài mới ở mức triển khai nền | Xây dựng rubric cho từng kịch bản học tập |
+Thứ hai, quy mô bản điện tử hóa hiện tại mới dừng ở bốn kênh nhạc cụ mô phỏng. Mức quy mô này phù hợp cho mục tiêu nền tảng, nhưng chưa đủ để phản ánh các cấu hình phân tán lớn hơn hoặc các tình huống tương tác đa thành phần có mức phụ thuộc cao. Do đó, khả năng mô tả những hiện tượng phân tán nâng cao vẫn còn giới hạn.
 
-### 4.3. Đóng góp học thuật và sư phạm
+Thứ ba, bộ chỉ số đánh giá tuy đã đáp ứng mục tiêu thực hành cơ bản nhưng chưa mở rộng đầy đủ các chỉ báo định lượng chuyên sâu theo thời gian ngắn. Điều này khiến việc so sánh chi tiết giữa các phiên thực nghiệm còn phụ thuộc một phần vào nhận xét định tính.
 
-Đề tài đóng góp ở hai tầng:
+Cuối cùng, đề tài chưa hoàn thiện bộ tiêu chí đánh giá chuẩn hóa ở mức học phần để giảng viên có thể chấm điểm đồng nhất giữa nhiều nhóm. Đây là khoảng trống cần được bổ sung để mô hình được tích hợp bền vững vào hoạt động giảng dạy chính khóa.
 
-1. **Tầng học thuật:** đề xuất khung ánh xạ khái niệm công-xéc-tô vào hệ thống phân tán một cách nhất quán.
-2. **Tầng sư phạm:** hiện thực hóa một học cụ thực nghiệm chi phí thấp nhưng hiệu quả cao trong truyền đạt khái niệm khó.
+### 4.3. Hướng phát triển
 
-Giá trị của đề tài không nằm ở độ phức tạp kỹ thuật, mà nằm ở khả năng “chuyển nghĩa” từ dữ liệu kỹ thuật sang cảm nhận trực quan và khả năng lặp lại trong môi trường đào tạo.
+Trong giai đoạn tiếp theo, hướng phát triển ưu tiên là mở rộng bản điện tử hóa theo kiến trúc mô-đun nhằm tăng số lượng nhạc cụ mô phỏng và nâng cao khả năng biểu đạt trạng thái phân tán đa thành phần. Việc mở rộng này cần đi kèm chuẩn hóa kết nối và quy trình vận hành để vẫn bảo đảm tính lặp lại trong môi trường lớp học.
 
-### 4.4. Hướng phát triển trong tương lai
+Song song, nhóm định hướng nâng cấp hệ chỉ số đánh giá theo hướng kết hợp chặt chẽ giữa định lượng và định tính, bổ sung các chỉ báo đo mức dao động và tốc độ phục hồi theo từng kịch bản cụ thể. Khi bộ chỉ số được chuẩn hóa, kết quả thực nghiệm sẽ có cơ sở so sánh tốt hơn giữa các đợt học và giữa các nhóm triển khai.
 
-Trong giai đoạn tiếp theo, nhóm định hướng:
-
-- Mở rộng bản điện tử hóa theo kiến trúc mô-đun để tăng số nhạc cụ mô phỏng;
-- Chuẩn hóa bộ chỉ số định lượng và biểu mẫu ghi nhận;
-- Xây dựng bộ kịch bản giảng dạy theo từng mức độ khó;
-- Tăng cường nội dung trực quan hóa để phục vụ nhiều lớp học song song;
-- Hoàn thiện bộ tài liệu hướng dẫn thực hành cho giảng viên và sinh viên.
+Một hướng quan trọng khác là hoàn thiện bộ tài liệu hướng dẫn sử dụng trong giảng dạy, bao gồm kịch bản thực hành theo cấp độ, biểu mẫu ghi nhận thống nhất và rubric đánh giá theo năng lực. Cách tiếp cận này sẽ giúp mô hình không chỉ dừng ở phạm vi bài tập lớn, mà có thể trở thành học cụ thực nghiệm ổn định cho học phần Các hệ thống phân tán trong các học kỳ tiếp theo.
 
 **Hình 15: Lộ trình phát triển mở rộng bản điện tử hóa**
-
-### 4.5. Kết luận cuối cùng
-
-Với mục tiêu của một bài tập lớn mô phỏng phục vụ học tập, đề tài đã đạt được kết quả tích cực, có tính mới trong cách tiếp cận và có tiềm năng ứng dụng thực tế trong giảng dạy học phần Hệ thống phân tán. Việc lấy bản điện tử hóa làm trọng tâm đã chứng minh hiệu quả trong việc nâng cao mức hiểu của người học đối với các hiện tượng phân tán vốn khó hình dung bằng phương pháp trình bày truyền thống.
 
 ---
 
